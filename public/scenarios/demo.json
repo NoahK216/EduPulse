@@ -16,7 +16,22 @@
             "id": "2",
             "title": "Free Response",
             "prompt": "What should you do?",
-            "toNode": "3"
+            "rubric": {
+                "id": "r1",
+                "prompt": "Hello AI agent",
+                "answerBuckets": [
+                    {
+                        "id": "a1",
+                        "classifier": "This is for an answer that's good",
+                        "toNode": "1"
+                    },
+                    {
+                        "id": "a2",
+                        "classifier": "This answer is bad",
+                        "toNode": "2"
+                    }
+                ]
+            }
         },
         {
             "type": "choice",

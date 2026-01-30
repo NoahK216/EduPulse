@@ -15,12 +15,23 @@ export const VideoNodeSchema = BaseNodeSchema.extend({
 });
 export type VideoNode = z.infer<typeof VideoNodeSchema>;
 
+const RubricSchema = z.object({
+  id: z.string().min(1),
+  prompt: z.string(),
+  answerBuckets: z.array(z.object({
+    id: z.string(),
+    classifier: z.string(),
+    toNode: z.string().optional(),
+  }))
+});
+export type Rubric = z.infer<typeof RubricSchema>;
+
 export const FreeResponseNodeSchema = BaseNodeSchema.extend({
   type: z.literal('free_response'),
   prompt: z.string(),
   placeholder: z.string().optional(),
-  rubricId: z.string().optional(),
-  // No "toNode" here, transitions will be stored in the rubric
+  rubric: RubricSchema,
+  // Optional toNode in case a free response is to be collected, but not evaluated
 });
 export type FreeResponseNode = z.infer<typeof FreeResponseNodeSchema>;
 

@@ -8,11 +8,9 @@ function ScenarioDemo() {
     const [currentNodeId, setCurrentNodeId] = useState<string>("");
     const [scenario, setScenario] = useState<Scenario | undefined>(undefined);
 
-
     const currentNode = () => {
         return scenario?.nodes.find(node => node.id === currentNodeId);
     }
-
 
     const initializeScenario = (s: Scenario) => {
         setScenario(s);
@@ -25,7 +23,7 @@ function ScenarioDemo() {
     useEffect(() => {
         const fetchScenario = async () => {
             try {
-                const parsedScenario = await loadScenario("./scenario.json");
+                const parsedScenario = await loadScenario("/scenarios/demo.json");
                 initializeScenario(parsedScenario);
             } catch (error) {
                 // TODO error handling
