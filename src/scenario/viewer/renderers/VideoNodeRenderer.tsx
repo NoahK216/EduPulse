@@ -1,5 +1,5 @@
 import type { NodeRendererProps } from "../scenarioTypes";
-import type { VideoNode } from "../nodeTypes";
+import type { VideoNode } from "../scenarioNodeSchemas";
 
 export function VideoNodeRenderer({ node, dispatch }: NodeRendererProps<VideoNode>) {
   return (

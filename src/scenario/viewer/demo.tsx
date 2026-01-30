@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NodeRenderer } from "./NodeRenderer";
-import type { VideoNode, FreeResponseNode, ChoiceNode, ScenarioNode } from "./nodeTypes";
+import type { VideoNode, FreeResponseNode, ChoiceNode, ScenarioNode } from "./scenarioNodeSchemas";
 import type { ScenarioState } from "./scenarioTypes";
 
 function ScenarioDemo() {

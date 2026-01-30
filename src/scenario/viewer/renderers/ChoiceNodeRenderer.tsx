@@ -1,5 +1,5 @@
 import type { NodeRendererProps } from "../scenarioTypes";
-import type { ChoiceNode } from "../nodeTypes";
+import type { ChoiceNode } from "../scenarioNodeSchemas";
 
 export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceNode>) {
   return (

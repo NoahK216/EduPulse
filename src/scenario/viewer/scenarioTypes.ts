@@ -1,4 +1,7 @@
-import type { ScenarioNode } from "./nodeTypes";
+import {z} from 'zod';
+
+import type {ScenarioNode} from './scenarioNodeSchemas';
+import {ScenarioNodeSchema} from './scenarioNodeSchemas';
 
 export type ScenarioState = {
   currentNodeId: string;
@@ -15,3 +18,22 @@ export type NodeRendererProps<N extends ScenarioNode = ScenarioNode> = {
   state: ScenarioState;
   dispatch: (event: ScenarioEvent) => void;
 };
+
+
+export const TransitionSchema = z.object({
+  from: z.string().min(1),
+  on: z.string().min(1),  // event type or outcome tag
+  to: z.string().min(1),
+  // optional: guards / conditions later
+});
+
+export const ScenarioSchema = z.object({
+  scenarioVersion: z.number().int().positive(),
+  id: z.string().min(1),
+  title: z.string().min(1),
+  startNodeId: z.string().min(1),
+  nodes: z.array(ScenarioNodeSchema).min(1),
+  transitions: z.array(TransitionSchema).default([]),
+});
+
+export type Scenario = z.infer<typeof ScenarioSchema>;

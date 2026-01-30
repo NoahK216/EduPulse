@@ -1,5 +1,5 @@
 import type { NodeRendererProps } from "../scenarioTypes";
-import type { FreeResponseNode } from "../nodeTypes";
+import type { FreeResponseNode } from "../scenarioNodeSchemas";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 
 export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<FreeResponseNode>) {
