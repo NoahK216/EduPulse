@@ -17,7 +17,7 @@ export type VideoNode = z.infer<typeof VideoNodeSchema>;
 
 const RubricSchema = z.object({
   id: z.string().min(1),
-  prompt: z.string(),
+  context: z.string(),
   answerBuckets: z.array(z.object({
     id: z.string(),
     classifier: z.string(),

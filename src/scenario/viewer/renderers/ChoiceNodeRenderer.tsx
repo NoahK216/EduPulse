@@ -9,7 +9,7 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
 
       <div>
         {node.choices.map((c) => (
-          <button key={c.id} onClick={() => dispatch({ type: "SELECT_CHOICE", choiceId: c.id })}>
+          <button key={c.id} onClick={() => dispatch({ type: "NEXT_NODE", nextId: c.toNode })}>
             {c.label}
           </button>
         ))}

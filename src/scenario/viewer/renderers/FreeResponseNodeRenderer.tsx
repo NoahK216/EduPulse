@@ -7,7 +7,10 @@ export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<F
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    dispatch({ type: "SUBMIT_FREE_RESPONSE", text: response });
+
+    // TODO this will eventually be calling LLM evaluation and passing the corresponding next node
+
+    dispatch({ type: "NEXT_NODE" });
   }
 
   const handleResponseUpdate = (event: ChangeEvent<HTMLInputElement>) => {

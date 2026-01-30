@@ -18,7 +18,7 @@
             "prompt": "What should you do?",
             "rubric": {
                 "id": "r1",
-                "prompt": "Hello AI agent",
+                "context": "Hello AI agent",
                 "answerBuckets": [
                     {
                         "id": "a1",

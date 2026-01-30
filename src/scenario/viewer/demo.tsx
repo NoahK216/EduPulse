@@ -41,15 +41,12 @@ function ScenarioDemo() {
 
     const dispatcher = (e: ScenarioEvent) => {
         console.log(e)
-        // TODO
         switch (e.type) {
-            case "VIDEO_ENDED":
-                break;
-            case "SUBMIT_FREE_RESPONSE":
-                // setCurrentNodeId((currentNode() as FreeResponseNode).toNode)
-                break;
-            case "SELECT_CHOICE":
-                setCurrentNodeId((currentNode() as ChoiceNode).choices.find(choice => choice.id === e.choiceId)?.toNode!);
+            case "NEXT_NODE":
+                if (!e.nextId)
+                    console.log("Scenario terminated");
+                else
+                    setCurrentNodeId(e.nextId);
                 break;
         }
     }
