@@ -19,13 +19,12 @@ export type NodeRendererProps<N extends ScenarioNode = ScenarioNode> = {
   dispatch: (event: ScenarioEvent) => void;
 };
 
-
-export const TransitionSchema = z.object({
-  from: z.string().min(1),
-  on: z.string().min(1),  // event type or outcome tag
-  to: z.string().min(1),
-  // optional: guards / conditions later
-});
+// export const TransitionSchema = z.object({
+//   from: z.string().min(1),
+//   on: z.string().min(1),  // event type or outcome tag
+//   to: z.string().min(1),
+//   // optional: guards / conditions later
+// });
 
 export const ScenarioSchema = z.object({
   scenarioVersion: z.number().int().positive(),
@@ -33,7 +32,6 @@ export const ScenarioSchema = z.object({
   title: z.string().min(1),
   startNodeId: z.string().min(1),
   nodes: z.array(ScenarioNodeSchema).min(1),
-  transitions: z.array(TransitionSchema).default([]),
 });
 
 export type Scenario = z.infer<typeof ScenarioSchema>;
