@@ -8,9 +8,10 @@ export type ScenarioState = {
   vars: Record<string, unknown>;
 };
 
-export type ScenarioEvent =|{
-  type: 'NEXT_NODE', nextId?: string
-}
+export type ScenarioEvent =
+  | { type: 'NEXT_NODE'; nextId?: string; choiceId?: string }
+  | { type: "SUBMIT_FREE_RESPONSE"; text: string }
+  | { type: "VIDEO_ENDED" };
 
 export type NodeRendererProps<N extends ScenarioNode = ScenarioNode> = {
   node: N;

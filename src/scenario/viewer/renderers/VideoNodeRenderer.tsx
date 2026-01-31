@@ -6,25 +6,28 @@ export function VideoNodeRenderer({ node, dispatch }: NodeRendererProps<VideoNod
   const playerRef = useRef<HTMLVideoElement>(null);
 
   // TODO eventually use a video player without scrub forward.
-
   useEffect(() => {
     const v = playerRef.current;
     if (!v) return;
-
-    v.onended = () => { dispatch({ type: "NEXT_NODE", nextId: node.toNode }) }
-  }, [dispatch, node.id]);
-
+    v.onended = () => dispatch({ type: "NEXT_NODE", nextId: node.toNode });
+  }, [dispatch, node.id, node.toNode]);
 
   return (
     <section>
       <h2>{node.title}</h2>
 
-      <video ref={playerRef} width="360" height="240" controls disablePictureInPicture preload="auto">
+      <video
+        ref={playerRef}
+        width="360"
+        height="240"
+        controls
+        disablePictureInPicture
+        preload="auto"
+      >
         <source src={node.src} />
         <track src={node.captionsSrc} kind="subtitles" srcLang="en" label="English" />
         Your browser does not support the video tag.
       </video>
-
     </section>
   );
 }

@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter } from "react-router";
-import { RouterProvider } from "react-router/dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import './index.css'
 import App from './App.tsx'
@@ -11,11 +10,9 @@ const router = createBrowserRouter([
   {
     path: "/",
     children: [
-      { index: true, Component: App },
-      {
-        path: "scenario",
-        Component: ScenarioDemo
-      }
+      { index: true, Component: ScenarioDemo },
+      { path: "scenario", Component: ScenarioDemo },
+      { path: "grader", Component: App },
     ]
   }
 ]);

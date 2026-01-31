@@ -15,7 +15,7 @@ export const VideoNodeSchema = BaseNodeSchema.extend({
 });
 export type VideoNode = z.infer<typeof VideoNodeSchema>;
 
-const RubricSchema = z.object({
+export const RubricSchema = z.object({
   id: z.string().min(1),
   context: z.string(),
   answerBuckets: z.array(z.object({

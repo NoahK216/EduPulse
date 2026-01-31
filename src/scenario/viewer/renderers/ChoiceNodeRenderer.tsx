@@ -18,7 +18,7 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
             className="mcq-option"
             onClick={() => {
               setSelectedId(choice.id);
-              dispatch({ type: "NEXT_NODE", choiceId: choice.id });
+              dispatch({ type: "NEXT_NODE", choiceId: choice.id, nextId: choice.toNode });
             }}
           >
             {String.fromCharCode(65 + index)}. {choice.label}
@@ -28,12 +28,9 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
 
       {selectedId && (
         <p style={{ marginTop: "10px" }}>
-          {selectedId === "good" ? "✓ Correct" : "✗ Wrong"}
+          {selectedId === "good" ? "✔ Correct" : "✖ Wrong"}
         </p>
       )}
     </section>
   );
 }
-
-
-
