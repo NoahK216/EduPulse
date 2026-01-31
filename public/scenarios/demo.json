@@ -44,17 +44,17 @@
                 "context": "Evaluate professor replies to a student requesting a grade change. Tone should be professional, fair, and constructive.",
                 "answerBuckets": [
                     {
-                        "id": "good",
+                        "id": "a1",
                         "classifier": "Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change.",
                         "toNode": "2"
                     },
                     {
-                        "id": "okay",
+                        "id": "a2",
                         "classifier": "Polite but thin: acknowledges request but lacks detail on criteria or next steps.",
                         "toNode": "2"
                     },
                     {
-                        "id": "bad",
+                        "id": "a3",
                         "classifier": "Defensive or dismissive; gives no rationale or next steps; unprofessional tone.",
                         "toNode": "2"
                     }
