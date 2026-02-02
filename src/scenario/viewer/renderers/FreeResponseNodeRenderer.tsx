@@ -1,17 +1,40 @@
+import { useState, type FormEvent } from "react";
 import type { NodeRendererProps } from "../scenarioTypes";
 import type { FreeResponseNode } from "../scenarioNodeSchemas";
-import { useState, type FormEvent } from "react";
+import { evaluateFreeResponse, type FreeResponseEvaluation } from "./FreeResponseGrader";
 import "./Scenario.css";
 
-
-export function FreeResponseNodeRenderer({ node, dispatch, state }: NodeRendererProps<FreeResponseNode>) {
+export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<FreeResponseNode>) {
   const [response, setResponse] = useState<string>("");
+  const [evaluation, setEvaluation] = useState<FreeResponseEvaluation | null>(null);
+  const [nodeState, setNodeState] = useState<'error' | 'responding' | 'evaluating' | 'feedback'>('responding');
+  const [evalError, setEvalError] = useState("");
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-
-    dispatch({ type: "SUBMIT_FREE_RESPONSE", text: response });
+  const evaluatedChoice = (evaluation: FreeResponseEvaluation) => {
+    return node.rubric.answerBuckets.find((bucket) => bucket.id === evaluation?.bucket_id)
   }
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setNodeState('evaluating');
+    setEvaluation(null);
+
+    const result = await evaluateFreeResponse(node, response);
+
+    if (result.ok) {
+      setEvaluation(result.evaluation);
+      console.log(evaluatedChoice(result.evaluation));
+
+      if (result.evaluation.feedback) {
+        setNodeState('feedback')
+      } else {
+        dispatch({ type: "NEXT_NODE", nextId: evaluatedChoice(result.evaluation)?.toNode })
+      }
+    } else {
+      setNodeState('error');
+      setEvalError(result.error);
+    }
+  };
 
   return (
     <section>
@@ -29,24 +52,30 @@ export function FreeResponseNodeRenderer({ node, dispatch, state }: NodeRenderer
           />
           <input className="fr-submit" type="submit" value="Submit" />
         </form>
-        <div className="fr-right">
-          <h3>Feedback</h3>
-          {(() => {
-            const grading = Boolean(state.vars.grading);
-            const grade = state.vars.grade as string | null;
-            const gradeError = state.vars.gradeError as string | null;
-
-            if (grading) return <p>Grading...</p>;
-            if (gradeError) return <p style={{ color: "red" }}>{gradeError}</p>;
-            if (grade)
-              return (
-                <pre style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>
-                  {grade}
-                </pre>
-              );
-            return <p>LLM response will appear here after submission.</p>;
-          })()}
-        </div>
+        {nodeState !== 'responding' &&
+          <div className="fr-right">
+            <h3>Feedback</h3>
+            {(() => {
+              switch (nodeState) {
+                case 'error':
+                  return <p style={{ color: "red" }}>{evalError}</p>;
+                case 'evaluating':
+                  return <p>Evaluating Response...</p>;
+                case 'feedback':
+                  return (
+                    <>
+                      <pre style={{ whiteSpace: "pre-wrap", marginTop: 4 }}>
+                        {evaluation?.feedback}
+                      </pre>
+                      <button
+                        onClick={() => { dispatch({ type: "NEXT_NODE", nextId: evaluatedChoice(evaluation!)?.toNode }) }}
+                      >Continue</button>
+                    </>
+                  )
+              }
+            })()}
+          </div>
+        }
       </div>
     </section>
   );

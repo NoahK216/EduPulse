@@ -9,9 +9,7 @@ export type ScenarioState = {
 };
 
 export type ScenarioEvent =
-  | { type: 'NEXT_NODE'; nextId?: string; choiceId?: string }
-  | { type: "SUBMIT_FREE_RESPONSE"; text: string }
-  | { type: "VIDEO_ENDED" };
+  | { type: 'NEXT_NODE'; nextId?: string; }
 
 export type NodeRendererProps<N extends ScenarioNode = ScenarioNode> = {
   node: N;

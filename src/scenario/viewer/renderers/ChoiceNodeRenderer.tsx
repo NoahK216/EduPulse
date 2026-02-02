@@ -18,7 +18,7 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
             className="mcq-option"
             onClick={() => {
               setSelectedId(choice.id);
-              dispatch({ type: "NEXT_NODE", choiceId: choice.id, nextId: choice.toNode });
+              dispatch({ type: "NEXT_NODE", nextId: choice.toNode });
             }}
           >
             {String.fromCharCode(65 + index)}. {choice.label}

@@ -41,25 +41,43 @@
             "prompt": "A student emails to argue for points back on an assignment. Draft your reply as the professor.",
             "rubric": {
                 "id": "r1",
-                "context": "Evaluate professor replies to a student requesting a grade change. Tone should be professional, fair, and constructive.",
+                "context": "Evaluate professor replies to a student requesting a grade change. Tone should be professional, fair, and constructive. Don't be too stingy, if a response is mostly correct (aka would fit into a positive bucket), put it in that bucket and highlight what could be changed. We aren't looking for perfection, just good grouping.",
                 "answerBuckets": [
                     {
                         "id": "a1",
-                        "classifier": "Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change.",
-                        "toNode": "2"
+                        "classifier": "Perfect. Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change.",
+                        "toNode": "4"
+                    },
+                    {
+                        "id": "a4",
+                        "classifier": "Good. Clear, professional, empathetic. Cites what is specifically wrong and tells the student what will happen moving forward.",
+                        "toNode": "4"
                     },
                     {
                         "id": "a2",
-                        "classifier": "Polite but thin: acknowledges request but lacks detail on criteria or next steps.",
+                        "classifier": "Middling. Polite but thin: acknowledges request but lacks detail   ",
                         "toNode": "2"
                     },
                     {
                         "id": "a3",
-                        "classifier": "Defensive or dismissive; gives no rationale or next steps; unprofessional tone.",
+                        "classifier": "Bad. Defensive or dismissive; gives no rationale or next steps; unprofessional tone.",
                         "toNode": "2"
                     }
                 ]
             }
+        },
+        {
+            "type": "choice",
+            "id": "4",
+            "title": "You've completed this scenario",
+            "prompt": "",
+            "choices": [
+                {
+                    "id": "c1",
+                    "label": "Exit",
+                    "toNode": ""
+                }
+            ]
         }
     ]
 }

@@ -5,9 +5,9 @@
 }
 
 .fr-textarea {
+  resize: none;
   padding: 12px;
   border-radius: 10px;
-  width: 250px;
 }
 
 .fr-layout {
