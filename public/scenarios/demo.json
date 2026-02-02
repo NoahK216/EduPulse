@@ -46,12 +46,12 @@
                     {
                         "id": "a1",
                         "classifier": "Perfect. Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change.",
-                        "toNode": "4"
+                        "toNode": ""
                     },
                     {
                         "id": "a4",
                         "classifier": "Good. Clear, professional, empathetic. Cites what is specifically wrong and tells the student what will happen moving forward.",
-                        "toNode": "4"
+                        "toNode": ""
                     },
                     {
                         "id": "a2",
@@ -65,19 +65,6 @@
                     }
                 ]
             }
-        },
-        {
-            "type": "choice",
-            "id": "4",
-            "title": "You've completed this scenario",
-            "prompt": "",
-            "choices": [
-                {
-                    "id": "c1",
-                    "label": "Exit",
-                    "toNode": ""
-                }
-            ]
         }
     ]
 }

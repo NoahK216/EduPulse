@@ -3,17 +3,14 @@ import {z} from 'zod';
 import type {ScenarioNode} from './scenarioNodeSchemas';
 import {ScenarioNodeSchema} from './scenarioNodeSchemas';
 
-export type ScenarioState = {
-  currentNodeId: string;
-  vars: Record<string, unknown>;
-};
+export type ScenarioVars = Record<string, unknown>;
 
 export type ScenarioEvent =
   | { type: 'NEXT_NODE'; nextId?: string; }
 
 export type NodeRendererProps<N extends ScenarioNode = ScenarioNode> = {
   node: N;
-  state: ScenarioState;
+  vars: ScenarioVars;
   dispatch: (event: ScenarioEvent) => void;
 };
 
