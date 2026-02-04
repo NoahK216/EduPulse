@@ -6,7 +6,7 @@ This repo is a small Vite + React demo that drives a local Express API to grade 
 - Requirements: Node 20+, `OPENAI_API_KEY` in your env. Optional: `OPENAI_MODEL` (default `gpt-4o-mini`).
 - Install: `npm install`
 - Start backend: `npm run dev:server` (Express on http://localhost:8787)
-- Start frontend: `npm run dev` (Vite on http://localhost:5173; proxy forwards `/grade` to the backend)
+- Start frontend: `npm run dev` (Vite on http://localhost:5173; proxy forwards `/api/grade` to the backend)
 
 ## Where things live
 - Frontend entry + routing: `src/main.tsx` (routes `/` and `/scenario` → scenario demo, `/grader` → simple landing).
@@ -15,7 +15,7 @@ This repo is a small Vite + React demo that drives a local Express API to grade 
   - Built-in nodes: `renderers/VideoNodeRenderer.tsx`, `renderers/ChoiceNodeRenderer.tsx`, `renderers/FreeResponseNodeRenderer.tsx`.  
   - Types/schemas: `scenarioNodeSchemas.ts`, `scenarioTypes.ts`.
 - Scenario content (what the user sees): JSON files under `public/scenarios/` (demo is `public/scenarios/demo.json`). Video and assets in `public/`.
-- Backend API: `src/server/index.ts` (Express `POST /grade` endpoint).
+- Backend API: `src/server/index.ts` (Express `POST /api/grade` endpoint).
 - Grading + prompts: `src/server/grader.ts` (system prompt, user prompt builder, JSON schema, OpenAI call).
 - Shared types: `src/types/grader.ts`.
 - Vite proxy config: `vite.config.ts`.
@@ -33,7 +33,7 @@ This repo is a small Vite + React demo that drives a local Express API to grade 
 - Backend tweaks (logging, validation, retries): `src/server/index.ts` and `src/server/grader.ts`.
 
 ## Quick API reference
-- Endpoint: `POST /grade`
+- Endpoint: `POST /api/grade`
 - Body: `{ question_prompt: string, user_response_text: string, rubric: { context: string, answerBuckets: [{ id, classifier, toNode? }], ... } }`
 - Response: `{ bucket_id: string, feedback: string }` (feedback is concise text from the model).
 

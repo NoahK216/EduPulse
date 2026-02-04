@@ -15,7 +15,7 @@ export const evaluateFreeResponse = async(
   const rubric = node.rubric;
 
   try {
-    const res = await fetch('/grade', {
+    const res = await fetch('/api/grade', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
