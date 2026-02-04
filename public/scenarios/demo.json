@@ -8,7 +8,7 @@
             "type": "video",
             "id": "1",
             "title": "Intro Video",
-            "src": "depression.mp4",
+            "src": "/depression.mp4",
             "toNode": "2"
         },
         {

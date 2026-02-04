@@ -3,8 +3,9 @@ import { NodeRenderer } from "./NodeRenderer";
 import type { Scenario, ScenarioEvent, ScenarioVars } from "./scenarioTypes";
 import { loadScenario } from "./loadScenario";
 import type { ScenarioNode } from "../scenarioNodeSchemas";
+import "./Scenario.css";
 
-const ScenarioViewer = (scenarioUrl: string) => {
+const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
     const [scenario, setScenario] = useState<Scenario | undefined>();
     const [currentNode, setCurrentNode] = useState<ScenarioNode | undefined>();
     const [scenarioState, setScenarioState] = useState<'loading' | 'doing' | 'finished' | 'error'>('loading')
@@ -29,7 +30,7 @@ const ScenarioViewer = (scenarioUrl: string) => {
                 setScenarioState('error');
             })
             .finally(() => setScenarioState('doing'));
-    }, []);
+    }, [scenarioUrl]);
 
     const dispatcher = async (e: ScenarioEvent) => {
         console.log(e);

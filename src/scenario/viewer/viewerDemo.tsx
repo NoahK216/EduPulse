@@ -2,7 +2,9 @@ import ScenarioViewer from "./ScenarioViewer";
 
 function ScenarioViewerDemo() {
   return (
-    ScenarioViewer("/scenarios/demo.json")
+    <div className="view-demo" style={{ display: 'flex', width: '100vw', justifyContent: 'center' }}>
+      <ScenarioViewer scenarioUrl="/scenarios/demo.json" />
+    </div>
   );
 }
 
