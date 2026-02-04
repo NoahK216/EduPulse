@@ -1,4 +1,4 @@
-import type {FreeResponseNode} from '../scenarioNodeSchemas';
+import type {FreeResponseNode} from '../../scenarioNodeSchemas';
 
 export type FreeResponseEvaluation = {
   bucket_id: string,

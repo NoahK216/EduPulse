@@ -1,5 +1,5 @@
 import type { NodeRendererProps } from "../scenarioTypes";
-import type { ChoiceNode } from "../scenarioNodeSchemas";
+import type { ChoiceNode } from "../../scenarioNodeSchemas";
 import { useState } from "react";
 import './Scenario.css';
 
@@ -34,3 +34,5 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
     </section>
   );
 }
+
+// TODO Should boxes/whatever also be defined here? It would make sense as far as maintainability goes.

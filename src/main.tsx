@@ -4,15 +4,22 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import './index.css'
 import App from './App.tsx'
-import ScenarioDemo from './scenario/viewer/demo.tsx';
+import ScenarioViewerDemo from './scenario/viewer/viewerDemo.tsx';
+import ScenarioCreatorDemo from './scenario/creator/creatorDemo.tsx';
 
 const router = createBrowserRouter([
   {
     path: "/",
     children: [
-      { index: true, Component: ScenarioDemo },
-      { path: "scenario", Component: ScenarioDemo },
-      { path: "grader", Component: App },
+      { index: true, Component: App },
+      {
+        path: "scenario",
+        children: [
+          { index: true, Component: ScenarioViewerDemo },
+          { path: "viewer", Component: ScenarioViewerDemo },
+          { path: "creator", Component: ScenarioCreatorDemo },
+        ]
+      },
     ]
   }
 ]);

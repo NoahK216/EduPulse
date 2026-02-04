@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
-import { z } from 'zod';
-import { RubricSchema } from '../scenario/viewer/scenarioNodeSchemas.js';
+import {z} from 'zod';
+
+import {RubricSchema} from '../scenario/scenarioNodeSchemas.js';
 
 // ---- Shared schemas/types (single source of truth) ----
 export const rubricSchema = RubricSchema;

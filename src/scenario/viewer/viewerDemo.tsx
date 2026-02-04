@@ -1,9 +1,9 @@
 import ScenarioViewer from "./ScenarioViewer";
 
-function ScenarioDemo() {
+function ScenarioViewerDemo() {
   return (
     ScenarioViewer("/scenarios/demo.json")
   );
 }
 
-export default ScenarioDemo;
+export default ScenarioViewerDemo;

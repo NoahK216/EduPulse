@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NodeRenderer } from "./NodeRenderer";
 import type { Scenario, ScenarioEvent, ScenarioVars } from "./scenarioTypes";
 import { loadScenario } from "./loadScenario";
-import type { ScenarioNode } from "./scenarioNodeSchemas";
+import type { ScenarioNode } from "../scenarioNodeSchemas";
 
 const ScenarioViewer = (scenarioUrl: string) => {
     const [scenario, setScenario] = useState<Scenario | undefined>();
