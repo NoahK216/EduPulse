@@ -1,16 +1,12 @@
 import type { GenericNode } from "../nodes";
 import type { NodeEdge } from "../scenarioSchemas";
 
-// TODO ScenarioVars are on the chopping block, remove unless a reason for their existence becomes apparent
-export type ScenarioVars = Record<string, unknown>;
-
 export type ScenarioEvent =
   | { type: 'NEXT_NODE'; nextId?: string; }
 
 export type NodeSceneProps<N extends GenericNode = GenericNode> = {
   node: N;
   edges: NodeEdge[];
-  vars: ScenarioVars;
   dispatch: (event: ScenarioEvent) => void;
 };
 

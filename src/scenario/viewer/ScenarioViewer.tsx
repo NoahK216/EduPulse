@@ -4,7 +4,7 @@ import type { Scenario } from "../scenarioSchemas";
 import "./Scenario.css";
 import { loadEditorScenario } from "../creator/EditorScenarioSchemas";
 import type { GenericNode } from "../nodes";
-import type { ScenarioEvent, ScenarioVars } from "./viewer";
+import type { ScenarioEvent } from "./viewer";
 
 const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
     const [scenario, setScenario] = useState<Scenario | undefined>();
@@ -46,14 +46,11 @@ const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
         }
     };
 
-    // TODO Passing raw mutable vars is rarely a good idea in React
-    const scenarioVars: ScenarioVars = {}
-
     switch (scenarioState) {
         case 'loading':
             return <p>Loading scenario...</p>;
         case 'doing':
-            return <SceneRenderer node={currentNode!} edges={scenario!.edges} vars={scenarioVars} dispatch={dispatcher} />;
+            return <SceneRenderer node={currentNode!} edges={scenario!.edges} dispatch={dispatcher} />;
         case 'finished':
             return <h1>Scenario complete!</h1>;
         case 'error':
