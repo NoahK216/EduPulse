@@ -1,0 +1,76 @@
+{
+    "meta": {
+        "editorVersion": 1
+    },
+    "scenario": {
+        "scenarioVersion": 1,
+        "id": "0",
+        "title": "Grade Appeal Demo",
+        "startNodeId": "1",
+        "nodes": [
+            {
+                "type": "video",
+                "id": "1",
+                "title": "Intro Video",
+                "src": "/depression.mp4",
+                "toNode": "2"
+            },
+            {
+                "type": "choice",
+                "id": "2",
+                "title": "Which follow-up?",
+                "prompt": "What do you want to do next?",
+                "choices": [
+                    {
+                        "id": "c1",
+                        "label": "Draft a reply to the student (free response)",
+                        "toNode": "3"
+                    },
+                    {
+                        "id": "c2",
+                        "label": "Rewatch the intro video",
+                        "toNode": "1"
+                    },
+                    {
+                        "id": "c3",
+                        "label": "End here",
+                        "toNode": ""
+                    }
+                ]
+            },
+            {
+                "type": "free_response",
+                "id": "3",
+                "title": "Grade Appeal Response",
+                "prompt": "A student emails to argue for points back on an assignment. Draft your reply as the professor.",
+                "rubric": {
+                    "id": "r1",
+                    "context": "Evaluate professor replies to a student requesting a grade change. Tone should be professional, fair, and constructive. Don't be too stingy, if a response is mostly correct (aka would fit into a positive bucket), put it in that bucket and highlight what could be changed. We aren't looking for perfection, just good grouping.",
+                    "answerBuckets": [
+                        {
+                            "id": "a1",
+                            "classifier": "Perfect. Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change.",
+                            "toNode": ""
+                        },
+                        {
+                            "id": "a4",
+                            "classifier": "Good. Clear, professional, empathetic. Cites what is specifically wrong and tells the student what will happen moving forward.",
+                            "toNode": ""
+                        },
+                        {
+                            "id": "a2",
+                            "classifier": "Middling. Polite but thin: acknowledges request but lacks detail   ",
+                            "toNode": "2"
+                        },
+                        {
+                            "id": "a3",
+                            "classifier": "Bad. Defensive or dismissive; gives no rationale or next steps; unprofessional tone.",
+                            "toNode": "2"
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+    "layout": {}
+}

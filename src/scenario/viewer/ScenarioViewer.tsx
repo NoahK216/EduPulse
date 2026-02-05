@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NodeRenderer } from "./NodeRenderer";
-import type { Scenario, ScenarioEvent, ScenarioVars } from "./scenarioTypes";
+import type { Scenario, ScenarioEvent, ScenarioVars } from "../scenarioTypes";
 import { loadScenario } from "./loadScenario";
 import type { ScenarioNode } from "../scenarioNodeSchemas";
 import "./Scenario.css";

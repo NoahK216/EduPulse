@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import type { NodeType, ScenarioNode } from "../scenarioNodeSchemas";
-import type { NodeRendererProps } from "./scenarioTypes";
+import type { NodeRendererProps } from "../scenarioTypes";
 
 // Add new node renderers here
 import { VideoNodeRenderer } from "./renderers/VideoNodeRenderer";

@@ -1,0 +1,22 @@
+.creator-demo {
+    color: #213547;
+    background-color: #ffffff;
+
+
+    a:hover {
+        color: #747bff;
+    }
+
+    button {
+        background-color: #f9f9f9;
+    }
+}
+.custom-node {
+    padding: 10px;
+    border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));
+    font-size: 12px;
+    color: var(--xy-node-color, var(--xy-node-color-default));
+    text-align: center;
+    border: var(--xy-node-border, var(--xy-node-border-default));
+    background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
+}

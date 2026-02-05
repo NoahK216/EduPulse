@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
     ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge,
     type Node,
@@ -13,12 +13,9 @@ import {
     Controls,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { VideoNode } from './nodes/VideoNode';
+import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
 
-const initialNodes: Node[] = [
-    { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-    { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
-];
-const initialEdges: Edge[] = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
 
 const fitViewOptions: FitViewOptions = {
     padding: 0.2,
@@ -28,13 +25,43 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
     animated: true,
 };
 
-const onNodeDrag: OnNodeDrag = (_, node) => {
-    // console.log('drag event', node.data);
+
+const nodeTypes = {
+    video: VideoNode,
 };
 
-export default function App() {
-    const [nodes, setNodes] = useState<Node[]>(initialNodes);
-    const [edges, setEdges] = useState<Edge[]>(initialEdges);
+const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
+    const [editorScenario, setEditorScenario] = useState<EditorScenario | undefined>();
+    const [scenarioState, setScenarioState] = useState<'loading' | 'creating' | 'error'>(scenarioUrl ? 'loading' : 'creating')
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const [nodes, setNodes] = useState<Node[]>([]);
+    const [edges, setEdges] = useState<Edge[]>([]);
+
+    const initializeEditor = (e: EditorScenario) => {
+        setEditorScenario(e);
+        const { nodes, edges } = flowGraphFromEditorScenario(e);
+        setNodes(nodes);
+        setEdges(edges);
+        console.log(nodes, edges)
+    }
+
+    useEffect(() => {
+        if (scenarioUrl) {
+            loadEditorScenario(scenarioUrl)
+                .then((parsed) => {
+                    initializeEditor(parsed);
+                })
+                .catch((error) => {
+                    const message = error instanceof Error ? error.message : "Failed to load scenario";
+                    setErrorMessage(message);
+                    setScenarioState('error');
+                })
+        }
+    }, [scenarioUrl]);
+
+    // const exportStateAsJSON = () => {
+    // }
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
@@ -48,12 +75,16 @@ export default function App() {
         (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
         [],
     );
+    const onNodeDrag: OnNodeDrag = (_, node) => {
+        // console.log('drag event', node.data);
+    };
 
     return (
         <div style={{ width: '100vw', height: '100vh' }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
+                nodeTypes={nodeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
@@ -68,3 +99,5 @@ export default function App() {
         </div>
     );
 }
+
+export default ScenarioCreator;

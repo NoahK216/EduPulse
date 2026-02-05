@@ -1,4 +1,4 @@
-import type { NodeRendererProps } from "../scenarioTypes";
+import type { NodeRendererProps } from "../../scenarioTypes";
 import type { ChoiceNode } from "../../scenarioNodeSchemas";
 import { useState } from "react";
 

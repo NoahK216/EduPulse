@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { NodeRendererProps } from "../scenarioTypes";
+import type { NodeRendererProps } from "../../scenarioTypes";
 import type { FreeResponseNode } from "../../scenarioNodeSchemas";
 import { evaluateFreeResponse, type FreeResponseEvaluation } from "./FreeResponseGrader";
 

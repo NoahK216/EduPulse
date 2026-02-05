@@ -1,7 +1,7 @@
 import {z} from 'zod';
 
-import type {ScenarioNode} from '../scenarioNodeSchemas';
-import {ScenarioNodeSchema} from '../scenarioNodeSchemas';
+import type {ScenarioNode} from './scenarioNodeSchemas';
+import {ScenarioNodeSchema} from './scenarioNodeSchemas';
 
 export type ScenarioVars = Record<string, unknown>;
 

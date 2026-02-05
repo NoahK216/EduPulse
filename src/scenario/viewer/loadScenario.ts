@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import { ScenarioSchema, type Scenario } from "./scenarioTypes";
+import {ScenarioSchema, type Scenario} from '../scenarioTypes';
 
 export async function loadScenario(url: string): Promise<Scenario> {
   const res = await fetch(url);

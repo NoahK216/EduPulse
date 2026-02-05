@@ -1,4 +1,4 @@
-import type { NodeRendererProps } from "../scenarioTypes";
+import type { NodeRendererProps } from "../../scenarioTypes";
 import type { VideoNode } from "../../scenarioNodeSchemas";
 import { useEffect, useRef } from "react";
 
