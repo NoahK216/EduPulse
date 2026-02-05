@@ -7,7 +7,7 @@ export const NodeEdgeSchema = z.object({
   id: z.string(), 
   from: z.object({
     nodeId: z.string(),
-    // TODO we'll want some validation on these ports, they'll be things like CHOICE:c1 or RESPONSE_CATEGORY:r1 
+    // TODO we'll want some validation on these ports, they'll each start with an indicator char like c, a, etc
     port: z.string().optional()
   }),
   to: z.object({

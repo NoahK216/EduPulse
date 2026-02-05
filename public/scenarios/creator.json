@@ -81,7 +81,7 @@
                 "id": "e2",
                 "from": {
                     "nodeId": "2",
-                    "port": "CHOICE:c1"
+                    "port": "c1"
                 },
                 "to": {
                     "nodeId": "3"
@@ -91,7 +91,7 @@
                 "id": "e3",
                 "from": {
                     "nodeId": "2",
-                    "port": "CHOICE:c2"
+                    "port": "c2"
                 },
                 "to": {
                     "nodeId": "1"
@@ -101,21 +101,21 @@
                 "id": "e4",
                 "from": {
                     "nodeId": "2",
-                    "port": "CHOICE:c3"
+                    "port": "c3"
                 }
             },
             {
                 "id": "e5",
                 "from": {
                     "nodeId": "3",
-                    "port": "EVALUATION:a1"
+                    "port": "a1"
                 }
             },
             {
                 "id": "e6",
                 "from": {
                     "nodeId": "3",
-                    "port": "EVALUATION:a2"
+                    "port": "a2"
                 },
                 "to": {
                     "nodeId": "2"
@@ -125,7 +125,7 @@
                 "id": "e7",
                 "from": {
                     "nodeId": "3",
-                    "port": "EVALUATION:a3"
+                    "port": "a3"
                 },
                 "to": {
                     "nodeId": "2"
@@ -135,7 +135,7 @@
                 "id": "e8",
                 "from": {
                     "nodeId": "3",
-                    "port": "EVALUATION:a4"
+                    "port": "a4"
                 }
             }
         ]

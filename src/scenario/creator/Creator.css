@@ -12,11 +12,40 @@
     }
 }
 .custom-node {
-    padding: 10px;
+    --creator-node-padding: 10px;
+    padding: var(--creator-node-padding);
     border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));
     font-size: 12px;
     color: var(--xy-node-color, var(--xy-node-color-default));
     text-align: center;
     border: var(--xy-node-border, var(--xy-node-border-default));
     background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
+}
+
+.custom-node .mcq-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.creator-node-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-right: var(--creator-node-padding);
+    margin-right: calc(var(--creator-node-padding) * -1);
+}
+
+.creator-node-row .react-flow__handle {
+    top: 50%;
+}
+
+.creator-bucket {
+    flex: 1;
+    text-align: left;
+    border-radius: 5px;
+    border: 1px solid #000;
+    padding: 4px 6px;
 }

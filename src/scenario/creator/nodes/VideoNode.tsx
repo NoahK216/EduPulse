@@ -26,6 +26,7 @@ export function VideoNode(props: NodeProps<VideoNodeFlow>) {
 
   return (
     <div className="custom-node">
+      <Handle type="target" position={Position.Left} />
       <p>{nodeData.title}</p>
 
       {/* TODO Eventually store video uploads */}
@@ -43,7 +44,6 @@ export function VideoNode(props: NodeProps<VideoNodeFlow>) {
         Your browser does not support the video tag.
       </video>
 
-      <Handle type="target" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
     </div>
   );

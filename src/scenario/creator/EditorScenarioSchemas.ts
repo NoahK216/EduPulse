@@ -55,17 +55,10 @@ export function flowGraphFromEditorScenario(editorScenario: EditorScenario):
       draggable: layout?.locked ? false : undefined,
     };
 
-    // TODO This should be inferred with some registry like ScenarioNodeSchema
-    switch (node.type) {
-      case 'video':
-        return {
-          ...baseNode,
-          type: 'video',
-          data: {initialNode: node},
-        };
-      default:
-        return baseNode;
-    }
+    return {
+      ...baseNode,
+      type: node.type,
+    };
   });
 
   const edges: Edge[] =
@@ -73,6 +66,7 @@ export function flowGraphFromEditorScenario(editorScenario: EditorScenario):
           .map((edge) => ({
                  id: edge.id,
                  source: edge.from.nodeId,
+                 sourceHandle: edge.from.port,
                  target: edge.to!.nodeId,
                  ...(edge.from.port ? {label: edge.from.port} : {}),
                }));

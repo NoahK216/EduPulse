@@ -6,10 +6,6 @@ import { nextNodeId } from "../findEdge";
 export function ChoiceNodeRenderer({ node, edges, dispatch }: NodeRendererProps<ChoiceNode>) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const nextNodeFromChoice = (choiceId: string) => {
-    return nextNodeId(node, edges, "CHOICE:" + choiceId)
-  }
-
   return (
     <section>
       <h2>{node.title}</h2>
@@ -22,7 +18,7 @@ export function ChoiceNodeRenderer({ node, edges, dispatch }: NodeRendererProps<
             className="mcq-option"
             onClick={() => {
               setSelectedId(choice.id);
-              dispatch({ type: "NEXT_NODE", nextId: nextNodeFromChoice(choice.id) });
+              dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges, choice.id) });
             }}
           >
             {String.fromCharCode(65 + index)}. {choice.label}

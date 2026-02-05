@@ -14,10 +14,6 @@ export function FreeResponseNodeRenderer({ node, edges, dispatch }: NodeRenderer
     return node.rubric.answerBuckets.find((bucket) => bucket.id === evaluation?.bucket_id)
   }
 
-  const nextNodeFromEvaluation = (evaluation: FreeResponseEvaluation) => {
-    return nextNodeId(node, edges, "EVALUATION:" + evaluation.bucket_id)
-  }
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setNodeState('evaluating');
@@ -32,7 +28,7 @@ export function FreeResponseNodeRenderer({ node, edges, dispatch }: NodeRenderer
       if (result.evaluation.feedback) {
         setNodeState('feedback')
       } else {
-        dispatch({ type: "NEXT_NODE", nextId: nextNodeFromEvaluation(result.evaluation) })
+        dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges, result.evaluation.bucket_id) })
       }
     } else {
       setNodeState('error');
@@ -72,7 +68,7 @@ export function FreeResponseNodeRenderer({ node, edges, dispatch }: NodeRenderer
                         {evaluation?.feedback}
                       </pre>
                       <button
-                        onClick={() => { dispatch({ type: "NEXT_NODE", nextId: nextNodeFromEvaluation(evaluation!) }) }}
+                        onClick={() => { dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges, evaluation!.bucket_id) }) }}
                       >Continue</button>
                     </>
                   )

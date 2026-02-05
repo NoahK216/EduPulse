@@ -15,6 +15,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { VideoNode } from './nodes/VideoNode';
 import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
+import { ChoiceNode } from './nodes/ChoiceNode';
+import { FreeResponseNode } from './nodes/FreeResponseNode';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -28,6 +30,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 
 const nodeTypes = {
     video: VideoNode,
+    choice: ChoiceNode,
+    free_response: FreeResponseNode,
 };
 
 const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
