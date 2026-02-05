@@ -1,6 +1,6 @@
 import {z} from 'zod';
 
-import {ScenarioSchema} from '../scenarioTypes';
+import {ScenarioSchema} from '../scenarioSchemas';
 
 import type {Edge, Node} from '@xyflow/react';
 
@@ -26,6 +26,8 @@ export async function loadEditorScenario(url: string): Promise<EditorScenario> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load scenario: ${res.status}`);
   const data = await res.json();
+
+  console.log(EditorScenarioSchema.shape)
 
   const parsed = EditorScenarioSchema.safeParse(data);
   if (!parsed.success) {

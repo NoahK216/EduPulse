@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { NodeRenderer } from "./NodeRenderer";
-import type { Scenario, ScenarioEvent, ScenarioVars } from "../scenarioTypes";
-import type { ScenarioNode } from "../scenarioNodeSchemas";
+import { SceneRenderer } from "./SceneRenderer";
+import type { Scenario } from "../scenarioSchemas";
 import "./Scenario.css";
 import { loadEditorScenario } from "../creator/EditorScenarioSchemas";
+import type { GenericNode } from "../nodes";
+import type { ScenarioEvent, ScenarioVars } from "./viewer";
 
 const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
     const [scenario, setScenario] = useState<Scenario | undefined>();
-    const [currentNode, setCurrentNode] = useState<ScenarioNode | undefined>();
+    const [currentNode, setCurrentNode] = useState<GenericNode | undefined>();
     const [scenarioState, setScenarioState] = useState<'loading' | 'doing' | 'finished' | 'error'>('loading')
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
         case 'loading':
             return <p>Loading scenario...</p>;
         case 'doing':
-            return <NodeRenderer node={currentNode!} edges={scenario!.edges} vars={scenarioVars} dispatch={dispatcher} />;
+            return <SceneRenderer node={currentNode!} edges={scenario!.edges} vars={scenarioVars} dispatch={dispatcher} />;
         case 'finished':
             return <h1>Scenario complete!</h1>;
         case 'error':

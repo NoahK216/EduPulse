@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from "react";
-import type { NodeRendererProps } from "../../scenarioTypes";
-import type { FreeResponseNode } from "../../scenarioNodeSchemas";
+import { nextNodeId, type NodeSceneProps } from "../viewer";
+import type { FreeResponseNode } from "../../nodeSchemas";
 import { evaluateFreeResponse, type FreeResponseEvaluation } from "./FreeResponseGrader";
-import { nextNodeId } from "../findEdge";
 
-export function FreeResponseNodeRenderer({ node, edges, dispatch }: NodeRendererProps<FreeResponseNode>) {
+export function FreeResponseScene({ node, edges, dispatch }: NodeSceneProps<FreeResponseNode>) {
   const [response, setResponse] = useState<string>("");
   const [evaluation, setEvaluation] = useState<FreeResponseEvaluation | null>(null);
   const [nodeState, setNodeState] = useState<'error' | 'responding' | 'evaluating' | 'feedback'>('responding');

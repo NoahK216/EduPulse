@@ -1,11 +1,7 @@
-import type { NodeRendererProps } from "../../scenarioTypes";
-import type { ChoiceNode } from "../../scenarioNodeSchemas";
-import { useState } from "react";
-import { nextNodeId } from "../findEdge";
+import type { ChoiceNode } from "../../nodeSchemas";
+import { nextNodeId, type NodeSceneProps } from "../viewer";
 
-export function ChoiceNodeRenderer({ node, edges, dispatch }: NodeRendererProps<ChoiceNode>) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
+export function ChoiceScene({ node, edges, dispatch }: NodeSceneProps<ChoiceNode>) {
   return (
     <section>
       <h2>{node.title}</h2>
@@ -17,7 +13,6 @@ export function ChoiceNodeRenderer({ node, edges, dispatch }: NodeRendererProps<
             key={choice.id}
             className="mcq-option"
             onClick={() => {
-              setSelectedId(choice.id);
               dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges, choice.id) });
             }}
           >

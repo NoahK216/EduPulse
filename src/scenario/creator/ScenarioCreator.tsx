@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
+import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
+import { cards } from '../nodes';
 import {
     ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge,
     type Node,
@@ -13,10 +15,6 @@ import {
     Controls,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { VideoNode } from './nodes/VideoNode';
-import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
-import { ChoiceNode } from './nodes/ChoiceNode';
-import { FreeResponseNode } from './nodes/FreeResponseNode';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -25,13 +23,6 @@ const fitViewOptions: FitViewOptions = {
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
     animated: true,
-};
-
-
-const nodeTypes = {
-    video: VideoNode,
-    choice: ChoiceNode,
-    free_response: FreeResponseNode,
 };
 
 const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
@@ -79,20 +70,16 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
         [],
     );
-    const onNodeDrag: OnNodeDrag = (_, node) => {
-        // console.log('drag event', node.data);
-    };
 
     return (
         <div style={{ width: '100vw', height: '100vh' }}>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                nodeTypes={nodeTypes}
+                nodeTypes={cards}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                onNodeDrag={onNodeDrag}
                 fitView
                 fitViewOptions={fitViewOptions}
                 defaultEdgeOptions={defaultEdgeOptions}

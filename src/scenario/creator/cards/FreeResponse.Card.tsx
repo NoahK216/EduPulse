@@ -1,4 +1,4 @@
-import type { FreeResponseNode } from "../../scenarioNodeSchemas";
+import type { FreeResponseNode } from "../../nodeSchemas";
 import { useState } from "react";
 import {
   Handle,
@@ -13,7 +13,7 @@ export type FreeResponseNodeFlow = Node<
   }
   >;
 
-export function FreeResponseNode(props: NodeProps<FreeResponseNodeFlow>) {
+export function FreeResponseCard(props: NodeProps<FreeResponseNodeFlow>) {
   const [nodeData, setNodeData] = useState<FreeResponseNode>(props.data.initialNode);
 
 

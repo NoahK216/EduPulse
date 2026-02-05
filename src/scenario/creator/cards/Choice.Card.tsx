@@ -1,4 +1,4 @@
-import type { ChoiceNode } from "../../scenarioNodeSchemas";
+import type { ChoiceNode } from "../../nodeSchemas";
 import { useState } from "react";
 import {
   Handle,
@@ -13,7 +13,7 @@ export type ChoiceNodeFlow = Node<
   }
 >;
 
-export function ChoiceNode(props: NodeProps<ChoiceNodeFlow>) {
+export function ChoiceCard(props: NodeProps<ChoiceNodeFlow>) {
   const [nodeData, setNodeData] = useState<ChoiceNode>(props.data.initialNode);
 
   return (

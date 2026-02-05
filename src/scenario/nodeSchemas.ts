@@ -36,11 +36,4 @@ export const ChoiceNodeSchema = BaseNodeSchema.extend({
 });
 export type ChoiceNode = z.infer<typeof ChoiceNodeSchema>;
 
-export const ScenarioNodeSchema = z.discriminatedUnion('type', [
-  VideoNodeSchema,
-  FreeResponseNodeSchema,
-  ChoiceNodeSchema,
-]);
 
-export type ScenarioNode = z.infer<typeof ScenarioNodeSchema>;
-export type NodeType = ScenarioNode['type'];

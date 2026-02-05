@@ -1,4 +1,4 @@
-import type { VideoNode } from "../../scenarioNodeSchemas";
+import type { VideoNode } from "../../nodeSchemas";
 import { useState } from "react";
 import {
   Handle,
@@ -21,7 +21,7 @@ export type VideoNodeFlow = Node<
 
 // TODO We'll want a full screen node editor modal
 
-export function VideoNode(props: NodeProps<VideoNodeFlow>) {
+export function VideoCard(props: NodeProps<VideoNodeFlow>) {
   const [nodeData, setNodeData] = useState<VideoNode>(props.data.initialNode);
 
   return (

@@ -1,9 +1,8 @@
-import type { NodeRendererProps } from "../../scenarioTypes";
-import type { VideoNode } from "../../scenarioNodeSchemas";
+import { nextNodeId, type NodeSceneProps } from "../viewer";
+import type { VideoNode } from "../../nodeSchemas";
 import { useEffect, useRef } from "react";
-import { nextNodeId } from "../findEdge";
 
-export function VideoNodeRenderer({ node, edges, dispatch }: NodeRendererProps<VideoNode>) {
+export function VideoScene({ node, edges, dispatch }: NodeSceneProps<VideoNode>) {
   const playerRef = useRef<HTMLVideoElement>(null);
 
   // TODO eventually use a video player without scrub forward.
