@@ -2,8 +2,9 @@ import { useState, type FormEvent } from "react";
 import type { NodeRendererProps } from "../../scenarioTypes";
 import type { FreeResponseNode } from "../../scenarioNodeSchemas";
 import { evaluateFreeResponse, type FreeResponseEvaluation } from "./FreeResponseGrader";
+import { nextNodeId } from "../findEdge";
 
-export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<FreeResponseNode>) {
+export function FreeResponseNodeRenderer({ node, edges, dispatch }: NodeRendererProps<FreeResponseNode>) {
   const [response, setResponse] = useState<string>("");
   const [evaluation, setEvaluation] = useState<FreeResponseEvaluation | null>(null);
   const [nodeState, setNodeState] = useState<'error' | 'responding' | 'evaluating' | 'feedback'>('responding');
@@ -11,6 +12,10 @@ export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<F
 
   const evaluatedChoice = (evaluation: FreeResponseEvaluation) => {
     return node.rubric.answerBuckets.find((bucket) => bucket.id === evaluation?.bucket_id)
+  }
+
+  const nextNodeFromEvaluation = (evaluation: FreeResponseEvaluation) => {
+    return nextNodeId(node, edges, "EVALUATION:" + evaluation.bucket_id)
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -27,7 +32,7 @@ export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<F
       if (result.evaluation.feedback) {
         setNodeState('feedback')
       } else {
-        dispatch({ type: "NEXT_NODE", nextId: evaluatedChoice(result.evaluation)?.toNode })
+        dispatch({ type: "NEXT_NODE", nextId: nextNodeFromEvaluation(result.evaluation) })
       }
     } else {
       setNodeState('error');
@@ -67,7 +72,7 @@ export function FreeResponseNodeRenderer({ node, dispatch }: NodeRendererProps<F
                         {evaluation?.feedback}
                       </pre>
                       <button
-                        onClick={() => { dispatch({ type: "NEXT_NODE", nextId: evaluatedChoice(evaluation!)?.toNode }) }}
+                        onClick={() => { dispatch({ type: "NEXT_NODE", nextId: nextNodeFromEvaluation(evaluation!) }) }}
                       >Continue</button>
                     </>
                   )

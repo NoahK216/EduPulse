@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { NodeRenderer } from "./NodeRenderer";
 import type { Scenario, ScenarioEvent, ScenarioVars } from "../scenarioTypes";
-import { loadScenario } from "./loadScenario";
 import type { ScenarioNode } from "../scenarioNodeSchemas";
 import "./Scenario.css";
+import { loadEditorScenario } from "../creator/EditorScenarioSchemas";
 
 const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
     const [scenario, setScenario] = useState<Scenario | undefined>();
@@ -20,9 +20,9 @@ const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
     };
 
     useEffect(() => {
-        loadScenario(scenarioUrl)
+        loadEditorScenario(scenarioUrl)
             .then((parsed) => {
-                initializeScenario(parsed);
+                initializeScenario(parsed.scenario);
             })
             .catch((error) => {
                 const message = error instanceof Error ? error.message : "Failed to load scenario";
@@ -52,7 +52,7 @@ const ScenarioViewer = ({ scenarioUrl }: { scenarioUrl: string }) => {
         case 'loading':
             return <p>Loading scenario...</p>;
         case 'doing':
-            return <NodeRenderer node={currentNode!} vars={scenarioVars} dispatch={dispatcher} />;
+            return <NodeRenderer node={currentNode!} edges={scenario!.edges} vars={scenarioVars} dispatch={dispatcher} />;
         case 'finished':
             return <h1>Scenario complete!</h1>;
         case 'error':

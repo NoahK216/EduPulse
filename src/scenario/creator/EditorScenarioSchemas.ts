@@ -68,37 +68,14 @@ export function flowGraphFromEditorScenario(editorScenario: EditorScenario):
     }
   });
 
-  const edges: Edge[] = [];
-  const pushEdge =
-      (source: string, target: string|undefined, label?: string) => {
-        if (!target) return;
-        const suffix = label ? `-${label}` : '';
-        edges.push({
-          id: `${source}-${target}${suffix}-${edges.length}`,
-          source,
-          target,
-          ...(label ? {label} : {}),
-        });
-      };
-
-  // TODO No switch cases!
-  for (const node of editorScenario.scenario.nodes) {
-    switch (node.type) {
-      case 'video':
-        pushEdge(node.id, node.toNode);
-        break;
-      case 'choice':
-        for (const choice of node.choices) {
-          pushEdge(node.id, choice.toNode, choice.label);
-        }
-        break;
-      case 'free_response':
-        for (const bucket of node.rubric.answerBuckets) {
-          pushEdge(node.id, bucket.toNode, bucket.classifier ?? bucket.id);
-        }
-        break;
-    }
-  }
+  const edges: Edge[] =
+      editorScenario.scenario.edges.filter((edge) => edge.to?.nodeId)
+          .map((edge) => ({
+                 id: edge.id,
+                 source: edge.from.nodeId,
+                 target: edge.to!.nodeId,
+                 ...(edge.from.port ? {label: edge.from.port} : {}),
+               }));
 
   return {nodes, edges};
 }

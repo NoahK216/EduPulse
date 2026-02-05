@@ -1,9 +1,14 @@
 import type { NodeRendererProps } from "../../scenarioTypes";
 import type { ChoiceNode } from "../../scenarioNodeSchemas";
 import { useState } from "react";
+import { nextNodeId } from "../findEdge";
 
-export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceNode>) {
+export function ChoiceNodeRenderer({ node, edges, dispatch }: NodeRendererProps<ChoiceNode>) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const nextNodeFromChoice = (choiceId: string) => {
+    return nextNodeId(node, edges, "CHOICE:" + choiceId)
+  }
 
   return (
     <section>
@@ -17,19 +22,13 @@ export function ChoiceNodeRenderer({ node, dispatch }: NodeRendererProps<ChoiceN
             className="mcq-option"
             onClick={() => {
               setSelectedId(choice.id);
-              dispatch({ type: "NEXT_NODE", nextId: choice.toNode });
+              dispatch({ type: "NEXT_NODE", nextId: nextNodeFromChoice(choice.id) });
             }}
           >
             {String.fromCharCode(65 + index)}. {choice.label}
           </button>
         ))}
       </div>
-
-      {selectedId && (
-        <p style={{ marginTop: "10px" }}>
-          {selectedId === "good" ? "✔ Correct" : "✖ Wrong"}
-        </p>
-      )}
     </section>
   );
 }

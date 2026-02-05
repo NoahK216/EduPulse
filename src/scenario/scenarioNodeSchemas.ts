@@ -10,19 +10,14 @@ export const VideoNodeSchema = BaseNodeSchema.extend({
   type: z.literal('video'),
   src: z.string(),
   captionsSrc: z.string().optional(),
-  autoplay: z.boolean().optional(),
-  toNode: z.string().optional(),
+  autoplay: z.boolean().optional()
 });
 export type VideoNode = z.infer<typeof VideoNodeSchema>;
 
 export const RubricSchema = z.object({
   id: z.string().min(1),
   context: z.string(),
-  answerBuckets: z.array(z.object({
-    id: z.string(),
-    classifier: z.string(),
-    toNode: z.string().optional(),
-  }))
+  answerBuckets: z.array(z.object({id: z.string(), classifier: z.string()}))
 });
 export type Rubric = z.infer<typeof RubricSchema>;
 
@@ -31,18 +26,13 @@ export const FreeResponseNodeSchema = BaseNodeSchema.extend({
   prompt: z.string(),
   placeholder: z.string().optional(),
   rubric: RubricSchema,
-  // Optional toNode in case a free response is to be collected, but not evaluated
 });
 export type FreeResponseNode = z.infer<typeof FreeResponseNodeSchema>;
 
 export const ChoiceNodeSchema = BaseNodeSchema.extend({
   type: z.literal('choice'),
   prompt: z.string(),
-  choices: z.array(z.object({
-              id: z.string(),
-              label: z.string(),
-              toNode: z.string().optional()
-            })).min(1),
+  choices: z.array(z.object({id: z.string(), label: z.string()})).min(1),
 });
 export type ChoiceNode = z.infer<typeof ChoiceNodeSchema>;
 
