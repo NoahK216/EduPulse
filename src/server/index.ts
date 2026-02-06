@@ -5,6 +5,9 @@ import OpenAI from 'openai';
 import path from 'path';
 
 import {createGraderRouter} from './grader.js';
+import {initializeDatabase} from './db.js';
+import {createUserRouter} from './users.js';
+import {createScenarioRouter} from './scenarios.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -13,6 +16,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ! Use /api prefix for calls to backend
 app.use('/api', createGraderRouter(openai));
+app.use('/api/users', createUserRouter());
+app.use('/api/scenarios', createScenarioRouter());
 
 const clientDist = path.resolve(process.cwd(), 'dist');
 
@@ -25,6 +30,16 @@ app.get('*', (_, res) => {
 });
 
 const port = Number(process.env.PORT) || 8787;
-app.listen(port, () => {
-  console.log(`Rubric grader API listening on http://localhost:${port}`);
-});
+
+// Initialize database and start server
+(async () => {
+  try {
+    await initializeDatabase();
+    app.listen(port, () => {
+      console.log(`🚀 EduPulse API listening on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+})();

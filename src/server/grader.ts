@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import {z} from 'zod';
 
 import {RubricSchema} from '../scenario/nodeSchemas.js';
+import {getPool} from './db.js';
 
 // ---- Shared schemas/types (single source of truth) ----
 export const rubricSchema = RubricSchema;
@@ -77,6 +78,9 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 export async function gradeWithOpenAI(
   openai: OpenAI,
   body: GradeRequest,
+  userId?: number,
+  scenarioId?: string,
+  nodeId?: string,
 ): Promise<GradeResult> {
   const responseFormat = {
     type: 'json_schema' as const,
@@ -97,6 +101,29 @@ export async function gradeWithOpenAI(
     const fixed = await fixJson(openai, raw, responseFormat);
     parsed = parseModelJson(fixed);
   }
+
+  if (!parsed) {
+    throw new Error('Model did not return valid JSON after retry');
+  }
+
+  const result = enforceResult(parsed, body.rubric);
+
+  // Save submission to database if userId and scenarioId provided
+  if (userId && scenarioId) {
+    try {
+      const pool = getPool();
+      await pool.query(
+        `INSERT INTO submissions (user_id, scenario_id, node_id, question_prompt, user_response_text, bucket_id, feedback)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [userId, scenarioId, nodeId || 'unknown', body.question_prompt, body.user_response_text, result.bucket_id, result.feedback]
+      );
+    } catch (error) {
+      console.error('Failed to save submission:', error);
+      // Don't fail the grading request if database save fails
+    }
+  }
+
+  return result;
 
   if (!parsed) {
     throw new Error('Model did not return valid JSON after retry');
@@ -192,7 +219,8 @@ export function createGraderRouter(openai: OpenAI) {
     }
 
     try {
-      const result = await gradeWithOpenAI(openai, parsed.data);
+      const { userId, scenarioId, nodeId } = req.body;
+      const result = await gradeWithOpenAI(openai, parsed.data, userId, scenarioId, nodeId);
       res.json(result);
     } catch (error) {
       console.error('Grading failed', error);
