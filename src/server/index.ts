@@ -4,7 +4,7 @@ import express from 'express';
 import OpenAI from 'openai';
 import path from 'path';
 
-import {gradeRequestSchema, gradeWithOpenAI} from './grader.js';
+import {createGraderRouter} from './grader.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -12,27 +12,7 @@ app.use(express.json({ limit: '2mb' }));
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ! Use /api prefix for calls to backend
-app.post('/api/grade', async (req, res) => {
-  const parsed = gradeRequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
-  }
-
-  try {
-    const result = await gradeWithOpenAI(openai, parsed.data);
-    res.json(result);
-  } catch (error) {
-    console.error('Grading failed', error);
-    res.status(502).json({
-      error: 'Failed to grade response',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+app.use('/api', createGraderRouter(openai));
 
 const clientDist = path.resolve(process.cwd(), 'dist');
 

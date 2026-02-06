@@ -1,3 +1,4 @@
+import express from 'express';
 import OpenAI from 'openai';
 import {z} from 'zod';
 
@@ -173,4 +174,34 @@ function enforceResult(aiResult: GradeResult, rubric: Rubric): GradeResult {
   const feedback = aiResult.feedback || 'No feedback provided.';
 
   return { bucket_id, feedback };
+}
+
+export function createGraderRouter(openai: OpenAI) {
+  const router = express.Router();
+
+  router.post('/grade', async (req, res) => {
+    const parsed = gradeRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid request body', details: parsed.error.flatten() });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
+    }
+
+    try {
+      const result = await gradeWithOpenAI(openai, parsed.data);
+      res.json(result);
+    } catch (error) {
+      console.error('Grading failed', error);
+      res.status(502).json({
+        error: 'Failed to grade response',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  });
+
+  return router;
 }
