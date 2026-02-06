@@ -12,6 +12,7 @@ import {ChoiceScene} from './viewer/scenes/Choice.Scene';
 import {FreeResponseScene} from './viewer/scenes/FreeResponse.Scene';
 import {VideoScene} from './viewer/scenes/Video.Scene';
 
+// TODO Create nodes server side
 export const nodeRegistry = defineNodeRegistry({
   video: {
     type: 'video',
@@ -19,6 +20,13 @@ export const nodeRegistry = defineNodeRegistry({
     scene: VideoScene,
     card: VideoCard,
     tab: VideoTab,
+    factory: (partial): z.infer<typeof VideoNodeSchema> => ({
+      id: crypto.randomUUID(),
+      type: 'video',
+      src: undefined,
+      autoplay: false,
+      ...partial,
+    }),
   },
   choice: {
     type: 'choice',
@@ -26,6 +34,13 @@ export const nodeRegistry = defineNodeRegistry({
     scene: ChoiceScene,
     card: ChoiceCard,
     tab: ChoiceTab,
+    factory: (partial): z.infer<typeof ChoiceNodeSchema> => ({
+      id: crypto.randomUUID(),
+      type: 'choice',
+      prompt: '',
+      choices: [],
+      ...partial,
+    }),
   },
   free_response: {
     type: 'free_response',
@@ -33,6 +48,14 @@ export const nodeRegistry = defineNodeRegistry({
     scene: FreeResponseScene,
     card: FreeResponseCard,
     tab: FreeResponseTab,
+    factory: (partial): z.infer<typeof FreeResponseNodeSchema> => ({
+      id: crypto.randomUUID(),
+      type: 'free_response',
+      prompt: '',
+      placeholder: '',
+      rubric: {id: '', context: '', answerBuckets: []},
+      ...partial,
+    }),
   },
 } as const);
 
@@ -51,4 +74,5 @@ export const scenes = pluck(nodeRegistry, 'scene');
 export const cards = pluck(nodeRegistry, 'card');
 export const tabs = pluck(nodeRegistry, 'tab');
 
-export type NodeType = keyof typeof nodeRegistry;
+export type NodeType = GenericNode['type'];
+export type NodeOf<T extends NodeType> = Extract<GenericNode, {type: T}>;

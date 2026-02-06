@@ -9,12 +9,16 @@ import {
     type OnConnect,
     type OnNodesChange,
     type OnEdgesChange,
-    type OnNodeDrag,
     type DefaultEdgeOptions,
     Background,
     Controls,
+    MiniMap,
+    type OnSelectionChangeFunc,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import NodeAddPanel from './ui/NodeAddPanel';
+import MenuBar from './ui/MenuBar';
+import NodeEditorPanel from './ui/NodeEditorPanel';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -25,6 +29,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
     animated: true,
 };
 
+// TODO rename initialNode to nodeData or something
+
 const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
     const [editorScenario, setEditorScenario] = useState<EditorScenario | undefined>();
     const [scenarioState, setScenarioState] = useState<'loading' | 'creating' | 'error'>(scenarioUrl ? 'loading' : 'creating')
@@ -32,6 +38,12 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
 
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [selection, setSelection] = useState<Node>();
+
+
+    const addNode = (node: Node) => {
+        setNodes([...nodes, node]);
+    }
 
     const initializeEditor = (e: EditorScenario) => {
         setEditorScenario(e);
@@ -40,6 +52,17 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         setEdges(edges);
         console.log(nodes, edges)
     }
+
+    // No context menu on right click
+    // useEffect(() => {
+    //     const handleContextMenu = (e: Event) => {
+    //         e.preventDefault();
+    //     };
+    //     document.addEventListener('contextmenu', handleContextMenu);
+    //     return () => {
+    //         document.removeEventListener('contextmenu', handleContextMenu);
+    //     };
+    // }, []);
 
     useEffect(() => {
         if (scenarioUrl) {
@@ -71,22 +94,42 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         [],
     );
 
+    const onSelectionChange: OnSelectionChangeFunc = useCallback(
+        (params) => { console.log(params) },
+        [],
+    );
+
     return (
-        <div style={{ width: '100vw', height: '100vh' }}>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={cards}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                fitView
-                fitViewOptions={fitViewOptions}
-                defaultEdgeOptions={defaultEdgeOptions}
-            >
-                <Background />
-                <Controls />
-            </ReactFlow>
+        <div className="w-screen h-screen flex flex-col">
+            <MenuBar />
+            <div className='h-full flex flex-row'>
+                <NodeAddPanel addNode={addNode} />
+                <ReactFlow
+                    className="flex-1 min-h-0"
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={cards}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    fitView
+                    fitViewOptions={fitViewOptions}
+                    defaultEdgeOptions={defaultEdgeOptions}
+                    panOnDrag={[2]}
+                    selectionOnDrag={true}
+                    onSelectionChange={onSelectionChange}
+                >
+                    <Background />
+
+
+                    {/* Panels */}
+                    <MiniMap nodeStrokeWidth={3} />
+
+                    {/* TODO Move these to toolbar below MenuBar */}
+                    <Controls />
+                </ReactFlow>
+                <NodeEditorPanel />
+            </div>
         </div>
     );
 }

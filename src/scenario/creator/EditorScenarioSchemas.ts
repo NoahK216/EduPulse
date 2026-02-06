@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {ScenarioSchema} from '../scenarioSchemas';
 
 import type {Edge, Node} from '@xyflow/react';
+import type {GenericNode} from '../nodes';
 
 export const NodeLayoutSchema = z.object({
   x: z.number(),
@@ -11,6 +12,7 @@ export const NodeLayoutSchema = z.object({
   height: z.number().optional(),
   locked: z.boolean().optional(),
 });
+export type NodeLayout = z.infer<typeof NodeLayoutSchema>;
 
 // TODO Figure out what to do with JSON differences
 export const EditorScenarioSchema = z.object({
@@ -27,8 +29,6 @@ export async function loadEditorScenario(url: string): Promise<EditorScenario> {
   if (!res.ok) throw new Error(`Failed to load scenario: ${res.status}`);
   const data = await res.json();
 
-  console.log(EditorScenarioSchema.shape)
-
   const parsed = EditorScenarioSchema.safeParse(data);
   if (!parsed.success) {
     console.error(z.treeifyError(parsed.error));
@@ -37,30 +37,34 @@ export async function loadEditorScenario(url: string): Promise<EditorScenario> {
   return parsed.data;
 }
 
+export function flowNodeFromGenericNode(
+    node: GenericNode, layout?: NodeLayout): Node {
+  const position = {
+    x: layout?.x ?? 0,
+    y: layout?.y ?? 0,
+  };
+  const baseNode: Node = {
+    id: node.id,
+    position,
+    data: {
+      label: node.title ?? node.id,
+      initialNode: node,
+    },
+    width: layout?.width,
+    height: layout?.height,
+    draggable: layout?.locked ? false : undefined,
+  };
+
+  return {
+    ...baseNode,
+    type: node.type,
+  };
+}
+
 export function flowGraphFromEditorScenario(editorScenario: EditorScenario):
     {nodes: Node[], edges: Edge[]} {
   const nodes: Node[] = editorScenario.scenario.nodes.map((node) => {
-    const layout = editorScenario.layout[node.id];
-    const position = {
-      x: layout?.x ?? 0,
-      y: layout?.y ?? 0,
-    };
-    const baseNode: Node = {
-      id: node.id,
-      position,
-      data: {
-        label: node.title ?? node.id,
-        initialNode: node,
-      },
-      width: layout?.width,
-      height: layout?.height,
-      draggable: layout?.locked ? false : undefined,
-    };
-
-    return {
-      ...baseNode,
-      type: node.type,
-    };
+    return flowNodeFromGenericNode(node, editorScenario.layout[node.id]);
   });
 
   const edges: Edge[] =
