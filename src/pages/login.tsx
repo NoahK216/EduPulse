@@ -1,4 +1,5 @@
 import NavBar from "./ui/NavBar";
+import { Link } from "react-router";
 
 function Login() {
   return (
@@ -46,11 +47,11 @@ function Login() {
             </div>
         <div className="mt-6 text-center text-sm text-neutral-300">
           Don’t have an account?
-          <button
-            type="button"
-            className="text-blue-400 hover:text-blue-300">
+          <Link
+            to="/signup"
+            className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-600">
             Sign up
-          </button>
+          </Link>
         </div>
       </main>
       </div>

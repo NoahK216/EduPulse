@@ -8,6 +8,7 @@ import ScenarioViewerDemo from './scenario/viewer/viewerDemo.tsx';
 import ScenarioCreatorDemo from './scenario/creator/creatorDemo.tsx';
 import Login from "./pages/login";
 import Classroom from "./pages/classroom";
+import Signup from "./pages/signup";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { index: true, Component: App },
       { path: "login", Component: Login },
       { path: "classroom", Component: Classroom },
+      { path: "signup", Component: Signup },
       {
         path: "scenario",
         children: [
