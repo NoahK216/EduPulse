@@ -39,8 +39,8 @@ const clientDist = path.resolve(process.cwd(), 'dist');
 // Serve static files from the "dist" folder (built React app)
 app.use(express.static(clientDist));
 
-// Catch-all: send index.html for React Router to handle routes
-app.get('*', (_, res) => {
+// Express 5 requires named wildcards; this matches all non-API routes
+app.get('/{*splat}', (_, res) => {
   res.sendFile(path.join(clientDist, 'index.html'));
 });
 
