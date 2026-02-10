@@ -93,10 +93,6 @@ return (
           <div className="mt-4 flex justify-end gap-2">
             <button
               type="button"
-              className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium hover:bg-white/15"
-              onClick={() => setIsFeedbackOpen(false)}>Close</button>
-            <button
-              type="button"
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
               onClick={() => {
                 setIsFeedbackOpen(false);
