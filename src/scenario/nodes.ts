@@ -37,8 +37,8 @@ export const nodeRegistry = defineNodeRegistry({
     factory: (partial): z.infer<typeof ChoiceNodeSchema> => ({
       id: crypto.randomUUID(),
       type: 'choice',
-      prompt: '',
-      choices: [],
+      prompt: 'Multiple Choice',
+      choices: [{id: crypto.randomUUID(), label: 'choice 1'}],
       ...partial,
     }),
   },
@@ -51,9 +51,13 @@ export const nodeRegistry = defineNodeRegistry({
     factory: (partial): z.infer<typeof FreeResponseNodeSchema> => ({
       id: crypto.randomUUID(),
       type: 'free_response',
-      prompt: '',
+      prompt: 'Free Response',
       placeholder: '',
-      rubric: {id: '', context: '', answerBuckets: []},
+      rubric: {
+        id: crypto.randomUUID(),
+        context: '',
+        answerBuckets: [{id: crypto.randomUUID(), classifier: 'classifier 1'}]
+      },
       ...partial,
     }),
   },

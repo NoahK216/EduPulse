@@ -20,6 +20,7 @@ export const ScenarioSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   startNodeId: z.string().min(1),
+  // TODO !!! Make nodes a record rather than array
   nodes: z.array(GenericNodeSchema).min(1),
   edges: z.array(NodeEdgeSchema)
 });

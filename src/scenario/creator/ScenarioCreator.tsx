@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
+import { loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
 import { cards } from '../nodes';
 import {
     ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge,
@@ -14,11 +14,16 @@ import {
     Controls,
     MiniMap,
     type OnSelectionChangeFunc,
+    type ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import NodeAddPanel from './ui/NodeAddPanel';
 import MenuBar from './ui/MenuBar';
 import NodeEditorPanel from './ui/NodeEditorPanel';
+import { exportScenarioToJSON, reactFlowToScenario } from './export';
+import { downloadJson } from './DownloadJson';
+import { flowGraphFromEditorScenario } from './import';
+import { ScenarioImportButton } from './ui/ScenarioImportButton';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -38,7 +43,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
 
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    const [selection, setSelection] = useState<Node>();
+    const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
 
 
     const addNode = (node: Node) => {
@@ -50,7 +55,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         const { nodes, edges } = flowGraphFromEditorScenario(e);
         setNodes(nodes);
         setEdges(edges);
-        console.log(nodes, edges)
+        reactFlowInstance?.fitView()
     }
 
     // No context menu on right click
@@ -78,8 +83,6 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         }
     }, [scenarioUrl]);
 
-    // const exportStateAsJSON = () => {
-    // }
 
     const onNodesChange: OnNodesChange = useCallback(
         (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
@@ -101,11 +104,20 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
 
     return (
         <div className="w-screen h-screen flex flex-col">
-            <MenuBar />
+            <MenuBar >
+                <button onClick={() =>
+                    downloadJson(exportScenarioToJSON(reactFlowToScenario(nodes, edges, editorScenario!)), "scenario.json")
+                } >
+                    Download JSON
+                </button>
+                <ScenarioImportButton onLoaded={initializeEditor} />
+
+            </MenuBar>
             <div className='h-full flex flex-row'>
                 <NodeAddPanel addNode={addNode} />
                 <ReactFlow
                     className="flex-1 min-h-0"
+                    onInit={(instance) => setReactFlowInstance(instance)}
                     nodes={nodes}
                     edges={edges}
                     nodeTypes={cards}

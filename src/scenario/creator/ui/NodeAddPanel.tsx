@@ -1,5 +1,5 @@
 import { nodeRegistry } from "../../nodes";
-import { flowNodeFromGenericNode } from "../EditorScenarioSchemas";
+import { flowNodeFromGenericNode } from "../import";
 import { type Node } from '@xyflow/react';
 
 export type NodeAddPanelProps = {
