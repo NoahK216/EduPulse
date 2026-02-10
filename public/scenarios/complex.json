@@ -3,14 +3,14 @@
   "id": "0",
   "title": "Grade Appeal Demo",
   "startNodeId": "1",
-  "nodes": [
-    {
+  "nodes": {
+    "1": {
       "id": "1",
       "title": "Intro Video",
       "type": "video",
       "src": "/depression.mp4"
     },
-    {
+    "2": {
       "id": "2",
       "title": "Which follow-up?",
       "type": "choice",
@@ -30,7 +30,7 @@
         }
       ]
     },
-    {
+    "3": {
       "id": "3",
       "title": "Grade Appeal Response",
       "type": "free_response",
@@ -58,12 +58,12 @@
         ]
       }
     },
-    {
+    "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c": {
       "id": "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c",
       "type": "video",
       "autoplay": false
     },
-    {
+    "deca83c7-0429-494f-97a8-a3adff856a99": {
       "id": "deca83c7-0429-494f-97a8-a3adff856a99",
       "type": "free_response",
       "prompt": "Free Response",
@@ -79,7 +79,7 @@
         ]
       }
     },
-    {
+    "628602f7-0f99-4592-b6e4-5d5c992073cb": {
       "id": "628602f7-0f99-4592-b6e4-5d5c992073cb",
       "type": "choice",
       "prompt": "Multiple Choice",
@@ -90,7 +90,7 @@
         }
       ]
     },
-    {
+    "e9477fd5-7d9a-424b-985e-f151b814b86f": {
       "id": "e9477fd5-7d9a-424b-985e-f151b814b86f",
       "type": "choice",
       "prompt": "Multiple Choice",
@@ -101,7 +101,7 @@
         }
       ]
     }
-  ],
+  },
   "edges": [
     {
       "id": "e1",

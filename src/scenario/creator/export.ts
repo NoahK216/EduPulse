@@ -30,11 +30,12 @@ function toScenarioNode(node: Node): GenericNode {
   };
 }
 
+// TODO Only layout should be needed this way
 export const reactFlowToScenario =
     (nodes: Node[], edges: Edge[], oldScenario: Scenario): Scenario => {
       const nextScenario: Scenario = {
         ...oldScenario,
-        nodes: nodes.map(toScenarioNode),
+        nodes: Object.fromEntries(nodes.map((node) => [node.id, toScenarioNode(node)])),
         edges: edges.map((edge) => ({
           id: edge.id,
           from: {

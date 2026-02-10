@@ -1,4 +1,4 @@
-import NavBar from "../scenario/creator/ui/NavBar";
+import NavBar from "./ui/NavBar";
 
 function Login() {
   return (

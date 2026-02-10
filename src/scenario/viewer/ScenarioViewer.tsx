@@ -10,10 +10,8 @@ const ScenarioViewer = ({ scenario }: { scenario?: Scenario }) => {
     const [scenarioState, setScenarioState] = useState<'loading' | 'doing' | 'finished' | 'error'>('loading')
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    const nodeOfId = (s: Scenario, id: string) => s.nodes.find((node) => node.id === id);
-
     const initializeScenario = (s: Scenario) => {
-        setCurrentNode(nodeOfId(s, s.startNodeId));
+        setCurrentNode(s.nodes[s.startNodeId]);
         console.log(s);
     };
 
@@ -32,7 +30,7 @@ const ScenarioViewer = ({ scenario }: { scenario?: Scenario }) => {
         console.log(e);
         switch (e.type) {
             case "NEXT_NODE":
-                if (e.nextId) setCurrentNode(nodeOfId(scenario!, e.nextId));
+                if (e.nextId) setCurrentNode(scenario!.nodes[e.nextId]);
                 else {
                     setScenarioState('finished');
                     console.log("Scenario over");

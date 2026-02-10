@@ -1,6 +1,3 @@
-import { Panel } from "@xyflow/react";
-import { tabs } from "../../nodes";
-
 const MenuBar = ({ children }: { children: any }) => {
     return (
         // TODO Clean up UI

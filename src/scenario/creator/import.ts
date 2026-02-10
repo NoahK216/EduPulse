@@ -3,8 +3,6 @@ import type { GenericNode } from "../nodes";
 import {type NodeLayout, type Scenario, ScenarioSchema} from '../scenarioSchemas';
 import z from "zod";
 
-// TODO Templating out loadScenario to verify for any schema probably makes more
-// sense
 export async function loadScenario(url: string): Promise<Scenario> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to load scenario: ${res.status}`);
@@ -17,7 +15,6 @@ export async function loadScenario(url: string): Promise<Scenario> {
   }
   return parsed.data;
 }
-
 
 export function flowNodeFromGenericNode(
     node: GenericNode, layout?: NodeLayout): Node {
@@ -45,7 +42,7 @@ export function flowNodeFromGenericNode(
 
 export function flowGraphFromScenario(scenario: Scenario):
     {nodes: Node[], edges: Edge[]} {
-  const nodes: Node[] = scenario.nodes.map((node) => {
+  const nodes: Node[] = Object.values(scenario.nodes).map((node) => {
     return flowNodeFromGenericNode(node, scenario.layout[node.id]);
   });
 

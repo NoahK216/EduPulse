@@ -1,4 +1,4 @@
-import NavBar from "./scenario/creator/ui/NavBar";
+import NavBar from "./pages/ui/NavBar";
 import { Link } from "react-router-dom";
 
 function App() {

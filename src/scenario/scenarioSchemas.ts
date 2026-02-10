@@ -6,12 +6,12 @@ export const NodeEdgeSchema = z.object({
   id: z.string(), 
   from: z.object({
     nodeId: z.string(),
-    // TODO we'll want some validation on these ports, they'll each start with an indicator char like c, a, etc
     port: z.string().optional()
   }),
   to: z.object({
     nodeId: z.string()
-  }).optional()
+  }).optional() 
+  //? Is there a reason for 'to' to be optional
 });
 export type NodeEdge = z.infer<typeof NodeEdgeSchema>;
 
@@ -29,8 +29,7 @@ export const ScenarioSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   startNodeId: z.string().min(1),
-  // TODO !!! Make nodes a record rather than array
-  nodes: z.array(GenericNodeSchema).min(1),
+  nodes: z.record(z.string(), GenericNodeSchema),  // keyed by nodeId
   edges: z.array(NodeEdgeSchema),
   layout: z.record(z.string(), NodeLayoutSchema)  // keyed by nodeId
 });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import NavBar from "../scenario/creator/ui/NavBar";
+import NavBar from "./ui/NavBar";
 
 function Classroom() {
   const [showAssigned, setShowAssigned] = useState(true);
