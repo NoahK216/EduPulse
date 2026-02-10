@@ -7,6 +7,9 @@ export function VideoScene({ node, edges, dispatch }: NodeSceneProps<VideoNode>)
 
   // TODO eventually use a video player without scrub forward.
   useEffect(() => {
+    if (!node.src) {
+      dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges) });
+    }
     const v = playerRef.current;
     if (!v) return;
     v.onended = () => dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges) });

@@ -1,20 +1,20 @@
 import { nodeRegistry } from "../../nodes";
-import { flowNodeFromGenericNode } from "../import";
-import { type Node } from '@xyflow/react';
+import type { EditorAction } from "../EditorStore";
 
 export type NodeAddPanelProps = {
-    addNode: (node: Node) => void;
+    editorDispatch: React.ActionDispatch<[action: EditorAction]>;
 };
 
 
 // TODO GENERATION SHOULD NOT BE DONE ON THE CLIENT
-const NodeAddPanel = ({ addNode }: NodeAddPanelProps) => {
+const NodeAddPanel = ({ editorDispatch }: NodeAddPanelProps) => {
     const onNodeClick = (nodeEntry) => {
-        addNode(flowNodeFromGenericNode(nodeEntry.factory()))
+        // addNode(flowNodeFromGenericNode(nodeEntry.factory()))
+        editorDispatch({ type: "addNode", node: nodeEntry.factory() })
     }
 
     return (
-        <div className="min-h-full w-fit bg-gray-600 !mx-0 text-gray-100">
+        <div className="min-h-full w-fit select-none bg-gray-600 !mx-0 text-gray-100">
             {Object.entries(nodeRegistry).map(([type, nodeEntry]) => (
                 <div
                     key={type}
