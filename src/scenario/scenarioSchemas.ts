@@ -15,6 +15,15 @@ export const NodeEdgeSchema = z.object({
 });
 export type NodeEdge = z.infer<typeof NodeEdgeSchema>;
 
+export const NodeLayoutSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  locked: z.boolean().optional(),
+});
+export type NodeLayout = z.infer<typeof NodeLayoutSchema>;
+
 export const ScenarioSchema = z.object({
   scenarioVersion: z.number().int().positive(),
   id: z.string().min(1),
@@ -22,6 +31,7 @@ export const ScenarioSchema = z.object({
   startNodeId: z.string().min(1),
   // TODO !!! Make nodes a record rather than array
   nodes: z.array(GenericNodeSchema).min(1),
-  edges: z.array(NodeEdgeSchema)
+  edges: z.array(NodeEdgeSchema),
+  layout: z.record(z.string(), NodeLayoutSchema)  // keyed by nodeId
 });
 export type Scenario = z.infer<typeof ScenarioSchema>;

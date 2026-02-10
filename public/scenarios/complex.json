@@ -1,0 +1,215 @@
+{
+  "scenarioVersion": 1,
+  "id": "0",
+  "title": "Grade Appeal Demo",
+  "startNodeId": "1",
+  "nodes": [
+    {
+      "id": "1",
+      "title": "Intro Video",
+      "type": "video",
+      "src": "/depression.mp4"
+    },
+    {
+      "id": "2",
+      "title": "Which follow-up?",
+      "type": "choice",
+      "prompt": "What do you want to do next?",
+      "choices": [
+        {
+          "id": "c1",
+          "label": "Draft a reply to the student (free response)"
+        },
+        {
+          "id": "c2",
+          "label": "Rewatch the intro video"
+        },
+        {
+          "id": "c3",
+          "label": "End here"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "title": "Grade Appeal Response",
+      "type": "free_response",
+      "prompt": "A student emails to argue for points back on an assignment. Draft your reply as the professor.",
+      "rubric": {
+        "id": "r1",
+        "context": "Evaluate professor replies to a student requesting a grade change. Tone should be professional, fair, and constructive. Don't be too stingy, if a response is mostly correct (aka would fit into a positive bucket), put it in that bucket and highlight what could be changed. We aren't looking for perfection, just good grouping.",
+        "answerBuckets": [
+          {
+            "id": "a1",
+            "classifier": "Perfect. Clear, professional, empathetic. Explains grading criteria, references rubric, offers regrade/next steps without promising an unwarranted change."
+          },
+          {
+            "id": "a4",
+            "classifier": "Good. Clear, professional, empathetic. Cites what is specifically wrong and tells the student what will happen moving forward."
+          },
+          {
+            "id": "a2",
+            "classifier": "Middling. Polite but thin: acknowledges request but lacks detail   "
+          },
+          {
+            "id": "a3",
+            "classifier": "Bad. Defensive or dismissive; gives no rationale or next steps; unprofessional tone."
+          }
+        ]
+      }
+    },
+    {
+      "id": "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c",
+      "type": "video",
+      "autoplay": false
+    },
+    {
+      "id": "deca83c7-0429-494f-97a8-a3adff856a99",
+      "type": "free_response",
+      "prompt": "Free Response",
+      "placeholder": "",
+      "rubric": {
+        "id": "152e61c7-19ae-404e-8599-f9bfdc282b1e",
+        "context": "",
+        "answerBuckets": [
+          {
+            "id": "d8812007-f1e1-418a-930d-5f57814dae4c",
+            "classifier": "classifier 1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "628602f7-0f99-4592-b6e4-5d5c992073cb",
+      "type": "choice",
+      "prompt": "Multiple Choice",
+      "choices": [
+        {
+          "id": "9897b52f-e879-453b-9c96-2ea42f44c7ee",
+          "label": "choice 1"
+        }
+      ]
+    },
+    {
+      "id": "e9477fd5-7d9a-424b-985e-f151b814b86f",
+      "type": "choice",
+      "prompt": "Multiple Choice",
+      "choices": [
+        {
+          "id": "8321c1d4-afa0-459f-99ea-18bfc24b8e23",
+          "label": "choice 1"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": {
+        "nodeId": "1"
+      },
+      "to": {
+        "nodeId": "2"
+      }
+    },
+    {
+      "id": "e3",
+      "from": {
+        "nodeId": "2",
+        "port": "c2"
+      },
+      "to": {
+        "nodeId": "1"
+      }
+    },
+    {
+      "id": "e6",
+      "from": {
+        "nodeId": "3",
+        "port": "a2"
+      },
+      "to": {
+        "nodeId": "2"
+      }
+    },
+    {
+      "id": "e7",
+      "from": {
+        "nodeId": "3",
+        "port": "a3"
+      },
+      "to": {
+        "nodeId": "2"
+      }
+    },
+    {
+      "id": "xy-edge__2c1-e9477fd5-7d9a-424b-985e-f151b814b86f",
+      "from": {
+        "nodeId": "2",
+        "port": "c1"
+      },
+      "to": {
+        "nodeId": "e9477fd5-7d9a-424b-985e-f151b814b86f"
+      }
+    },
+    {
+      "id": "xy-edge__e9477fd5-7d9a-424b-985e-f151b814b86f8321c1d4-afa0-459f-99ea-18bfc24b8e23-4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c",
+      "from": {
+        "nodeId": "e9477fd5-7d9a-424b-985e-f151b814b86f",
+        "port": "8321c1d4-afa0-459f-99ea-18bfc24b8e23"
+      },
+      "to": {
+        "nodeId": "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c"
+      }
+    },
+    {
+      "id": "xy-edge__4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c-deca83c7-0429-494f-97a8-a3adff856a99",
+      "from": {
+        "nodeId": "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c"
+      },
+      "to": {
+        "nodeId": "deca83c7-0429-494f-97a8-a3adff856a99"
+      }
+    },
+    {
+      "id": "xy-edge__3a1-628602f7-0f99-4592-b6e4-5d5c992073cb",
+      "from": {
+        "nodeId": "3",
+        "port": "a1"
+      },
+      "to": {
+        "nodeId": "628602f7-0f99-4592-b6e4-5d5c992073cb"
+      }
+    }
+  ],
+  "layout": {
+    "1": {
+      "x": -0.9778869778869819,
+      "y": -4.8894348894348845
+    },
+    "2": {
+      "x": -60.76486234932682,
+      "y": 252.97003589007898
+    },
+    "3": {
+      "x": 438.7443609022554,
+      "y": -179.32330827067668
+    },
+    "4fa9e85b-fbf4-441f-8ecc-3382f0f3a91c": {
+      "x": 1194,
+      "y": 279.99999999999994
+    },
+    "deca83c7-0429-494f-97a8-a3adff856a99": {
+      "x": 1436,
+      "y": 113.99999999999997
+    },
+    "628602f7-0f99-4592-b6e4-5d5c992073cb": {
+      "x": 1398,
+      "y": -161.99999999999997
+    },
+    "e9477fd5-7d9a-424b-985e-f151b814b86f": {
+      "x": 644.1721518987341,
+      "y": 234.14810126582282
+    }
+  }
+}

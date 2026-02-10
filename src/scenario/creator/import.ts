@@ -1,6 +1,23 @@
 import type { Node, Edge } from "@xyflow/react";
 import type { GenericNode } from "../nodes";
-import { type NodeLayout, type EditorScenario, EditorScenarioSchema } from "./EditorScenarioSchemas";
+import {type NodeLayout, type Scenario, ScenarioSchema} from '../scenarioSchemas';
+import z from "zod";
+
+// TODO Templating out loadScenario to verify for any schema probably makes more
+// sense
+export async function loadScenario(url: string): Promise<Scenario> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to load scenario: ${res.status}`);
+  const data = await res.json();
+
+  const parsed = ScenarioSchema.safeParse(data);
+  if (!parsed.success) {
+    console.error(z.treeifyError(parsed.error));
+    throw new Error('Scenario JSON failed validation.');
+  }
+  return parsed.data;
+}
+
 
 export function flowNodeFromGenericNode(
     node: GenericNode, layout?: NodeLayout): Node {
@@ -26,14 +43,14 @@ export function flowNodeFromGenericNode(
   };
 }
 
-export function flowGraphFromEditorScenario(editorScenario: EditorScenario):
+export function flowGraphFromScenario(scenario: Scenario):
     {nodes: Node[], edges: Edge[]} {
-  const nodes: Node[] = editorScenario.scenario.nodes.map((node) => {
-    return flowNodeFromGenericNode(node, editorScenario.layout[node.id]);
+  const nodes: Node[] = scenario.nodes.map((node) => {
+    return flowNodeFromGenericNode(node, scenario.layout[node.id]);
   });
 
   const edges: Edge[] =
-      editorScenario.scenario.edges.filter((edge) => edge.to?.nodeId)
+      scenario.edges.filter((edge) => edge.to?.nodeId)
           .map((edge) => ({
                  id: edge.id,
                  source: edge.from.nodeId,
@@ -56,5 +73,5 @@ export async function importScenarioFromFile(file: File) {
   }
 
   // throws ZodError if invalid
-  return EditorScenarioSchema.parse(raw);
+  return ScenarioSchema.parse(raw);
 }

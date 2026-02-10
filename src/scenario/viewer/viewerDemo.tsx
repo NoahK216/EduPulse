@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import ScenarioViewer from "./ScenarioViewer";
-import { loadEditorScenario } from "../creator/EditorScenarioSchemas";
 import type { Scenario } from "../scenarioSchemas";
 import { ScenarioImportButton } from "../creator/ui/ScenarioImportButton";
+import { loadScenario } from "../creator/import";
 
 function ScenarioViewerDemo() {
   const [scenario, setScenario] = useState<Scenario>();
@@ -11,9 +11,9 @@ function ScenarioViewerDemo() {
   const scenarioUrl = "/scenarios/creator.json"
 
   useEffect(() => {
-    loadEditorScenario(scenarioUrl)
+    loadScenario(scenarioUrl)
       .then((parsed) => {
-        setScenario(parsed.scenario);
+        setScenario(parsed);
       })
       .catch((error) => {
         const message = error instanceof Error ? error.message : "Failed to load scenario";
@@ -25,7 +25,7 @@ function ScenarioViewerDemo() {
 
     <div className="view-demo flex h-screen w-screen justify-center items-center">
       <div className="fixed top-1 flex flex-col text-center">
-        <ScenarioImportButton onLoaded={(s) => setScenario(s.scenario)} />
+        <ScenarioImportButton onLoaded={(s) => setScenario(s)} />
         {error}
       </div>
 

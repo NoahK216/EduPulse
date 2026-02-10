@@ -1,7 +1,7 @@
-import type { EditorScenario } from "../EditorScenarioSchemas";
+import type { Scenario } from "../../scenarioSchemas";
 import { importScenarioFromFile } from "../import";
 
-export function ScenarioImportButton({ onLoaded }: { onLoaded: (v: EditorScenario) => void }) {
+export function ScenarioImportButton({ onLoaded }: { onLoaded: (v: Scenario) => void }) {
     return (
         <input
             // TODO update this UI

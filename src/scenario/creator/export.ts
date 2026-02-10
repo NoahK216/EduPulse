@@ -1,10 +1,10 @@
 import type {Edge, Node} from '@xyflow/react';
 import type {GenericNode} from '../nodes';
-import {EditorScenarioSchema, type EditorScenario, type NodeLayout} from './EditorScenarioSchemas';
+import {ScenarioSchema, type Scenario, type NodeLayout} from '../scenarioSchemas';
 
 export const exportScenarioToJSON =
     (doc: unknown) => {
-      const parsed = EditorScenarioSchema.parse(doc);  // throws if invalid
+      const parsed = ScenarioSchema.parse(doc);  // throws if invalid
       return parsed;
     }
 
@@ -31,23 +31,20 @@ function toScenarioNode(node: Node): GenericNode {
 }
 
 export const reactFlowToScenario =
-    (nodes: Node[], edges: Edge[], oldScenario: EditorScenario): EditorScenario => {
-      const nextScenario: EditorScenario = {
+    (nodes: Node[], edges: Edge[], oldScenario: Scenario): Scenario => {
+      const nextScenario: Scenario = {
         ...oldScenario,
-        scenario: {
-          ...oldScenario.scenario,
-          nodes: nodes.map(toScenarioNode),
-          edges: edges.map((edge) => ({
-            id: edge.id,
-            from: {
-              nodeId: edge.source,
-              ...(edge.sourceHandle ? {port: edge.sourceHandle} : {}),
-            },
-            to: {nodeId: edge.target},
-          })),
-        },
+        nodes: nodes.map(toScenarioNode),
+        edges: edges.map((edge) => ({
+          id: edge.id,
+          from: {
+            nodeId: edge.source,
+            ...(edge.sourceHandle ? {port: edge.sourceHandle} : {}),
+          },
+          to: {nodeId: edge.target},
+        })),
         layout: Object.fromEntries(nodes.map((node) => [node.id, toNodeLayout(node)])),
       };
 
-      return EditorScenarioSchema.parse(nextScenario);
+      return ScenarioSchema.parse(nextScenario);
     };

@@ -4,7 +4,7 @@ import './Creator.css'
 function ScenarioCreatorDemo() {
     return (
         <div className="creator-demo">
-            <ScenarioCreator scenarioUrl="/scenarios/creator.json" />
+            <ScenarioCreator scenarioUrl="/scenarios/complex.json" />
         </div>
     );
 }

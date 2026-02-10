@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
+import { type Scenario } from '../scenarioSchemas';
 import { cards } from '../nodes';
 import {
     ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge,
@@ -22,7 +22,7 @@ import MenuBar from './ui/MenuBar';
 import NodeEditorPanel from './ui/NodeEditorPanel';
 import { exportScenarioToJSON, reactFlowToScenario } from './export';
 import { downloadJson } from './DownloadJson';
-import { flowGraphFromEditorScenario } from './import';
+import { flowGraphFromScenario, loadScenario } from './import';
 import { ScenarioImportButton } from './ui/ScenarioImportButton';
 
 
@@ -37,7 +37,7 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 // TODO rename initialNode to nodeData or something
 
 const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
-    const [editorScenario, setEditorScenario] = useState<EditorScenario | undefined>();
+    const [scenario, setScenario] = useState<Scenario | undefined>();
     const [scenarioState, setScenarioState] = useState<'loading' | 'creating' | 'error'>(scenarioUrl ? 'loading' : 'creating')
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -50,9 +50,9 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         setNodes([...nodes, node]);
     }
 
-    const initializeEditor = (e: EditorScenario) => {
-        setEditorScenario(e);
-        const { nodes, edges } = flowGraphFromEditorScenario(e);
+    const initializeEditor = (e: Scenario) => {
+        setScenario(e);
+        const { nodes, edges } = flowGraphFromScenario(e);
         setNodes(nodes);
         setEdges(edges);
         reactFlowInstance?.fitView()
@@ -71,7 +71,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
 
     useEffect(() => {
         if (scenarioUrl) {
-            loadEditorScenario(scenarioUrl)
+            loadScenario(scenarioUrl)
                 .then((parsed) => {
                     initializeEditor(parsed);
                 })
@@ -106,7 +106,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         <div className="w-screen h-screen flex flex-col">
             <MenuBar >
                 <button onClick={() =>
-                    downloadJson(exportScenarioToJSON(reactFlowToScenario(nodes, edges, editorScenario!)), "scenario.json")
+                    downloadJson(exportScenarioToJSON(reactFlowToScenario(nodes, edges, scenario!)), "scenario.json")
                 } >
                     Download JSON
                 </button>
