@@ -1,5 +1,5 @@
-import { scenes } from "../nodes";
-import type { NodeSceneProps } from "./viewer";
+import { scenes } from "../../nodes";
+import type { NodeSceneProps } from "../viewer";
 
 export function SceneRenderer(props: NodeSceneProps) {
   const { node } = props;

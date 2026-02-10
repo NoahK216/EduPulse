@@ -1,9 +1,11 @@
 import type { ChoiceNode } from "../../nodeSchemas";
+import type { NodeTabProps } from "./TabRenderer";
 
-export function ChoiceTab(node: ChoiceNode) {
+export function ChoiceTab({ node, dispatch }: NodeTabProps<ChoiceNode>) {
   return (
-    <div className="custom-node">
-      {node.title}
-    </div>
+    <>
+      <p>{node.title}</p>
+    </>
   );
 }
+

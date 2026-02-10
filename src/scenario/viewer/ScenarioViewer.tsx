@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { SceneRenderer } from "./SceneRenderer";
+import { SceneRenderer } from "./scenes/SceneRenderer";
 import type { Scenario } from "../scenarioSchemas";
 import "./Scenario.css";
 import type { GenericNode } from "../nodes";

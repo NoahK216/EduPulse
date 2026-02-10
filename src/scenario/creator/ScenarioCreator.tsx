@@ -45,6 +45,11 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
     const [rfNodes, setRfNodes] = useState<Node[]>([]);
     const [rfEdges, setRfEdges] = useState<Edge[]>([]);
 
+    const initializeEditor = (e: Scenario) => {
+        dispatch({ type: "initScenario", scenario: e });
+        requestAnimationFrame(() => reactFlowInstance?.fitView());
+    }
+
     useEffect(() => {
         if (scenarioUrl) {
             loadScenario(scenarioUrl)
@@ -63,11 +68,6 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         setRfNodes(nodes);
         setRfEdges(edges);
     }, [state.status, state.status === "loaded" ? state.doc : null, setRfNodes, setRfEdges]);
-
-    const initializeEditor = (e: Scenario) => {
-        dispatch({ type: "initScenario", scenario: e });
-        requestAnimationFrame(() => reactFlowInstance?.fitView());
-    }
 
 
     const onConnect: OnConnect = useCallback(
@@ -120,7 +120,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
                     nodes={rfNodes}
                     edges={rfEdges}
                     nodeTypes={cards}
-                    
+
                     fitView
                     fitViewOptions={fitViewOptions}
                     defaultEdgeOptions={defaultEdgeOptions}
@@ -144,7 +144,7 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
                     {/* TODO Move these to toolbar below MenuBar */}
                     <Controls />
                 </ReactFlow>
-                <NodeEditorPanel />
+                <NodeEditorPanel editorState={state} dispatch={dispatch} />
             </div>
         </div>
     );

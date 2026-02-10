@@ -1,36 +1,25 @@
 import type { ChoiceNode } from "../../nodeSchemas";
-import { useState } from "react";
 import {
   Handle,
   Position,
-  type Node,
   type NodeProps
 } from '@xyflow/react';
+import type { ReactFlowCard } from "./Cards";
 
-export type ChoiceNodeFlow = Node<
-  {
-    initialNode: ChoiceNode
-  }
->;
-
-export function ChoiceCard(props: NodeProps<ChoiceNodeFlow>) {
-  const [nodeData, setNodeData] = useState<ChoiceNode>(props.data.initialNode);
+export function ChoiceCard(props: NodeProps<ReactFlowCard<ChoiceNode>>) {
+  const node = props.data.node;
 
   return (
     <div className="custom-node">
-      <h2>{nodeData.title}</h2>
-      <p>{nodeData.prompt}</p>
+      <h2>{node.title}</h2>
+      <p>{node.prompt}</p>
       <Handle type="target" position={Position.Left} />
 
       <div className="mcq-container">
-        {nodeData.choices.map((choice, index) => (
+        {node.choices.map((choice, index) => (
           <div key={choice.id} className="creator-node-row">
             <button
               className="mcq-option"
-              onClick={() => {
-                // setSelectedId(choice.id);
-                // dispatch({ type: "NEXT_NODE", nextId: nextNodeFromChoice(choice.id) });
-              }}
             >
               {String.fromCharCode(65 + index)}. {choice.label}
             </button>

@@ -1,14 +1,25 @@
-import type { GenericNode } from "../../nodes";
+import type { EditorAction, EditorState } from "../EditorStore";
+import { TabRenderer } from "../tabs/TabRenderer";
 
-export type NodeEditorPanelProps ={
-    selectedNode?: GenericNode;
+export type NodeEditorPanelProps = {
+    editorState?: EditorState;
+    dispatch: React.ActionDispatch<[action: EditorAction]>;
 }
 
-const NodeEditorPanel = ({selectedNode}: NodeEditorPanelProps) => {
+
+const NodeEditorPanel = ({ editorState, dispatch }: NodeEditorPanelProps) => {
+    const doc = (editorState && editorState.status === "loaded") ? editorState.doc : null;
+    const ui = (editorState && editorState.status === "loaded") ? editorState.ui : null;
+    const node = doc?.nodes[ui?.selectedNodeId!];
+
+
     return (
-        <div className="min-h-full bg-gray-600 !mx-0 text-gray-100">
-            {selectedNode?.id}
-        </div>
+        <>
+            {node &&
+                <div className="min-h-full max-w-50 bg-gray-600 !mx-0 text-gray-100">
+                    <TabRenderer node={node} dispatch={dispatch} />
+                </div>
+            }</>
     );
 
 }

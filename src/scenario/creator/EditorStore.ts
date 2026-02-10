@@ -8,13 +8,15 @@ export type EditorState =|{
 |{
   status: 'loaded';
   doc: Scenario;
+  // TODO Add multiple node selection
   ui: {selectedNodeId: string|null;};
 }
 
 type NodePatch = {
-  [K in GenericNode['type']]:
-      Partial<Omit<Extract<GenericNode, {type: K}>, 'id'|'type'>>;
-};
+  [K in GenericNode['type']]: {
+    type: K;
+  } & Partial<Omit<Extract<GenericNode, {type: K}>, 'id'|'type'>>;
+}[GenericNode['type']];
 
 export type EditorAction =|{
   type: 'initScenario';
@@ -88,6 +90,8 @@ export function editorReducer(
       if (state.status !== 'loaded') return state;
       const node = state.doc.nodes[action.id];
       if (!node) return state;
+      if (action.patch.type !== node.type) return state;
+      const {type: _, ...patch} = action.patch;
 
       return {
         ...state,
@@ -95,7 +99,7 @@ export function editorReducer(
           ...state.doc,
           nodes: {
             ...state.doc.nodes,
-            [action.id]: {...node, ...action.patch},
+            [action.id]: {...node, ...patch},
           },
         },
       };

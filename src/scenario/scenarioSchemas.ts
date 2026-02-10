@@ -15,6 +15,7 @@ export const NodeEdgeSchema = z.object({
 });
 export type NodeEdge = z.infer<typeof NodeEdgeSchema>;
 
+// TODO Remove width and height
 export const NodeLayoutSchema = z.object({
   x: z.number(),
   y: z.number(),

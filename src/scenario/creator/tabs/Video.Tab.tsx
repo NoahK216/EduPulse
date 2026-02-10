@@ -1,9 +1,13 @@
 import type { VideoNode } from "../../nodeSchemas";
+import type { NodeTabProps } from "./TabRenderer";
 
-export function VideoTab(node: VideoNode) {
+// TODO shared components that dispatch for simple fields
+
+export function VideoTab({ node, dispatch }: NodeTabProps<VideoNode>) {
   return (
-    <div className="custom-node">
-      {node.title}
-    </div>
+    <>
+      <p>{node.title}</p>
+      <input></input>
+    </>
   );
 }

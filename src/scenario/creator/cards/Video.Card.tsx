@@ -1,33 +1,19 @@
 import type { VideoNode } from "../../nodeSchemas";
-import { useState } from "react";
 import {
   Handle,
   Position,
-  type Node,
   type NodeProps
 } from '@xyflow/react';
+import type { ReactFlowCard } from "./Cards";
 
-// type: z.literal('video'),
-// src: z.string(),
-// captionsSrc: z.string().optional(),
-// autoplay: z.boolean().optional(),
-// toNode: z.string().optional(),
 
-export type VideoNodeFlow = Node<
-  {
-    initialNode: VideoNode
-  }
->;
-
-// TODO We'll want a full screen node editor modal
-
-export function VideoCard(props: NodeProps<VideoNodeFlow>) {
-  const [nodeData, setNodeData] = useState<VideoNode>(props.data.initialNode);
+export function VideoCard(props: NodeProps<ReactFlowCard<VideoNode>>) {
+  const node = props.data.node;
 
   return (
     <div className="custom-node">
       <Handle type="target" position={Position.Left} />
-      <p>{nodeData.title}</p>
+      <p>{node.title}</p>
 
       {/* TODO Eventually store video uploads */}
 
@@ -39,8 +25,8 @@ export function VideoCard(props: NodeProps<VideoNodeFlow>) {
         disablePictureInPicture
         preload="auto"
       >
-        <source src={nodeData.src} />
-        <track src={nodeData.captionsSrc} kind="subtitles" srcLang="en" label="English" />
+        <source src={node.src} />
+        <track src={node.captionsSrc} kind="subtitles" srcLang="en" label="English" />
         Your browser does not support the video tag.
       </video>
 

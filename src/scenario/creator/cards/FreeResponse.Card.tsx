@@ -1,30 +1,22 @@
 import type { FreeResponseNode } from "../../nodeSchemas";
-import { useState } from "react";
 import {
   Handle,
   Position,
-  type Node,
   type NodeProps
 } from '@xyflow/react';
+import type { ReactFlowCard } from "./Cards";
 
-export type FreeResponseNodeFlow = Node<
-  {
-    initialNode: FreeResponseNode
-  }
-  >;
-
-export function FreeResponseCard(props: NodeProps<FreeResponseNodeFlow>) {
-  const [nodeData, setNodeData] = useState<FreeResponseNode>(props.data.initialNode);
-
+export function FreeResponseCard(props: NodeProps<ReactFlowCard<FreeResponseNode>>) {
+  const node = props.data.node;
 
   return (
     <div className="custom-node">
       <Handle type="target" position={Position.Left} />
-      <h2>{nodeData.title}</h2>
-      <p><strong>Question:</strong> {nodeData.prompt}</p>
+      <h2>{node.title}</h2>
+      <p><strong>Question:</strong> {node.prompt}</p>
 
       <div className="mcq-container">
-        {nodeData.rubric.answerBuckets.map((bucket) => (
+        {node.rubric.answerBuckets.map((bucket) => (
           <div key={bucket.id} className="creator-node-row">
             <div className="creator-bucket">{bucket.classifier}</div>
             <Handle type="source" position={Position.Right} id={bucket.id} />

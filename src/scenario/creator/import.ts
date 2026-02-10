@@ -25,10 +25,7 @@ export function flowNodeFromGenericNode(
   const baseNode: Node = {
     id: node.id,
     position,
-    data: {
-      label: node.title ?? node.id,
-      initialNode: node,
-    },
+    data: {node: node},
     width: layout?.width,
     height: layout?.height,
     draggable: layout?.locked ? false : undefined,
