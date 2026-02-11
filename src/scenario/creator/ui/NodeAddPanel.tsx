@@ -14,17 +14,23 @@ const NodeAddPanel = ({ editorDispatch }: NodeAddPanelProps) => {
     }
 
     return (
-        <div className="min-h-full w-fit select-none bg-gray-600 !mx-0 text-gray-100">
-            {Object.entries(nodeRegistry).map(([type, nodeEntry]) => (
-                <div
-                    key={type}
-                    className="rounded-sm p-2 m-2 hover:bg-gray-300 cursor-pointer"
-                    onClick={() => onNodeClick(nodeEntry)}
-                >
-                    {nodeEntry.type}
-                </div>
-            ))}
-        </div>
+        <aside className="h-full w-48 shrink-0 select-none border-r border-slate-700/80 bg-slate-900 px-3 py-4 text-slate-100">
+            <p className="px-1 text-xs font-semibold uppercase tracking-[0.14em] text-sky-300/90">
+                Add Node
+            </p>
+            <div className="mt-3 space-y-2">
+                {Object.entries(nodeRegistry).map(([type, nodeEntry]) => (
+                    <button
+                        key={type}
+                        type="button"
+                        className="w-full rounded-lg !border !border-slate-600/70 !bg-slate-800/70 !px-3 !py-2 text-left !text-sm font-medium capitalize !text-slate-100 transition hover:!border-sky-400/60 hover:!bg-slate-700/90"
+                        onClick={() => onNodeClick(nodeEntry)}
+                    >
+                        {nodeEntry.type.replace("_", " ")}
+                    </button>
+                ))}
+            </div>
+        </aside>
     );
 
 }

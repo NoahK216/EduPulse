@@ -9,7 +9,7 @@ export type EditorState =|{
   status: 'loaded';
   doc: Scenario;
   // TODO Add multiple node selection
-  ui: {selectedNodeId: string|null;};
+  ui: {inspectedNodeId: string|null;};
 }
 
 type NodePatch = {
@@ -22,7 +22,7 @@ export type EditorAction =|{
   scenario: Scenario
 }
 |{
-  type: 'selectNode';
+  type: 'inspectNode';
   id: string|null
 }
 |{
@@ -52,15 +52,15 @@ export function editorReducer(
       return {
         status: 'loaded',
         doc: action.scenario,
-        ui: {selectedNodeId: null}
+        ui: {inspectedNodeId: null}
       };
     }
 
-    case 'selectNode':
+    case 'inspectNode':
       if (state.status !== 'loaded') return state;
       return {
         ...state,
-        ui: {...state.ui, selectedNodeId: action.id},
+        ui: {...state.ui, inspectedNodeId: action.id},
       };
 
 
@@ -138,10 +138,10 @@ export function editorReducer(
         doc: {...state.doc, nodes, edges, layout},
         ui: {
           ...state.ui,
-          selectedNodeId: state.ui.selectedNodeId !== null &&
-                  deletedIds.has(state.ui.selectedNodeId) ?
+          inspectedNodeId: state.ui.inspectedNodeId !== null &&
+                  deletedIds.has(state.ui.inspectedNodeId) ?
               null :
-              state.ui.selectedNodeId,
+              state.ui.inspectedNodeId,
         }
       };
     }

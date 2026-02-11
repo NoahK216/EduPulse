@@ -5,24 +5,39 @@ import {
   type NodeProps
 } from '@xyflow/react';
 import type { ReactFlowCard } from "./Cards";
+import { NodeCardFrame } from "./NodeCardFrame";
 
 export function FreeResponseCard(props: NodeProps<ReactFlowCard<FreeResponseNode>>) {
   const node = props.data.node;
 
   return (
-    <div className="custom-node">
-      <Handle type="target" position={Position.Left} />
-      <h2>{node.title}</h2>
-      <p><strong>Question:</strong> {node.prompt}</p>
+    <NodeCardFrame nodeId={node.id} selected={Boolean(props.selected)}>
+      <Handle type="target" position={Position.Left} className="creator-handle" />
+      <p className="creator-card-kicker">Free Response</p>
+      <h2 className="creator-card-title">{node.title?.trim() || "Untitled prompt"}</h2>
+      <p className="creator-card-description">
+        {node.prompt?.trim() || "Prompt text not set."}
+      </p>
+      {node.rubric.context.trim() && (
+        <p className="creator-card-subtle">{node.rubric.context}</p>
+      )}
 
-      <div className="mcq-container">
-        {node.rubric.answerBuckets.map((bucket) => (
-          <div key={bucket.id} className="creator-node-row">
-            <div className="creator-bucket">{bucket.classifier}</div>
-            <Handle type="source" position={Position.Right} id={bucket.id} />
+      <div className="creator-card-list">
+        {node.rubric.answerBuckets.map((bucket, index) => (
+          <div key={bucket.id} className="creator-card-row">
+            <span className="creator-card-badge">{index + 1}</span>
+            <div className="creator-card-pill">
+              {bucket.classifier?.trim() || `Bucket ${index + 1}`}
+            </div>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id={bucket.id}
+              className="creator-handle"
+            />
           </div>
         ))}
       </div>
-    </div >
+    </NodeCardFrame>
   );
 }
