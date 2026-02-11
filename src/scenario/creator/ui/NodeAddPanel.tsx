@@ -1,8 +1,8 @@
 import { nodeRegistry } from "../../nodes";
-import type { EditorAction } from "../EditorStore";
+import type { EditorDispatch } from "../EditorStore";
 
 export type NodeAddPanelProps = {
-    editorDispatch: React.ActionDispatch<[action: EditorAction]>;
+    editorDispatch: EditorDispatch;
 };
 
 

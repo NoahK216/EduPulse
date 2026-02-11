@@ -1,9 +1,8 @@
 import type {EdgeChange, NodeChange, XYPosition} from '@xyflow/react';
-import type {EditorAction} from './EditorStore';
+import type { EditorDispatch} from './EditorStore';
 
 export const dispatchOnNodesChange =
-    (dispatch: React.ActionDispatch<[action: EditorAction]>,
-     changes: NodeChange[]) => {
+    (dispatch: EditorDispatch, changes: NodeChange[]) => {
       // Aggregate
       const positions: Record<string, XYPosition> = {};
       const removedIds: string[] = [];
@@ -34,7 +33,6 @@ export const dispatchOnNodesChange =
 
 // TODO
 export const dispatchOnEdgesChange =
-    (dispatch: React.ActionDispatch<[action: EditorAction]>,
-     changes: EdgeChange[]) => {
+    (dispatch: EditorDispatch, changes: EdgeChange[]) => {
 
     }

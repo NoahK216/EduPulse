@@ -13,9 +13,8 @@ export type EditorState =|{
 }
 
 type NodePatch = {
-  [K in GenericNode['type']]: {
-    type: K;
-  } & Partial<Omit<Extract<GenericNode, {type: K}>, 'id'|'type'>>;
+  [K in GenericNode['type']]: {type: K;}&
+  Partial<Omit<Extract<GenericNode, {type: K}>, 'id'|'type'>>;
 }[GenericNode['type']];
 
 export type EditorAction =|{
@@ -139,13 +138,14 @@ export function editorReducer(
         doc: {...state.doc, nodes, edges, layout},
         ui: {
           ...state.ui,
-          selectedNodeId:
-              state.ui.selectedNodeId !== null &&
+          selectedNodeId: state.ui.selectedNodeId !== null &&
                   deletedIds.has(state.ui.selectedNodeId) ?
-                null :
-                state.ui.selectedNodeId,
-        },
+              null :
+              state.ui.selectedNodeId,
+        }
       };
     }
   }
 }
+
+export type EditorDispatch = React.ActionDispatch<[action: EditorAction]>;

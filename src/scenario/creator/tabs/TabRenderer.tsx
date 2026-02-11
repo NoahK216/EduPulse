@@ -1,9 +1,9 @@
 import { tabs, type GenericNode } from "../../nodes";
-import type { EditorAction } from "../EditorStore";
+import type { EditorDispatch } from "../EditorStore";
 
 export type NodeTabProps<N extends GenericNode = GenericNode> = {
   node: N;
-  dispatch: React.ActionDispatch<[action: EditorAction]>;
+  dispatch: EditorDispatch;
 };
 
 export function TabRenderer(props: NodeTabProps) {
