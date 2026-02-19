@@ -1,5 +1,5 @@
 import type {GenericNode} from '../nodes';
-import type {Scenario} from '../scenarioSchemas';
+import type {NodeEdge, Scenario} from '../scenarioSchemas';
 import type {XYPosition} from '@xyflow/react';
 
 export type EditorState =|{
@@ -41,7 +41,29 @@ export type EditorAction =|{
 |{
   type: 'deleteNodes';
   ids: string[]
+}
+|{
+  type: 'addEdge';
+  edge: NodeEdge;
+}
+|{
+  type: 'deleteEdges';
+  ids: string[]
+}
+|{
+  type: 'replaceEdge';
+  id: string;
+  edge: NodeEdge;
 };
+
+const edgeConnectionMatches = (a: NodeEdge, b: NodeEdge) =>
+  a.from.nodeId === b.from.nodeId &&
+  a.from.port === b.from.port &&
+  a.to?.nodeId === b.to?.nodeId;
+
+const edgeOutgoingHandleMatches = (a: NodeEdge, b: NodeEdge) =>
+  a.from.nodeId === b.from.nodeId &&
+  a.from.port === b.from.port;
 
 export function editorReducer(
     state: EditorState, action: EditorAction): EditorState {
@@ -143,6 +165,88 @@ export function editorReducer(
               null :
               state.ui.inspectedNodeId,
         }
+      };
+    }
+
+    case 'addEdge': {
+      if (state.status !== 'loaded') return state;
+      if (!state.doc.nodes[action.edge.from.nodeId]) return state;
+      if (action.edge.to?.nodeId && !state.doc.nodes[action.edge.to.nodeId]) {
+        return state;
+      }
+
+      const exactMatch = state.doc.edges.find((edge) =>
+        edge.id === action.edge.id &&
+        edgeConnectionMatches(edge, action.edge));
+      const conflictingEdges = state.doc.edges.filter((edge) =>
+        edge.id === action.edge.id ||
+        edgeOutgoingHandleMatches(edge, action.edge));
+
+      if (exactMatch && conflictingEdges.length === 1) {
+        return state;
+      }
+
+      const nextEdges = state.doc.edges.filter((edge) =>
+        edge.id !== action.edge.id &&
+        !edgeOutgoingHandleMatches(edge, action.edge));
+
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          edges: [...nextEdges, action.edge],
+        },
+      };
+    }
+
+    case 'deleteEdges': {
+      if (state.status !== 'loaded') return state;
+      const edgeIdsToDelete = new Set(action.ids);
+      const nextEdges =
+          state.doc.edges.filter((edge) => !edgeIdsToDelete.has(edge.id));
+      if (nextEdges.length === state.doc.edges.length) return state;
+
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          edges: nextEdges,
+        },
+      };
+    }
+
+    case 'replaceEdge': {
+      if (state.status !== 'loaded') return state;
+      if (!state.doc.nodes[action.edge.from.nodeId]) return state;
+      if (action.edge.to?.nodeId && !state.doc.nodes[action.edge.to.nodeId]) {
+        return state;
+      }
+      const edgeToReplace = state.doc.edges.find((edge) => edge.id === action.id);
+      if (!edgeToReplace) return state;
+
+      const exactMatch = edgeToReplace.id === action.edge.id &&
+          edgeConnectionMatches(edgeToReplace, action.edge);
+      const hasConflictingEdge = state.doc.edges.some((edge) =>
+        edge.id !== action.id &&
+        (edge.id === action.edge.id ||
+        edgeOutgoingHandleMatches(edge, action.edge)));
+
+      if (exactMatch && !hasConflictingEdge) {
+        return state;
+      }
+
+      const nextEdges = state.doc.edges.filter((edge) =>
+        edge.id !== action.id &&
+        edge.id !== action.edge.id &&
+        !edgeOutgoingHandleMatches(edge, action.edge));
+      nextEdges.push(action.edge);
+
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          edges: nextEdges,
+        },
       };
     }
   }

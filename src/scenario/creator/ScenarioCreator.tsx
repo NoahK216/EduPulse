@@ -26,7 +26,13 @@ import { ScenarioImportButton } from './ui/ScenarioImportButton';
 import { NodeInspectorProvider } from './cards/NodeCardFrame';
 
 import { editorReducer } from './EditorStore';
-import { dispatchOnEdgesChange, dispatchOnNodesChange } from './ScenarioCreatorCallbacks';
+import {
+    createEdgeFromConnection,
+    dispatchOnEdgesChange,
+    dispatchOnNodesChange,
+    enforceSingleOutgoingConnectionPerHandle,
+    toScenarioEdge,
+} from './ScenarioCreatorCallbacks';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -89,8 +95,16 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
 
 
     const onConnect: OnConnect = useCallback(
-        (params) => setRfEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-        [],
+        (params) => {
+            const createdEdge = createEdgeFromConnection(params);
+            if (!createdEdge) return;
+
+            dispatch({ type: "addEdge", edge: toScenarioEdge(createdEdge) });
+            setRfEdges((edgesSnapshot) =>
+                enforceSingleOutgoingConnectionPerHandle(
+                    addEdge(createdEdge, edgesSnapshot)));
+        },
+        [dispatch],
     );
 
     const onNodesChange: OnNodesChange = useCallback(
@@ -104,9 +118,11 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
     const onEdgesChange: OnEdgesChange = useCallback(
         (changes) => {
             dispatchOnEdgesChange(dispatch, changes);
-            setRfEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot))
+            setRfEdges((edgesSnapshot) =>
+                enforceSingleOutgoingConnectionPerHandle(
+                    applyEdgeChanges(changes, edgesSnapshot)))
         },
-        [],
+        [dispatch],
     );
 
     const inspectNode = useCallback((nodeId: string) => {
