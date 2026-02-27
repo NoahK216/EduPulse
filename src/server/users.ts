@@ -1,7 +1,7 @@
 import express from "express";
 import { z } from "zod";
 
-import { prisma } from "./db.js";
+import { prisma } from "./prisma.js";
 import { Prisma } from "../../prisma/generated/client.js";
 
 const UserRoleSchema = z.enum(["trainee", "trainer", "admin"]);

@@ -1,6 +1,6 @@
 import type { RequestHandler } from 'express';
 import express from 'express';
-import { prisma } from "./db.js";
+import { prisma } from "./prisma.js";
 
 function getTokenFromReq(req: any): string | null {
   // Check Authorization header

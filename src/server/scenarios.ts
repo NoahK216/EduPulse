@@ -1,7 +1,7 @@
 import express from 'express';
 
 import { ScenarioSchema } from '../scenario/scenarioSchemas.js';
-import { prisma } from './db.js';
+import { prisma } from "./prisma.js";
 
 function parseUserId(value: string): number | null {
   const parsed = Number(value);
@@ -35,7 +35,7 @@ export function createScenarioRouter() {
     const validScenario = validation.data;
 
     try {
-      const savedScenario = await prisma.scenarios.upsert({
+      const savedScenario = await prisma.scenario.upsert({
         where: { id: validScenario.id },
         create: {
           id: validScenario.id,
@@ -50,7 +50,13 @@ export function createScenarioRouter() {
           content: validScenario,
           updated_at: new Date(),
         },
-        select: { id: true, user_id: true, title: true, created_at: true, updated_at: true },
+        select: {
+          id: true,
+          user_id: true,
+          title: true,
+          created_at: true,
+          updated_at: true,
+        },
       });
 
       res.json({ scenario: savedScenario });
@@ -68,10 +74,16 @@ export function createScenarioRouter() {
     }
 
     try {
-      const scenarios = await prisma.scenarios.findMany({
+      const scenarios = await prisma.scenario.findMany({
         where: { user_id: parsedUserId },
-        orderBy: { updated_at: 'desc' },
-        select: { id: true, title: true, scenario_version: true, created_at: true, updated_at: true },
+        orderBy: { updated_at: "desc" },
+        select: {
+          id: true,
+          title: true,
+          scenario_version: true,
+          created_at: true,
+          updated_at: true,
+        },
       });
 
       res.json({ scenarios });
@@ -86,7 +98,7 @@ export function createScenarioRouter() {
     const { scenarioId } = req.params;
 
     try {
-      const scenarioRow = await prisma.scenarios.findUnique({
+      const scenarioRow = await prisma.scenario.findUnique({
         where: { id: scenarioId },
         select: {
           id: true,
@@ -129,7 +141,7 @@ export function createScenarioRouter() {
     }
 
     try {
-      const result = await prisma.scenarios.deleteMany({
+      const result = await prisma.scenario.deleteMany({
         where: { id: scenarioId, user_id: parsedUserId },
       });
 

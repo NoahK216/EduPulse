@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import {z} from 'zod';
 
 import {RubricSchema} from '../scenario/nodeSchemas.js';
-import {prisma} from './db.js';
+import { prisma } from "./prisma.js";
 
 // ---- Shared schemas/types (single source of truth) ----
 export const rubricSchema = RubricSchema;
@@ -113,7 +113,7 @@ export async function gradeWithOpenAI(
   // Save submission to database if userId and scenarioId provided
   if (userId !== undefined && scenarioId) {
     try {
-      await prisma.submissions.create({
+      await prisma.submission.create({
         data: {
           user_id: userId,
           scenario_id: scenarioId,
