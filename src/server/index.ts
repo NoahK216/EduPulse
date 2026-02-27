@@ -5,7 +5,6 @@ import OpenAI from 'openai';
 import path from 'path';
 
 import {createGraderRouter} from './grader.js';
-import {initializeDatabase} from './db.js';
 import {createUserRouter} from './users.js';
 import {createScenarioRouter} from './scenarios.js';
 import {createAuthRouter} from './auth.js';
@@ -36,7 +35,6 @@ const port = Number(process.env.PORT) || 8787;
 // Initialize database and start server
 (async () => {
   try {
-    await initializeDatabase();
     app.listen(port, () => {
       console.log(`🚀 EduPulse API listening on http://localhost:${port}`);
     });

@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import {z} from 'zod';
 
 import {RubricSchema} from '../scenario/nodeSchemas.js';
-import {getPool} from './db.js';
+import {prisma} from './db.js';
 
 // ---- Shared schemas/types (single source of truth) ----
 export const rubricSchema = RubricSchema;
@@ -107,16 +107,23 @@ export async function gradeWithOpenAI(
   }
 
   const result = enforceResult(parsed, body.rubric);
+  const normalizedNodeId =
+    typeof nodeId === 'string' && nodeId.length > 0 ? nodeId : 'unknown';
 
   // Save submission to database if userId and scenarioId provided
-  if (userId && scenarioId) {
+  if (userId !== undefined && scenarioId) {
     try {
-      const pool = getPool();
-      await pool.query(
-        `INSERT INTO submissions (user_id, scenario_id, node_id, question_prompt, user_response_text, bucket_id, feedback)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [userId, scenarioId, nodeId || 'unknown', body.question_prompt, body.user_response_text, result.bucket_id, result.feedback]
-      );
+      await prisma.submissions.create({
+        data: {
+          user_id: userId,
+          scenario_id: scenarioId,
+          node_id: normalizedNodeId,
+          question_prompt: body.question_prompt,
+          user_response_text: body.user_response_text,
+          bucket_id: result.bucket_id,
+          feedback: result.feedback,
+        },
+      });
     } catch (error) {
       console.error('Failed to save submission:', error);
       // Don't fail the grading request if database save fails
@@ -220,7 +227,17 @@ export function createGraderRouter(openai: OpenAI) {
 
     try {
       const { userId, scenarioId, nodeId } = req.body;
-      const result = await gradeWithOpenAI(openai, parsed.data, userId, scenarioId, nodeId);
+      let parsedUserId: number | undefined;
+      if (userId !== undefined && userId !== null) {
+        const numericUserId = typeof userId === 'number' ? userId : Number(userId);
+        if (!Number.isInteger(numericUserId)) {
+          return res.status(400).json({ error: 'userId must be an integer' });
+        }
+        parsedUserId = numericUserId;
+      }
+      const parsedScenarioId = typeof scenarioId === 'string' ? scenarioId : undefined;
+
+      const result = await gradeWithOpenAI(openai, parsed.data, parsedUserId, parsedScenarioId, nodeId);
       res.json(result);
     } catch (error) {
       console.error('Grading failed', error);

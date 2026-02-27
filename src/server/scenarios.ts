@@ -1,10 +1,18 @@
 import express from 'express';
-import { getPool } from './db.js';
-import { ScenarioSchema, Scenario } from '../scenario/scenarioSchemas.js';
+
+import { ScenarioSchema } from '../scenario/scenarioSchemas.js';
+import { prisma } from './db.js';
+
+function parseUserId(value: string): number | null {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return null;
+  return parsed;
+}
+
+// TODO Noah: I'll go through here and 
 
 export function createScenarioRouter() {
   const router = express.Router();
-  const pool = getPool();
 
   // Save scenario
   router.post('/', async (req, res) => {
@@ -12,6 +20,10 @@ export function createScenarioRouter() {
 
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
+    }
+    const parsedUserId = typeof userId === 'number' ? userId : Number(userId);
+    if (!Number.isInteger(parsedUserId)) {
+      return res.status(400).json({ error: 'userId must be an integer' });
     }
 
     // Validate scenario format
@@ -23,16 +35,25 @@ export function createScenarioRouter() {
     const validScenario = validation.data;
 
     try {
-      const result = await pool.query(
-        `INSERT INTO scenarios (id, user_id, title, scenario_version, content)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO UPDATE SET
-           title = $3, scenario_version = $4, content = $5, updated_at = NOW()
-         RETURNING id, user_id, title, created_at, updated_at`,
-        [validScenario.id, userId, validScenario.title, validScenario.scenarioVersion, JSON.stringify(validScenario)]
-      );
+      const savedScenario = await prisma.scenarios.upsert({
+        where: { id: validScenario.id },
+        create: {
+          id: validScenario.id,
+          user_id: parsedUserId,
+          title: validScenario.title,
+          scenario_version: validScenario.scenarioVersion,
+          content: validScenario,
+        },
+        update: {
+          title: validScenario.title,
+          scenario_version: validScenario.scenarioVersion,
+          content: validScenario,
+          updated_at: new Date(),
+        },
+        select: { id: true, user_id: true, title: true, created_at: true, updated_at: true },
+      });
 
-      res.json({ scenario: result.rows[0] });
+      res.json({ scenario: savedScenario });
     } catch (error) {
       console.error('Save scenario error:', error);
       res.status(500).json({ error: 'Failed to save scenario' });
@@ -41,15 +62,19 @@ export function createScenarioRouter() {
 
   // Get user's scenarios
   router.get('/user/:userId', async (req, res) => {
-    const { userId } = req.params;
+    const parsedUserId = parseUserId(req.params.userId);
+    if (!parsedUserId) {
+      return res.status(400).json({ error: 'userId must be an integer' });
+    }
 
     try {
-      const result = await pool.query(
-        'SELECT id, title, scenario_version, created_at, updated_at FROM scenarios WHERE user_id = $1 ORDER BY updated_at DESC',
-        [userId]
-      );
+      const scenarios = await prisma.scenarios.findMany({
+        where: { user_id: parsedUserId },
+        orderBy: { updated_at: 'desc' },
+        select: { id: true, title: true, scenario_version: true, created_at: true, updated_at: true },
+      });
 
-      res.json({ scenarios: result.rows });
+      res.json({ scenarios });
     } catch (error) {
       console.error('Get scenarios error:', error);
       res.status(500).json({ error: 'Failed to get scenarios' });
@@ -61,20 +86,27 @@ export function createScenarioRouter() {
     const { scenarioId } = req.params;
 
     try {
-      const result = await pool.query(
-        'SELECT id, user_id, title, scenario_version, content, created_at, updated_at FROM scenarios WHERE id = $1',
-        [scenarioId]
-      );
+      const scenarioRow = await prisma.scenarios.findUnique({
+        where: { id: scenarioId },
+        select: {
+          id: true,
+          user_id: true,
+          title: true,
+          scenario_version: true,
+          content: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
 
-      if (result.rows.length === 0) {
+      if (!scenarioRow) {
         return res.status(404).json({ error: 'Scenario not found' });
       }
 
-      const row = result.rows[0];
       res.json({ 
         scenario: {
-          ...row,
-          content: typeof row.content === 'string' ? JSON.parse(row.content) : row.content
+          ...scenarioRow,
+          content: scenarioRow.content,
         }
       });
     } catch (error) {
@@ -91,14 +123,17 @@ export function createScenarioRouter() {
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' });
     }
+    const parsedUserId = typeof userId === 'number' ? userId : Number(userId);
+    if (!Number.isInteger(parsedUserId)) {
+      return res.status(400).json({ error: 'userId must be an integer' });
+    }
 
     try {
-      const result = await pool.query(
-        'DELETE FROM scenarios WHERE id = $1 AND user_id = $2 RETURNING id',
-        [scenarioId, userId]
-      );
+      const result = await prisma.scenarios.deleteMany({
+        where: { id: scenarioId, user_id: parsedUserId },
+      });
 
-      if (result.rows.length === 0) {
+      if (result.count === 0) {
         return res.status(404).json({ error: 'Scenario not found or unauthorized' });
       }
 
