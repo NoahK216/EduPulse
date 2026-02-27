@@ -1,51 +1,218 @@
 .creator-demo {
-    color: #213547;
-    background-color: #ffffff;
-
-
-    a:hover {
-        color: #747bff;
-    }
-
-    button {
-        background-color: #f9f9f9;
-    }
+    color: #e2e8f0;
+    background-color: #020617;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
 }
-.custom-node {
-    --creator-node-padding: 10px;
-    padding: var(--creator-node-padding);
-    border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));
+
+.creator-demo .react-flow__controls {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.95);
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
+}
+
+.creator-demo .react-flow__controls-button {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    padding: 0;
+    background: #0f172a;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: background 120ms ease-in-out, border-color 120ms ease-in-out;
+}
+
+.creator-demo .react-flow__controls-button:last-child {
+    border-bottom: 0;
+}
+
+.creator-demo .react-flow__controls-button:hover {
+    border-color: rgba(125, 211, 252, 0.5);
+    background: #1e293b;
+}
+
+.creator-demo .react-flow__controls-button svg {
+    fill: currentColor;
+}
+
+.creator-demo .react-flow__minimap {
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.88);
+}
+
+.creator-demo .react-flow__nodesselection-rect {
+    pointer-events: none;
+}
+
+.creator-card {
+    --creator-card-padding: 12px;
+    min-width: 250px;
+    max-width: 320px;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 14px;
+    padding: var(--creator-card-padding);
+    background: linear-gradient(165deg, #0f172a 0%, #132045 100%);
+    color: #e2e8f0;
+    box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
+    transition: border-color 140ms ease-in-out, box-shadow 140ms ease-in-out;
+}
+
+.creator-card--selected {
+    border-color: rgba(125, 211, 252, 0.7);
+    box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.4), 0 14px 28px rgba(2, 6, 23, 0.52);
+}
+
+.creator-card--inspected {
+    border-color: rgba(125, 211, 252, 0.95);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.5), 0 16px 32px rgba(2, 6, 23, 0.6);
+}
+
+.creator-card--inspected .creator-card-kicker {
+    color: #bae6fd;
+}
+
+.creator-card-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 10px;
+    font-weight: 700;
+    color: #7dd3fc;
+}
+
+.creator-card-title {
+    margin: 4px 0 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.creator-card-description {
+    margin: 6px 0 0;
     font-size: 12px;
-    color: var(--xy-node-color, var(--xy-node-color-default));
-    text-align: center;
-    border: var(--xy-node-border, var(--xy-node-border-default));
-    background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
+    line-height: 1.35;
+    color: rgba(226, 232, 240, 0.9);
 }
 
-.custom-node .mcq-container {
+.creator-card-subtle {
+    margin: 6px 0 0;
+    font-size: 11px;
+    color: rgba(226, 232, 240, 0.72);
+}
+
+.creator-card-list {
+    margin-top: 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 7px;
 }
 
-.creator-node-row {
+.creator-card-row {
     position: relative;
     display: flex;
     align-items: center;
+    gap: 8px;
     width: 100%;
-    padding-right: var(--creator-node-padding);
-    margin-right: calc(var(--creator-node-padding) * -1);
+    padding-right: var(--creator-card-padding);
+    margin-right: calc(var(--creator-card-padding) * -1);
 }
 
-.creator-node-row .react-flow__handle {
+.creator-card-row .react-flow__handle {
     top: 50%;
 }
 
-.creator-bucket {
+.creator-card-badge {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(125, 211, 252, 0.45);
+    background: rgba(14, 116, 144, 0.25);
+    color: #bae6fd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.creator-card-pill {
     flex: 1;
+    min-width: 0;
+    border-radius: 7px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(15, 23, 42, 0.7);
+    color: #f1f5f9;
+    padding: 5px 8px;
+    font-size: 12px;
+    line-height: 1.25;
     text-align: left;
-    border-radius: 5px;
-    border: 1px solid #000;
-    padding: 4px 6px;
+    word-break: break-word;
+}
+
+.creator-card-meta {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.creator-card-tag {
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.7);
+    color: #cbd5e1;
+    padding: 3px 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+}
+
+.creator-card-video-preview {
+    margin-top: 10px;
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 9px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(2, 6, 23, 0.55);
+}
+
+.creator-card-video-preview {
+    object-fit: contain;
+}
+
+.creator-card-video-empty {
+    margin-top: 10px;
+    width: 100%;
+    height: 108px;
+    border-radius: 9px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(2, 6, 23, 0.55);
+}
+
+.creator-card-video-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(203, 213, 225, 0.75);
+}
+
+.creator-handle {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid #e2e8f0;
+    background: #0ea5e9;
 }

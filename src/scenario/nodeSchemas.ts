@@ -8,7 +8,7 @@ export type BaseNode = z.infer<typeof BaseNodeSchema>;
 
 export const VideoNodeSchema = BaseNodeSchema.extend({
   type: z.literal('video'),
-  src: z.string(),
+  src: z.string().optional(),
   captionsSrc: z.string().optional(),
   autoplay: z.boolean().optional()
 });

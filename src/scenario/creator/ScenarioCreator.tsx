@@ -1,20 +1,38 @@
-import { useState, useCallback, useEffect } from 'react';
-import { flowGraphFromEditorScenario, loadEditorScenario, type EditorScenario } from './EditorScenarioSchemas';
+import { useState, useCallback, useEffect, useReducer } from 'react';
+import { type Scenario } from '../scenarioSchemas';
 import { cards } from '../nodes';
 import {
-    ReactFlow, applyNodeChanges, applyEdgeChanges, addEdge,
+    ReactFlow, applyNodeChanges, addEdge,
     type Node,
     type Edge,
     type FitViewOptions,
     type OnConnect,
     type OnNodesChange,
-    type OnEdgesChange,
-    type OnNodeDrag,
     type DefaultEdgeOptions,
     Background,
     Controls,
+    MiniMap,
+    type ReactFlowInstance,
+    type OnEdgesChange,
+    applyEdgeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import NodeAddPanel from './ui/NodeAddPanel';
+import MenuBar from './ui/MenuBar';
+import NodeEditorPanel from './ui/NodeEditorPanel';
+import { downloadJson } from './DownloadJson';
+import { flowGraphFromScenario, loadScenario } from './import';
+import { ScenarioImportButton } from './ui/ScenarioImportButton';
+import { NodeInspectorProvider } from './cards/NodeCardFrame';
+
+import { editorReducer } from './EditorStore';
+import {
+    createEdgeFromConnection,
+    dispatchOnEdgesChange,
+    dispatchOnNodesChange,
+    enforceSingleOutgoingConnectionPerHandle,
+    toScenarioEdge,
+} from './ScenarioCreatorCallbacks';
 
 
 const fitViewOptions: FitViewOptions = {
@@ -25,68 +43,152 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
     animated: true,
 };
 
+// TODO rename initialNode to nodeData or something
+
 const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
-    const [editorScenario, setEditorScenario] = useState<EditorScenario | undefined>();
-    const [scenarioState, setScenarioState] = useState<'loading' | 'creating' | 'error'>(scenarioUrl ? 'loading' : 'creating')
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [state, dispatch] = useReducer(editorReducer, { status: "idle" });
 
-    const [nodes, setNodes] = useState<Node[]>([]);
-    const [edges, setEdges] = useState<Edge[]>([]);
+    const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
+    const [rfNodes, setRfNodes] = useState<Node[]>([]);
+    const [rfEdges, setRfEdges] = useState<Edge[]>([]);
+    const inspectedNodeId = state.status === "loaded" ? state.ui.inspectedNodeId : null;
 
-    const initializeEditor = (e: EditorScenario) => {
-        setEditorScenario(e);
-        const { nodes, edges } = flowGraphFromEditorScenario(e);
-        setNodes(nodes);
-        setEdges(edges);
-        console.log(nodes, edges)
+    const preserveReactFlowSelection = useCallback((nextNodes: Node[], prevNodes: Node[]) => {
+        const selectedIds = new Set(
+            prevNodes.filter((nodeSnapshot) => nodeSnapshot.selected).map((nodeSnapshot) => nodeSnapshot.id),
+        );
+
+        if (selectedIds.size === 0) return nextNodes;
+
+        return nextNodes.map((nodeSnapshot) =>
+            selectedIds.has(nodeSnapshot.id) ?
+                { ...nodeSnapshot, selected: true } :
+                nodeSnapshot,
+        );
+    }, []);
+
+    const initializeEditor = (e: Scenario) => {
+        dispatch({ type: "initScenario", scenario: e });
+        requestAnimationFrame(() => reactFlowInstance?.fitView());
     }
 
     useEffect(() => {
         if (scenarioUrl) {
-            loadEditorScenario(scenarioUrl)
+            loadScenario(scenarioUrl)
                 .then((parsed) => {
                     initializeEditor(parsed);
-                })
-                .catch((error) => {
-                    const message = error instanceof Error ? error.message : "Failed to load scenario";
-                    setErrorMessage(message);
-                    setScenarioState('error');
                 })
         }
     }, [scenarioUrl]);
 
-    // const exportStateAsJSON = () => {
-    // }
+    // Drives ReactFlow state by the SSoT: editorReducer
+    useEffect(() => {
+        if (state.status !== "loaded") return;
+        console.log(state.doc)
+
+        const { nodes, edges } = flowGraphFromScenario(state.doc);
+        setRfNodes((nodesSnapshot) => {
+            return preserveReactFlowSelection(nodes, nodesSnapshot);
+        });
+        setRfEdges(edges);
+    }, [state.status, state.status === "loaded" ? state.doc : null, preserveReactFlowSelection, setRfNodes, setRfEdges]);
+
+
+    const onConnect: OnConnect = useCallback(
+        (params) => {
+            const createdEdge = createEdgeFromConnection(params);
+            if (!createdEdge) return;
+
+            dispatch({ type: "addEdge", edge: toScenarioEdge(createdEdge) });
+            setRfEdges((edgesSnapshot) =>
+                enforceSingleOutgoingConnectionPerHandle(
+                    addEdge(createdEdge, edgesSnapshot)));
+        },
+        [dispatch],
+    );
 
     const onNodesChange: OnNodesChange = useCallback(
-        (changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
-        [],
+        (changes) => {
+            dispatchOnNodesChange(dispatch, changes);
+            setRfNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot))
+        },
+        [dispatch],
     );
+
     const onEdgesChange: OnEdgesChange = useCallback(
-        (changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
-        [],
+        (changes) => {
+            dispatchOnEdgesChange(dispatch, changes);
+            setRfEdges((edgesSnapshot) =>
+                enforceSingleOutgoingConnectionPerHandle(
+                    applyEdgeChanges(changes, edgesSnapshot)))
+        },
+        [dispatch],
     );
-    const onConnect: OnConnect = useCallback(
-        (params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)),
-        [],
+
+    const inspectNode = useCallback((nodeId: string) => {
+        dispatch({ type: "inspectNode", id: nodeId });
+    }, [dispatch]);
+
+    const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+        if (node) {
+            inspectNode(node.id);
+        }
+    },
+        [inspectNode],
     );
 
     return (
-        <div style={{ width: '100vw', height: '100vh' }}>
-            <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={cards}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                fitView
-                fitViewOptions={fitViewOptions}
-                defaultEdgeOptions={defaultEdgeOptions}
-            >
-                <Background />
-                <Controls />
-            </ReactFlow>
+        <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+            <MenuBar >
+                {state.status === "loaded" &&
+                    <button
+                        className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20"
+                        onClick={() =>
+                        downloadJson(state.doc, "scenario.json")}
+                    >
+                        Download JSON
+                    </button>
+                }
+                <ScenarioImportButton onLoaded={initializeEditor} />
+
+            </MenuBar>
+            <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
+                <NodeAddPanel editorDispatch={dispatch} />
+                <NodeInspectorProvider inspectedNodeId={inspectedNodeId} inspectNode={inspectNode}>
+                    <ReactFlow
+                        className="flex-1 min-h-0 min-w-0"
+                        onInit={(instance) => setReactFlowInstance(instance)}
+                        nodes={rfNodes}
+                        edges={rfEdges}
+                        nodeTypes={cards}
+                        proOptions={{ hideAttribution: true }}
+
+                        fitView
+                        fitViewOptions={fitViewOptions}
+                        defaultEdgeOptions={defaultEdgeOptions}
+                        panOnDrag={[2]}
+                        selectionOnDrag={true}
+
+                        onNodeClick={onNodeClick}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        // TODO
+                        onConnect={onConnect}
+                        // onNodesDelete={ }
+                        // onEdgesDelete={}
+                    >
+                        <Background />
+
+
+                        {/* Panels */}
+                        <MiniMap nodeStrokeWidth={3} />
+
+                        {/* TODO Move these to toolbar below MenuBar */}
+                        <Controls />
+                    </ReactFlow>
+                </NodeInspectorProvider>
+                <NodeEditorPanel editorState={state} dispatch={dispatch} />
+            </div>
         </div>
     );
 }

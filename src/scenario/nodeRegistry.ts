@@ -1,19 +1,21 @@
 import { z } from "zod";
 
 type AnyZod = z.ZodTypeAny;
+type InferSchema<S extends AnyZod> = z.infer<S>;
 
 type NodeDef<
   Type extends string,
   Schema extends AnyZod,
-  Scene,
-  Card,
-  Tab,
+  Scene extends React.ComponentType<any>,
+  Card extends React.ComponentType<any>,
+  Tab extends React.ComponentType<any>,
 > = {
   type: Type;
   schema: Schema;
   scene: Scene;
   card: Card;
   tab: Tab;
+  factory: (partial?: Partial<InferSchema<Schema>>) => InferSchema<Schema>;
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
