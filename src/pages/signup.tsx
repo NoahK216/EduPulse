@@ -51,7 +51,9 @@ function Signup() {
       <main className="mx-auto max-w-md px-8 py-15">
         <h1 className="text-3xl font-semibold">Create Account</h1>
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {error && <div className="text-red-400 text-sm">{error}</div>}
+          <div aria-live="polite">
+            {error && <div className="text-red-400 text-sm">{error}</div>}
+          </div>
           <div className="grid gap-5 grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-neutral-200">
@@ -69,7 +71,7 @@ function Signup() {
               Last Name
             </label>
             <input
-                className="mt-2 w-half rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className={`mt-2 w-half rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
@@ -81,7 +83,7 @@ function Signup() {
               Email
             </label>
             <input
-                className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -92,7 +94,7 @@ function Signup() {
               Password
             </label>
             <input
-                className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -103,7 +105,7 @@ function Signup() {
               Confirm Password
             </label>
             <input
-                className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}

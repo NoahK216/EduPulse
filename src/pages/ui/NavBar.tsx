@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { authClient } from "../../lib/auth-client";
 
 function NavBar() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const loc = useLocation();
+  const navigate = useNavigate();
+  const session = authClient.useSession();
+  const userName = session?.user?.name || session?.user?.email;
 
   useEffect(() => {
     setOpen(false);
@@ -43,11 +47,37 @@ function NavBar() {
 
         {open && (
           <div className="absolute right-0 mt-2 w-48 rounded-md bg-neutral-800 border border-gray-700 shadow-lg overflow-hidden">
-            <Link
-              to="/login"
-              className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
-              Login
-            </Link>
+            {session?.session ? (
+              // logged-in menu
+              <>
+                <p className="block !text-white px-3 py-2 text-sm">
+                  {userName}
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await authClient.signOut();
+                    navigate("/");
+                  }}
+                  className="block w-full text-left !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  Logout
+                </button>
+              </>
+            ) : (
+              // not logged in
+              <>
+                <Link
+                  to="/login"
+                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  Sign up
+                </Link>
+              </>
+            )}
             <Link
               to="/classroom"
               className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">

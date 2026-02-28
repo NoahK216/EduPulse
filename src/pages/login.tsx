@@ -39,12 +39,10 @@ function Login() {
       <main className="mx-auto max-w-md px-8 py-20">
         <h1 className="text-3xl font-semibold">Log in</h1>
                 <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          {error && (
-            <div className="text-red-400 text-sm">{error}</div>
-          )}
-          {message && (
-            <div className="text-green-400 text-sm">{message}</div>
-          )}
+          <div aria-live="polite">
+            {error && <div className="text-red-400 text-sm">{error}</div>}
+            {message && <div className="text-green-400 text-sm">{message}</div>}
+          </div>
           <div>
             <label className="block text-sm font-medium text-neutral-200">
               Email
@@ -56,7 +54,7 @@ function Login() {
               autoComplete="email"
               placeholder="Email"
               required
-              className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"/>
+              className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}/>
           </div>
           <div>
             <label className="block text-sm font-medium text-neutral-200">
@@ -68,7 +66,7 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               placeholder="Password"
-              className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"/>
+              className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}/>
             <p className="mt-1 text-xs text-neutral-400">
               Leave blank to request a magic link
             </p>
