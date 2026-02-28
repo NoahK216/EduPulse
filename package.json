@@ -14,6 +14,7 @@
     "start": "node dist/src/server/index.js"
   },
   "dependencies": {
+    "@neondatabase/auth": "^0.1.0-beta.21",
     "@prisma/adapter-neon": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@tailwindcss/vite": "^4.1.18",

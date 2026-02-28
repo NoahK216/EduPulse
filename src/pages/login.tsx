@@ -1,21 +1,61 @@
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import NavBar from "./ui/NavBar";
-import { Link } from "react-router";
+
+import { authClient } from "../lib/auth-client";
 
 function Login() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    setMessage(null);
+    // if password is empty we assume magic-link/passwordless flow
+    const payload: { email: string; password?: string } = { email };
+    if (password) payload.password = password;
+    const { error } = await authClient.signIn.email(payload as any);
+    setIsSubmitting(false);
+    if (error) {
+      setError(error.message || "Failed to sign in");
+    } else {
+      if (!password) {
+        setMessage("If an account exists, you should receive a magic link shortly.");
+      } else {
+        navigate("/");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen w-screen bg-neutral-900 text-neutral-150 pt-10">
       <NavBar/>
       <main className="mx-auto max-w-md px-8 py-20">
         <h1 className="text-3xl font-semibold">Log in</h1>
-        <form className="mt-8 space-y-4">
+                <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          {error && (
+            <div className="text-red-400 text-sm">{error}</div>
+          )}
+          {message && (
+            <div className="text-green-400 text-sm">{message}</div>
+          )}
           <div>
             <label className="block text-sm font-medium text-neutral-200">
               Email
             </label>
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               placeholder="Email"
+              required
               className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"/>
           </div>
           <div>
@@ -24,18 +64,22 @@ function Login() {
             </label>
             <input
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               placeholder="Password"
               className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"/>
+            <p className="mt-1 text-xs text-neutral-400">
+              Leave blank to request a magic link
+            </p>
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
-            onClick={(e) => {
-              e.preventDefault();
-            }}>
-            Sign in
+            disabled={isSubmitting}
+            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
+          >
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
             <div className="mt-2 text-right">
