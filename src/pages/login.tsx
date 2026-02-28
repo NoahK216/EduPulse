@@ -15,21 +15,28 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsSubmitting(true);
     setMessage(null);
-    // if password is empty we assume magic-link/passwordless flow
-    const payload: { email: string; password?: string } = { email };
-    if (password) payload.password = password;
-    const { error } = await authClient.signIn.email(payload as any);
-    setIsSubmitting(false);
-    if (error) {
-      setError(error.message || "Failed to sign in");
-    } else {
-      if (!password) {
-        setMessage("If an account exists, you should receive a magic link shortly.");
+    setIsSubmitting(true);
+
+    try {
+      // if password is empty we assume magic-link/passwordless flow
+      const payload: { email: string; password?: string } = { email };
+      if (password) payload.password = password;
+      const { error } = await authClient.signIn.email(payload as any);
+      if (error) {
+        setError(error.message || "Failed to sign in");
       } else {
-        navigate("/");
+        if (!password) {
+          setMessage("If an account exists, you should receive a magic link shortly.");
+        } else {
+          navigate("/");
+        }
       }
+    } catch (e: any) {
+      console.error("login error", e);
+      setError(e?.message || "An unexpected error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
