@@ -19,17 +19,36 @@ function Login() {
     setIsSubmitting(true);
 
     try {
-      // if password is empty we assume magic-link/passwordless flow
-      const payload: { email: string; password?: string } = { email };
-      if (password) payload.password = password;
-      const { error } = await authClient.signIn.email(payload as any);
+      // always include a password key (empty string when requesting magic link).
+      const { error } = await authClient.signIn.email({
+        email,
+        password: password || "",
+      } as any);
+
       if (error) {
-        setError(error.message || "Failed to sign in");
+        // show human-friendly message based on known codes
+        let msg = error.message || "Failed to sign in";
+        switch (error.code) {
+          case "INVALID_EMAIL_OR_PASSWORD":
+            msg = "Invalid email or password.";
+            break;
+          case "PASSWORD_REQUIRED":
+            msg = "Password required. Leave blank only if magic links are enabled.";
+            break;
+          case "EMAIL_NOT_VERIFIED":
+            msg = "Please verify your email before logging in.";
+            break;
+          case "USER_NOT_FOUND":
+            msg = "No account exists with that email.";
+            break;
+          default:
+            // keep existing message
+        }
+        setError(msg);
       } else {
         if (!password) {
           setMessage("If an account exists, you should receive a magic link shortly.");
         } else {
-          // wait for adapter to update session so nav bar reflects login
           await authClient.getSession();
           navigate("/");
         }
