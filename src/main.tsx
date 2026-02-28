@@ -30,8 +30,12 @@ const router = createBrowserRouter([
   }
 ]);
 
+import { Providers } from './providers';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Providers>
+      <RouterProvider router={router} />
+    </Providers>
   </StrictMode>,
 )
