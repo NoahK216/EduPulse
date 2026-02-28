@@ -55,15 +55,16 @@ function NavBar() {
                 <p className="block !text-white px-3 py-2 text-sm">
                   {userName}
                 </p>
-                <button
-                  type="button"
-                  onClick={async () => {
+                <a
+                  href="#"
+                  onClick={async (e) => {
+                    e.preventDefault();
                     await authClient.signOut();
                     navigate("/");
                   }}
                   className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
                   Logout
-                </button>
+                </a>
               </>
             ) : (
               // not logged in
@@ -86,7 +87,7 @@ function NavBar() {
               Classroom
             </Link>
             <div className="h-px bg-gray-700" />
-              <p className="block px-3 py-2 text-sm">
+              <p className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
                 Settings</p>
           </div>
         )}
