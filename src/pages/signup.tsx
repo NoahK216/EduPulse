@@ -16,13 +16,22 @@ function Signup() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!firstName || !lastName) {
+      setError("First and last name are required");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match");
       return;
     }
     setIsSubmitting(true);
     try {
-      const { error } = await authClient.signUp.email({ email, password });
+      const fullName = `${firstName} ${lastName}`.trim();
+      const { error } = await authClient.signUp.email({
+        email,
+        password,
+        name: fullName,
+      });
       if (error) {
         setError(error.message || "Failed to sign up");
       } else {
