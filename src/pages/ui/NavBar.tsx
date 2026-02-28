@@ -61,7 +61,7 @@ function NavBar() {
                     await authClient.signOut();
                     navigate("/");
                   }}
-                  className="block w-full text-left !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
                   Logout
                 </button>
               </>
