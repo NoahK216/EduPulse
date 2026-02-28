@@ -7,7 +7,7 @@ function NavBar() {
   const ref = useRef<HTMLDivElement | null>(null);
   const loc = useLocation();
   const navigate = useNavigate();
-  const session = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const userName = session?.user?.name || session?.user?.email;
 
   useEffect(() => {
@@ -47,7 +47,9 @@ function NavBar() {
 
         {open && (
           <div className="absolute right-0 mt-2 w-48 rounded-md bg-neutral-800 border border-gray-700 shadow-lg overflow-hidden">
-            {session?.session ? (
+            {isPending ? (
+            <p className="block !text-white px-3 py-2 text-sm">Loading…</p>
+          ) : session?.session ? (
               // logged-in menu
               <>
                 <p className="block !text-white px-3 py-2 text-sm">

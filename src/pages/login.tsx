@@ -29,6 +29,8 @@ function Login() {
         if (!password) {
           setMessage("If an account exists, you should receive a magic link shortly.");
         } else {
+          // wait for adapter to update session so nav bar reflects login
+          await authClient.getSession();
           navigate("/");
         }
       }
