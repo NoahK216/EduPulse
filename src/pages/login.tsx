@@ -19,10 +19,9 @@ function Login() {
     setIsSubmitting(true);
 
     try {
-      // always include a password key (empty string when requesting magic link).
       const { error } = await authClient.signIn.email({
         email,
-        password: password || "",
+        password,
       } as any);
 
       if (error) {
@@ -33,7 +32,7 @@ function Login() {
             msg = "Invalid email or password.";
             break;
           case "PASSWORD_REQUIRED":
-            msg = "Password required. Leave blank only if magic links are enabled.";
+            msg = "Password is required.";
             break;
           case "EMAIL_NOT_VERIFIED":
             msg = "Please verify your email before logging in.";
@@ -46,12 +45,8 @@ function Login() {
         }
         setError(msg);
       } else {
-        if (!password) {
-          setMessage("If an account exists, you should receive a magic link shortly.");
-        } else {
-          await authClient.getSession();
-          navigate("/");
-        }
+        await authClient.getSession();
+        navigate("/");
       }
     } catch (e: any) {
       console.error("login error", e);
@@ -94,10 +89,8 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               placeholder="Password"
+              required
               className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}/>
-            <p className="mt-1 text-xs text-neutral-400">
-              Leave blank to request a magic link
-            </p>
           </div>
 
           <button
