@@ -12,6 +12,16 @@ function App() {
           Interactive training scenarios with AI grading.</p>
         <div className="mt-16 flex flex-wrap gap-6">
           <Link
+            to="/classrooms"
+            className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-700">
+            Browse Classrooms
+          </Link>
+          <Link
+            to="/scenario/library"
+            className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-700">
+            Scenario Library
+          </Link>
+          <Link
             to="/scenario"
             className="rounded-md bg-blue-950 text-white! px-4 py-2 text-sm font-medium hover:bg-blue-500">
             Open Scenario Demo

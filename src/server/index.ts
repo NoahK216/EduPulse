@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import path from 'path';
 
 import { createGraderRouter } from './grader.js';
+import { createPublicRouter } from './public/index.js';
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -13,6 +14,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ! Use /api prefix for calls to backend
 app.use('/api/grade', createGraderRouter(openai));
+app.use('/api/public', createPublicRouter());
 
 const clientDist = path.resolve(process.cwd(), 'dist');
 

@@ -1,46 +1,62 @@
-import { useState } from "react";
-import NavBar from "./ui/NavBar";
+import { Link } from 'react-router-dom';
 
-function Classroom() {
-  const [showAssigned, setShowAssigned] = useState(true);
+import { useApiData } from './hooks/useApiData';
+import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from './ui/DataStatePanels';
+import PageShell from './ui/PageShell';
+import type { PagedResponse, PublicClassroom } from '../types/publicApi';
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString();
+}
+
+function ClassroomList() {
+  const { data, loading, error, unauthorized, refetch } = useApiData<
+    PagedResponse<PublicClassroom>
+  >('/api/public/classrooms');
 
   return (
-    <div className="min-h-screen w-screen bg-neutral-900 text-neutral-100">
-      <NavBar />
-      <div className="flex pt-16 min-h-screen">
-        <aside className="w-64 border-r border-neutral-800 p-4">
-          <h2 className="text-sm font-semibold text-neutral-300">Classroom</h2>
+    <PageShell
+      title="Classrooms"
+      subtitle="Browse classrooms where you are the creator or a member."
+    >
+      {unauthorized ? <UnauthorizedPanel /> : null}
+      {!unauthorized && loading ? <LoadingPanel /> : null}
+      {!unauthorized && !loading && error ? (
+        <ErrorPanel message={error} onRetry={refetch} />
+      ) : null}
+      {!unauthorized && !loading && !error && data && data.items.length === 0 ? (
+        <EmptyPanel message="No classrooms are available yet." />
+      ) : null}
 
-          <div className="mt-4 space-y-2">
-            <button
-              onClick={() => setShowAssigned(true)}
-              className="w-full rounded-md px-3 py-2 text-left text-sm">
-                Assigned</button>
-            <button
-              onClick={() => setShowAssigned(false)}
-              className="w-full rounded-md px-3 py-2 text-left text-sm">
-                Completed</button>
-          </div>
-        </aside>
-        <main className="flex-1 p-6">
-          {showAssigned && (
-            <div>
-              <h1 className="text-2xl font-semibold">Assigned</h1>
-              <p className="mt-2 text-sm text-neutral-300">
-              Assigned scenarios will be shown here.
-            </p>
-          </div>)}
-          {!showAssigned && (
-            <div>
-              <h1 className="text-2xl font-semibold">Completed</h1>
-              <p className="mt-2 text-sm text-neutral-300">
-              Completed scenarios will be shown here.
-            </p>
-          </div>)}
-        </main>
-      </div>
-    </div>
+      {!unauthorized && !loading && !error && data && data.items.length > 0 ? (
+        <div className="space-y-3">
+          {data.items.map((classroom) => (
+            <Link
+              key={classroom.id}
+              to={`/classrooms/${classroom.id}`}
+              className="block rounded-md border border-neutral-800 bg-neutral-800 p-4 hover:border-neutral-700"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold">{classroom.name}</h2>
+                  <p className="mt-1 text-sm text-neutral-300">
+                    Code: {classroom.code ?? 'N/A'}
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    Created by {classroom.created_by_name} on {formatDate(classroom.created_at)}
+                  </p>
+                </div>
+                <div className="text-right text-sm text-neutral-300">
+                  <p>{classroom.member_count} members</p>
+                  <p>{classroom.assignment_count} assignments</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </PageShell>
   );
 }
 
-export default Classroom;
+export default ClassroomList;

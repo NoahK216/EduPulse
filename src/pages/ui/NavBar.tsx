@@ -82,7 +82,7 @@ function NavBar() {
               </>
             )}
             <Link
-              to="/classroom"
+              to="/classrooms"
               className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
               Classroom
             </Link>
