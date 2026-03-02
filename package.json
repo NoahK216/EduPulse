@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "dev": "concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev": "npx prisma generate && concurrently -k -n api,web -c blue,magenta \"npm:dev:server\" \"npm:dev:client\"",
     "dev:client": "vite --host",
     "dev:server": "tsx src/server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npx prisma generate && npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.node.json",
     "start": "node dist/src/server/index.js"

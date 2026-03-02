@@ -7,32 +7,165 @@ datasource db {
   provider = "postgresql"
   schemas  = ["neon_auth", "public"]
 }
-model scenario {
-  id               String        @id @db.VarChar(255)
-  user_id          Int
-  title            String        @db.VarChar(255)
-  scenario_version Int
-  content          Json
-  created_at       DateTime?     @default(now()) @db.Timestamp(6)
-  updated_at       DateTime?     @default(now()) @db.Timestamp(6)
 
-  @@index([user_id], map: "idx_scenarios_user_id")
+enum classroom_role {
+  instructor
+  student
+
   @@schema("public")
 }
 
-model submission {
-  id                 Int       @id @default(autoincrement())
-  user_id            Int
-  scenario_id        String    @db.VarChar(255)
-  node_id            String    @db.VarChar(255)
-  question_prompt    String
-  user_response_text String
-  bucket_id          String?   @db.VarChar(255)
-  feedback           String?
-  created_at         DateTime? @default(now()) @db.Timestamp(6)
+enum attempt_status {
+  in_progress
+  submitted
 
-  @@index([scenario_id], map: "idx_submissions_scenario_id")
-  @@index([user_id], map: "idx_submissions_user_id")
+  @@schema("public")
+}
+
+model public_user {
+  id                  Int                @id @default(autoincrement())
+  auth_user_id        String?            @unique @db.Uuid
+  email               String             @unique
+  name                String             @db.VarChar(255)
+  created_at          DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime           @default(now()) @db.Timestamptz(6)
+  classroom_members   classroom_member[]
+  scenarios           scenario[]         @relation("scenario_owner")
+  published_versions  scenario_version[] @relation("scenario_publisher")
+  created_classrooms  classroom[]        @relation("classroom_creator")
+  created_assignments assignment[]       @relation("assignment_creator")
+  attempts            attempt[]
+
+  @@index([auth_user_id])
+  @@map("users")
+  @@schema("public")
+}
+
+// TODO classroom invite code
+model classroom {
+  id                 Int                 @id @default(autoincrement())
+  created_by_user_id Int
+  name               String              @db.VarChar(255)
+  code               String?             @db.VarChar(64)
+  created_at         DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime            @default(now()) @db.Timestamptz(6)
+  created_by         public_user         @relation("classroom_creator", fields: [created_by_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  members            classroom_member[]
+  assignments        assignment[]
+
+  @@index([created_by_user_id])
+  @@map("classrooms")
+  @@schema("public")
+}
+
+model classroom_member {
+  classroom_id Int
+  user_id      Int
+  role         classroom_role
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime       @default(now()) @db.Timestamptz(6)
+  classroom    classroom      @relation(fields: [classroom_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         public_user    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([classroom_id, user_id])
+  @@index([user_id])
+  @@index([classroom_id, role])
+  @@map("classroom_members")
+  @@schema("public")
+}
+
+model scenario {
+  id                    Int                 @id @default(autoincrement())
+  owner_user_id         Int
+  title                 String              @db.VarChar(255)
+  description           String?
+  draft_content         Json?
+  latest_version_number Int                 @default(0)
+  created_at            DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime            @default(now()) @db.Timestamptz(6)
+  owner                 public_user         @relation("scenario_owner", fields: [owner_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  versions              scenario_version[]
+
+  @@index([owner_user_id])
+  @@map("scenarios")
+  @@schema("public")
+}
+
+model scenario_version {
+  id                   Int          @id @default(autoincrement())
+  scenario_id          Int
+  version_number       Int
+  title                String       @db.VarChar(255)
+  content              Json
+  published_by_user_id Int
+  published_at         DateTime     @default(now()) @db.Timestamptz(6)
+  scenario             scenario     @relation(fields: [scenario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  published_by         public_user  @relation("scenario_publisher", fields: [published_by_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  assignments          assignment[]
+
+  @@unique([scenario_id, version_number])
+  @@index([published_by_user_id])
+  @@map("scenario_versions")
+  @@schema("public")
+}
+
+model assignment {
+  id                  Int                 @id @default(autoincrement())
+  classroom_id        Int
+  scenario_version_id Int
+  assigned_by_user_id Int
+  title               String              @db.VarChar(255)
+  instructions        String?
+  open_at             DateTime?           @db.Timestamptz(6)
+  due_at              DateTime?           @db.Timestamptz(6)
+  close_at            DateTime?           @db.Timestamptz(6)
+  max_attempts        Int                 @default(1)
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime            @default(now()) @db.Timestamptz(6)
+  classroom           classroom           @relation(fields: [classroom_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  scenario_version    scenario_version    @relation(fields: [scenario_version_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  assigned_by         public_user         @relation("assignment_creator", fields: [assigned_by_user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  attempts            attempt[]
+
+  @@index([classroom_id])
+  @@index([assigned_by_user_id])
+  @@index([due_at])
+  @@map("assignments")
+  @@schema("public")
+}
+
+model attempt {
+  id              Int            @id @default(autoincrement())
+  assignment_id   Int
+  student_user_id Int
+  attempt_number  Int            @default(1)
+  status          attempt_status @default(in_progress)
+  started_at      DateTime       @default(now()) @db.Timestamptz(6)
+  submitted_at    DateTime?      @db.Timestamptz(6)
+  assignment      assignment     @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  student         public_user    @relation(fields: [student_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  responses       response[]
+
+  @@unique([assignment_id, student_user_id, attempt_number])
+  @@index([student_user_id])
+  @@index([assignment_id, status])
+  @@index([submitted_at])
+  @@map("attempts")
+  @@schema("public")
+}
+
+model response {
+  id                 Int            @id @default(autoincrement())
+  attempt_id         Int
+  node_id            String         @db.VarChar(255)
+  response_payload   Json?
+  feedback           String?        @db.Text
+  created_at         DateTime       @default(now()) @db.Timestamptz(6)
+  attempt            attempt        @relation(fields: [attempt_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([attempt_id, node_id])
+  @@index([created_at])
+  @@map("responses")
   @@schema("public")
 }
 
