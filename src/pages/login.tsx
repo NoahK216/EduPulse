@@ -22,7 +22,7 @@ function Login() {
       const { error } = await authClient.signIn.email({
         email,
         password,
-      } as any);
+      });
 
       if (error) {
         // show human-friendly message based on known codes

@@ -1,17 +1,13 @@
 import express from 'express';
 import OpenAI from 'openai';
-import {z} from 'zod';
+import { z } from 'zod';
 
-import {RubricSchema} from '../scenario/nodeSchemas.js';
-import { prisma } from "./prisma.js";
-
-// ---- Shared schemas/types (single source of truth) ----
-export const rubricSchema = RubricSchema;
+import { RubricSchema } from '../scenario/nodeSchemas.js';
 
 export const gradeRequestSchema = z.object({
   question_prompt: z.string().min(1, 'question_prompt is required'),
   user_response_text: z.string().min(1, 'user_response_text is required'),
-  rubric: rubricSchema,
+  rubric: RubricSchema,
 });
 
 export const gradeResultSchema = z.object({
@@ -19,9 +15,9 @@ export const gradeResultSchema = z.object({
   feedback: z.string(),
 });
 
-export type GradeRequest = z.infer<typeof gradeRequestSchema>;
-export type Rubric = z.infer<typeof rubricSchema>;
-export type GradeResult = z.infer<typeof gradeResultSchema>;
+type GradeRequest = z.infer<typeof gradeRequestSchema>;
+type Rubric = z.infer<typeof RubricSchema>;
+type GradeResult = z.infer<typeof gradeResultSchema>;
 
 // JSON schema we give the model for structured output
 export const gradeResultJsonSchema = {
@@ -77,10 +73,7 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 
 export async function gradeWithOpenAI(
   openai: OpenAI,
-  body: GradeRequest,
-  userId?: number,
-  scenarioId?: string,
-  nodeId?: string,
+  body: GradeRequest
 ): Promise<GradeResult> {
   const responseFormat = {
     type: 'json_schema' as const,
@@ -107,36 +100,8 @@ export async function gradeWithOpenAI(
   }
 
   const result = enforceResult(parsed, body.rubric);
-  const normalizedNodeId =
-    typeof nodeId === 'string' && nodeId.length > 0 ? nodeId : 'unknown';
-
-  // Save submission to database if userId and scenarioId provided
-  if (userId !== undefined && scenarioId) {
-    try {
-      await prisma.submission.create({
-        data: {
-          user_id: userId,
-          scenario_id: scenarioId,
-          node_id: normalizedNodeId,
-          question_prompt: body.question_prompt,
-          user_response_text: body.user_response_text,
-          bucket_id: result.bucket_id,
-          feedback: result.feedback,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to save submission:', error);
-      // Don't fail the grading request if database save fails
-    }
-  }
 
   return result;
-
-  if (!parsed) {
-    throw new Error('Model did not return valid JSON after retry');
-  }
-
-  return enforceResult(parsed, body.rubric);
 }
 
 async function callModel(
@@ -213,7 +178,7 @@ function enforceResult(aiResult: GradeResult, rubric: Rubric): GradeResult {
 export function createGraderRouter(openai: OpenAI) {
   const router = express.Router();
 
-  router.post('/grade', async (req, res) => {
+  router.post('/', async (req, res) => {
     const parsed = gradeRequestSchema.safeParse(req.body);
     if (!parsed.success) {
       return res
@@ -226,18 +191,7 @@ export function createGraderRouter(openai: OpenAI) {
     }
 
     try {
-      const { userId, scenarioId, nodeId } = req.body;
-      let parsedUserId: number | undefined;
-      if (userId !== undefined && userId !== null) {
-        const numericUserId = typeof userId === 'number' ? userId : Number(userId);
-        if (!Number.isInteger(numericUserId)) {
-          return res.status(400).json({ error: 'userId must be an integer' });
-        }
-        parsedUserId = numericUserId;
-      }
-      const parsedScenarioId = typeof scenarioId === 'string' ? scenarioId : undefined;
-
-      const result = await gradeWithOpenAI(openai, parsed.data, parsedUserId, parsedScenarioId, nodeId);
+      const result = await gradeWithOpenAI(openai, parsed.data);
       res.json(result);
     } catch (error) {
       console.error('Grading failed', error);
