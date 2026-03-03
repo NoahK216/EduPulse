@@ -7,13 +7,29 @@ import {ChoiceTab} from './creator/tabs/Choice.Tab';
 import {FreeResponseTab} from './creator/tabs/FreeResponse.Tab';
 import {VideoTab} from './creator/tabs/Video.Tab';
 import {defineNodeRegistry, pluck, tuple} from './nodeRegistry';
-import {ChoiceNodeSchema, FreeResponseNodeSchema, VideoNodeSchema} from './nodeSchemas';
+import {ChoiceNodeSchema, FreeResponseNodeSchema, TextNodeSchema, VideoNodeSchema} from './nodeSchemas';
 import {ChoiceScene} from './viewer/scenes/Choice.Scene';
 import {FreeResponseScene} from './viewer/scenes/FreeResponse.Scene';
 import {VideoScene} from './viewer/scenes/Video.Scene';
+import {TextTab} from './creator/tabs/Text.Tab';
+import { TextCard } from './creator/cards/Text.Card';
+import { TextScene } from './viewer/scenes/Text.Scene';
 
 // TODO Create nodes server side
 export const nodeRegistry = defineNodeRegistry({
+  text: {
+    type: 'text',
+    schema: TextNodeSchema,
+    scene: TextScene,
+    card: TextCard,
+    tab: TextTab,
+    factory: (partial): z.infer<typeof TextNodeSchema> => ({
+      id: crypto.randomUUID(),
+      type: 'text',
+      text: "",
+      ...partial,
+    }),
+  },
   video: {
     type: 'video',
     schema: VideoNodeSchema,
@@ -65,10 +81,18 @@ export const nodeRegistry = defineNodeRegistry({
 
 
 const nodeSchemas = tuple(
+    nodeRegistry.text.schema, 
     nodeRegistry.video.schema, 
     nodeRegistry.choice.schema,
     nodeRegistry.free_response.schema
 );
+
+export const NODE_TYPE_LABELS: Record<GenericNode["type"], string> = {
+    text: "Text",
+    video: "Video",
+    choice: "Multiple Choice",
+    free_response: "Free Response",
+};
 
 export const GenericNodeSchema = z.discriminatedUnion('type', nodeSchemas);
 export type GenericNode = z.infer<typeof GenericNodeSchema>;

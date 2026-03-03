@@ -6,6 +6,14 @@ const BaseNodeSchema = z.object({
 });
 export type BaseNode = z.infer<typeof BaseNodeSchema>;
 
+export const TextNodeSchema = BaseNodeSchema.extend({
+  type: z.literal("text"),
+  title: z.string().optional(),
+  text: z.string().optional(),
+});
+export type TextNode = z.infer<typeof TextNodeSchema>;
+
+
 export const VideoNodeSchema = BaseNodeSchema.extend({
   type: z.literal('video'),
   src: z.string().optional(),

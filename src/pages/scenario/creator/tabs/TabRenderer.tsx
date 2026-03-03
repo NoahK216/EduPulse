@@ -1,16 +1,10 @@
-import { tabs, type GenericNode } from "../../nodes";
+import { NODE_TYPE_LABELS, tabs, type GenericNode } from "../../nodes";
 import type { EditorDispatch } from "../EditorStore";
 
 export type NodeTabProps<N extends GenericNode = GenericNode> = {
   node: N;
   dispatch: EditorDispatch;
   onClose?: () => void;
-};
-
-const NODE_TYPE_LABELS: Record<GenericNode["type"], string> = {
-  video: "Video",
-  choice: "Multiple Choice",
-  free_response: "Free Response",
 };
 
 export function TabRenderer(props: NodeTabProps) {
