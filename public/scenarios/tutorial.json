@@ -1,0 +1,326 @@
+{
+  "scenarioVersion": 1,
+  "id": "0",
+  "title": "Grade Appeal Demo",
+  "startNodeId": "1",
+  "nodes": {
+    "1": {
+      "id": "1",
+      "title": "Intro Video",
+      "type": "video",
+      "src": "/EdupulseTutorial.mp4"
+    },
+    "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e": {
+      "id": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+      "type": "choice",
+      "prompt": "Understanding the choice node",
+      "choices": [
+        {
+          "id": "2b22df71-f29b-4d08-a177-aafd9676a358",
+          "label": "Go back to tutorial video"
+        },
+        {
+          "id": "de85c348-4024-4fdb-adf1-52d573948976",
+          "label": "MCQ example"
+        },
+        {
+          "id": "375d96ab-d39b-4fe5-a060-3a73de15deab",
+          "label": "FRQ example"
+        },
+        {
+          "id": "787510c2-0546-4ff5-96a2-7d4d264f670a",
+          "label": "End tutorial"
+        }
+      ],
+      "title": "MCQ demo"
+    },
+    "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0": {
+      "id": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+      "type": "choice",
+      "prompt": "",
+      "choices": [
+        {
+          "id": "6abca06d-e7c8-4b26-8eea-8b7dbbf5a575",
+          "label": "1"
+        },
+        {
+          "id": "00b203bd-f3e8-4fb7-abe1-b501217bc038",
+          "label": "2"
+        },
+        {
+          "id": "12a12ed4-3754-4ade-a2f2-5b8b0c558581",
+          "label": "3"
+        },
+        {
+          "id": "e8442737-99b0-4c19-9243-87515852ab3e",
+          "label": "4"
+        }
+      ],
+      "title": "How many types of nodes are there?"
+    },
+    "78d6d601-143d-4e7e-8992-e6fa53ec3948": {
+      "id": "78d6d601-143d-4e7e-8992-e6fa53ec3948",
+      "type": "free_response",
+      "prompt": "Explain what goes in the rubric context box.",
+      "placeholder": "",
+      "rubric": {
+        "id": "6dd4009f-3cbc-4fea-b69a-af8edd046c16",
+        "context": "User correctly explains what goes in the rubric context field. Rubric context field describes constraints, content, and grading goals. Grade leniently.",
+        "answerBuckets": [
+          {
+            "id": "15397115-4262-40bc-acf0-07e8ce110aeb",
+            "classifier": "Good, correct or almost correctly answers question."
+          },
+          {
+            "id": "ced79a49-2a82-4906-9ffd-bfe2ef8ba5ee",
+            "classifier": "Okay, answers question somewhat correctly, but still lacks some understanding."
+          },
+          {
+            "id": "625b0f34-dd9c-413f-a7fa-e051fa44d9ec",
+            "classifier": "Incorrect, irrelevant or incorrect response."
+          }
+        ]
+      },
+      "title": "FRQ Node"
+    },
+    "1a0e77ff-9399-4b24-982a-240a828cb738": {
+      "id": "1a0e77ff-9399-4b24-982a-240a828cb738",
+      "type": "choice",
+      "prompt": "",
+      "choices": [
+        {
+          "id": "b5580a4d-8e15-48c5-bfba-cb4556a221c0",
+          "label": "Move to the next node."
+        }
+      ],
+      "title": "Incorrect"
+    },
+    "92356ee4-65a5-4b5e-9736-ca4e960406c7": {
+      "id": "92356ee4-65a5-4b5e-9736-ca4e960406c7",
+      "type": "choice",
+      "prompt": "",
+      "choices": [
+        {
+          "id": "d34046ae-d9ab-4947-8535-6b45bc08efd1",
+          "label": "Move to the next node"
+        }
+      ],
+      "title": "Correct!"
+    },
+    "0a3e35cb-40bd-4b08-b6d4-19812d654771": {
+      "id": "0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "type": "choice",
+      "prompt": "What do you want to do next?",
+      "choices": [
+        {
+          "id": "440d036c-cab2-4b32-abfb-80d143f84721",
+          "label": "Restart tutorial"
+        },
+        {
+          "id": "310d6f0b-a309-4c50-a9ec-aafb6349b67b",
+          "label": "MCQ example"
+        },
+        {
+          "id": "87b3c88b-60a5-49d2-986f-83206e48c7be",
+          "label": "FRQ example"
+        },
+        {
+          "id": "d2fbd3ad-5f11-44d7-809c-ca7dcdc506c5",
+          "label": "End tutorial"
+        }
+      ],
+      "title": "Which follow-up?"
+    }
+  },
+  "edges": [
+    {
+      "id": "xy-edge__1-0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+      "from": {
+        "nodeId": "1"
+      },
+      "to": {
+        "nodeId": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e"
+      }
+    },
+    {
+      "id": "xy-edge__0a64b8ad-0fdc-4811-afe3-555a09ca5d7e2b22df71-f29b-4d08-a177-aafd9676a358-1",
+      "from": {
+        "nodeId": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+        "port": "2b22df71-f29b-4d08-a177-aafd9676a358"
+      },
+      "to": {
+        "nodeId": "1"
+      }
+    },
+    {
+      "id": "xy-edge__0a64b8ad-0fdc-4811-afe3-555a09ca5d7ede85c348-4024-4fdb-adf1-52d573948976-0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+      "from": {
+        "nodeId": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+        "port": "de85c348-4024-4fdb-adf1-52d573948976"
+      },
+      "to": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0"
+      }
+    },
+    {
+      "id": "xy-edge__0a64b8ad-0fdc-4811-afe3-555a09ca5d7e375d96ab-d39b-4fe5-a060-3a73de15deab-78d6d601-143d-4e7e-8992-e6fa53ec3948",
+      "from": {
+        "nodeId": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+        "port": "375d96ab-d39b-4fe5-a060-3a73de15deab"
+      },
+      "to": {
+        "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948"
+      }
+    },
+    {
+      "id": "xy-edge__0d87eb83-acdc-4b6e-88c8-d13206a7d3b06abca06d-e7c8-4b26-8eea-8b7dbbf5a575-1a0e77ff-9399-4b24-982a-240a828cb738",
+      "from": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+        "port": "6abca06d-e7c8-4b26-8eea-8b7dbbf5a575"
+      },
+      "to": {
+        "nodeId": "1a0e77ff-9399-4b24-982a-240a828cb738"
+      }
+    },
+    {
+      "id": "xy-edge__0d87eb83-acdc-4b6e-88c8-d13206a7d3b000b203bd-f3e8-4fb7-abe1-b501217bc038-1a0e77ff-9399-4b24-982a-240a828cb738",
+      "from": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+        "port": "00b203bd-f3e8-4fb7-abe1-b501217bc038"
+      },
+      "to": {
+        "nodeId": "1a0e77ff-9399-4b24-982a-240a828cb738"
+      }
+    },
+    {
+      "id": "xy-edge__0d87eb83-acdc-4b6e-88c8-d13206a7d3b012a12ed4-3754-4ade-a2f2-5b8b0c558581-92356ee4-65a5-4b5e-9736-ca4e960406c7",
+      "from": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+        "port": "12a12ed4-3754-4ade-a2f2-5b8b0c558581"
+      },
+      "to": {
+        "nodeId": "92356ee4-65a5-4b5e-9736-ca4e960406c7"
+      }
+    },
+    {
+      "id": "xy-edge__0d87eb83-acdc-4b6e-88c8-d13206a7d3b0e8442737-99b0-4c19-9243-87515852ab3e-1a0e77ff-9399-4b24-982a-240a828cb738",
+      "from": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+        "port": "e8442737-99b0-4c19-9243-87515852ab3e"
+      },
+      "to": {
+        "nodeId": "1a0e77ff-9399-4b24-982a-240a828cb738"
+      }
+    },
+    {
+      "id": "xy-edge__92356ee4-65a5-4b5e-9736-ca4e960406c7d34046ae-d9ab-4947-8535-6b45bc08efd1-0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "from": {
+        "nodeId": "92356ee4-65a5-4b5e-9736-ca4e960406c7",
+        "port": "d34046ae-d9ab-4947-8535-6b45bc08efd1"
+      },
+      "to": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771"
+      }
+    },
+    {
+      "id": "xy-edge__1a0e77ff-9399-4b24-982a-240a828cb738b5580a4d-8e15-48c5-bfba-cb4556a221c0-0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "from": {
+        "nodeId": "1a0e77ff-9399-4b24-982a-240a828cb738",
+        "port": "b5580a4d-8e15-48c5-bfba-cb4556a221c0"
+      },
+      "to": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771"
+      }
+    },
+    {
+      "id": "xy-edge__78d6d601-143d-4e7e-8992-e6fa53ec394815397115-4262-40bc-acf0-07e8ce110aeb-0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "from": {
+        "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948",
+        "port": "15397115-4262-40bc-acf0-07e8ce110aeb"
+      },
+      "to": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771"
+      }
+    },
+    {
+      "id": "xy-edge__78d6d601-143d-4e7e-8992-e6fa53ec3948ced79a49-2a82-4906-9ffd-bfe2ef8ba5ee-0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "from": {
+        "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948",
+        "port": "ced79a49-2a82-4906-9ffd-bfe2ef8ba5ee"
+      },
+      "to": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771"
+      }
+    },
+    {
+      "id": "xy-edge__78d6d601-143d-4e7e-8992-e6fa53ec3948625b0f34-dd9c-413f-a7fa-e051fa44d9ec-0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "from": {
+        "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948",
+        "port": "625b0f34-dd9c-413f-a7fa-e051fa44d9ec"
+      },
+      "to": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771"
+      }
+    },
+    {
+      "id": "xy-edge__0a3e35cb-40bd-4b08-b6d4-19812d654771440d036c-cab2-4b32-abfb-80d143f84721-1",
+      "from": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771",
+        "port": "440d036c-cab2-4b32-abfb-80d143f84721"
+      },
+      "to": {
+        "nodeId": "1"
+      }
+    },
+    {
+      "id": "xy-edge__0a3e35cb-40bd-4b08-b6d4-19812d654771310d6f0b-a309-4c50-a9ec-aafb6349b67b-0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+      "from": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771",
+        "port": "310d6f0b-a309-4c50-a9ec-aafb6349b67b"
+      },
+      "to": {
+        "nodeId": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0"
+      }
+    },
+    {
+      "id": "xy-edge__0a3e35cb-40bd-4b08-b6d4-19812d65477187b3c88b-60a5-49d2-986f-83206e48c7be-78d6d601-143d-4e7e-8992-e6fa53ec3948",
+      "from": {
+        "nodeId": "0a3e35cb-40bd-4b08-b6d4-19812d654771",
+        "port": "87b3c88b-60a5-49d2-986f-83206e48c7be"
+      },
+      "to": {
+        "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948"
+      }
+    }
+  ],
+  "layout": {
+    "1": {
+      "x": -99.7291905954115,
+      "y": -286.57348127384904
+    },
+    "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e": {
+      "x": -51.803962553455484,
+      "y": 155.41188766036643
+    },
+    "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0": {
+      "x": 322.15589212930126,
+      "y": 174.83837361791225
+    },
+    "78d6d601-143d-4e7e-8992-e6fa53ec3948": {
+      "x": 343.2012519166426,
+      "y": -335.1068827676652
+    },
+    "92356ee4-65a5-4b5e-9736-ca4e960406c7": {
+      "x": 642.082159406827,
+      "y": 64.20096956781586
+    },
+    "1a0e77ff-9399-4b24-982a-240a828cb738": {
+      "x": 641.6417105787767,
+      "y": 259.6657926661264
+    },
+    "0a3e35cb-40bd-4b08-b6d4-19812d654771": {
+      "x": 966.5890593492026,
+      "y": -183.77056338077566
+    }
+  }
+}
