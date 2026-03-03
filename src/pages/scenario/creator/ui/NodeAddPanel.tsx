@@ -1,5 +1,3 @@
-import type { VideoDeleteResponse } from "openai/resources";
-import { useNavigate } from "react-router";
 import { nodeRegistry } from "../../nodes";
 import type { EditorDispatch } from "../EditorStore";
 
@@ -10,7 +8,6 @@ export type NodeAddPanelProps = {
 
 // TODO GENERATION SHOULD NOT BE DONE ON THE CLIENT
 const NodeAddPanel = ({ editorDispatch, onAddNode }: NodeAddPanelProps) => {
-  const navigate = useNavigate();
   const onNodeClick = (nodeEntry) => {
     // addNode(flowNodeFromGenericNode(nodeEntry.factory()))
     editorDispatch({ type: "addNode", node: nodeEntry.factory() });
@@ -33,16 +30,6 @@ const NodeAddPanel = ({ editorDispatch, onAddNode }: NodeAddPanelProps) => {
             {nodeEntry.type.replace("_", " ")}
           </button>
         ))}
-
-        <div className="mt-16 border-t border-slate-700 pt-4">
-          <button
-            type="button"
-            className="w-full rounded-lg !border !border-sky-500/60 !bg-sky-900/40 !px-3 !py-2 text-left !text-sm font-semibold !text-sky-200 transition hover:!bg-sky-800/60"
-            onClick={() => navigate("/scenario?url=/scenarios/tutorial.json")}
-          >
-            Open Tutorial
-          </button>
-        </div>
       </div>
     </aside>
   );

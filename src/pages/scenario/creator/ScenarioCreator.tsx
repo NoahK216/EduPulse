@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useReducer } from "react";
+import { useState, useCallback, useEffect, useMemo, useReducer } from "react";
+import { useNavigate } from "react-router-dom";
 import { type Scenario } from "../scenarioSchemas";
 import { cards } from "../nodes";
 import {
@@ -12,7 +13,6 @@ import {
   type OnNodesChange,
   type DefaultEdgeOptions,
   Background,
-  Controls,
   MiniMap,
   type ReactFlowInstance,
   type OnEdgesChange,
@@ -20,11 +20,10 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import NodeAddPanel from "./ui/NodeAddPanel";
-import MenuBar from "./ui/MenuBar";
+import CreatorTopBar from "./ui/CreatorTopBar";
 import NodeEditorPanel from "./ui/NodeEditorPanel";
 import { downloadJson } from "./DownloadJson";
 import { flowGraphFromScenario, loadScenario } from "./import";
-import { ScenarioImportButton } from "./ui/ScenarioImportButton";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
 import {
   ApiRequestError,
@@ -41,6 +40,10 @@ import {
   enforceSingleOutgoingConnectionPerHandle,
   toScenarioEdge,
 } from "./ScenarioCreatorCallbacks";
+import { buildStarterScenario } from "./starterScenario";
+import type {
+  CreatorStatusTone,
+} from "./ui/menus/menuTypes";
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -58,27 +61,30 @@ type ScenarioCreatorProps = {
   initialScenarioId?: number | null;
 };
 
-// TODO rename initialNode to nodeData or something
+const TUTORIAL_TOP_OFFSET = 84;
 
 const ScenarioCreator = ({
   scenarioUrl,
   initialScenario,
   initialScenarioId,
 }: ScenarioCreatorProps) => {
+  const navigate = useNavigate();
   const [state, dispatch] = useReducer(editorReducer, { status: "idle" });
-
   const [reactFlowInstance, setReactFlowInstance] =
     useState<ReactFlowInstance>();
   const [rfNodes, setRfNodes] = useState<Node[]>([]);
   const [rfEdges, setRfEdges] = useState<Edge[]>([]);
   const inspectedNodeId =
     state.status === "loaded" ? state.ui.inspectedNodeId : null;
-  const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(1);
-  const [tipOpen, setTipOpen] = useState(true);
-  const [tipClosed, setTipClosed] = useState(false);
+  const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
+  const [tipOpen, setTipOpen] = useState(false);
+  const [tipClosed, setTipClosed] = useState(true);
   const [syncedScenarioId, setSyncedScenarioId] = useState<number | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string>("");
+  const [baselineSerializedDoc, setBaselineSerializedDoc] = useState<
+    string | null
+  >(null);
 
   const preserveReactFlowSelection = useCallback(
     (nextNodes: Node[], prevNodes: Node[]) => {
@@ -99,44 +105,76 @@ const ScenarioCreator = ({
     [],
   );
 
-  const initializeEditor = (e: Scenario, scenarioId?: number | null) => {
-    dispatch({ type: "initScenario", scenario: e });
-    setSyncedScenarioId(scenarioId ?? null);
-    setSyncStatus("idle");
-    setSyncMessage("");
-    requestAnimationFrame(() => reactFlowInstance?.fitView());
-  };
+  const initializeEditor = useCallback(
+    (scenario: Scenario, scenarioId?: number | null) => {
+      dispatch({ type: "initScenario", scenario });
+      setSyncedScenarioId(scenarioId ?? null);
+      setSyncStatus("idle");
+      setSyncMessage("");
+      setBaselineSerializedDoc(JSON.stringify(scenario));
+      requestAnimationFrame(() => reactFlowInstance?.fitView());
+    },
+    [reactFlowInstance],
+  );
+
+  const currentSerializedDoc =
+    state.status === "loaded" ? JSON.stringify(state.doc) : null;
+  const isDirty =
+    state.status === "loaded" &&
+    baselineSerializedDoc !== null &&
+    currentSerializedDoc !== baselineSerializedDoc;
+
+  const confirmDiscardUnsavedChanges = useCallback(
+    (actionLabel: string) => {
+      if (!isDirty) return true;
+      return window.confirm(
+        `You have unsaved changes. Continue to ${actionLabel}?`,
+      );
+    },
+    [isDirty],
+  );
+
+  const reopenTutorial = useCallback(() => {
+    setTipClosed(false);
+    setTipNum(1);
+    setTipOpen(true);
+  }, []);
+
+  const openTutorialScenario = useCallback(() => {
+    const tutorialUrl = new URL(
+      "/scenario?url=/scenarios/tutorial.json",
+      window.location.origin,
+    );
+    window.open(tutorialUrl.toString(), "_blank", "noopener,noreferrer");
+  }, []);
+
 
   useEffect(() => {
-    if (scenarioUrl) {
-      loadScenario(scenarioUrl).then((parsed) => {
+    if (!scenarioUrl) return;
+    loadScenario(scenarioUrl)
+      .then((parsed) => {
         initializeEditor(parsed);
+      })
+      .catch((error) => {
+        console.error(error);
       });
-    }
-  }, [scenarioUrl]);
+  }, [scenarioUrl, initializeEditor]);
 
   useEffect(() => {
     if (!initialScenario) return;
     initializeEditor(initialScenario, initialScenarioId ?? null);
-  }, [initialScenario, initialScenarioId]);
+  }, [initialScenario, initialScenarioId, initializeEditor]);
 
   // Drives ReactFlow state by the SSoT: editorReducer
   useEffect(() => {
     if (state.status !== "loaded") return;
-    console.log(state.doc);
 
     const { nodes, edges } = flowGraphFromScenario(state.doc);
     setRfNodes((nodesSnapshot) => {
       return preserveReactFlowSelection(nodes, nodesSnapshot);
     });
     setRfEdges(edges);
-  }, [
-    state.status,
-    state.status === "loaded" ? state.doc : null,
-    preserveReactFlowSelection,
-    setRfNodes,
-    setRfEdges,
-  ]);
+  }, [state, preserveReactFlowSelection, setRfNodes, setRfEdges]);
 
   const onConnect: OnConnect = useCallback(
     (params) => {
@@ -182,34 +220,37 @@ const ScenarioCreator = ({
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      console.log("clicked type:", node.type, "id:", node.id);
-      if (node) {
-        inspectNode(node.id);
-        if (node.type === "free_response") {
-          setTimeout(() => {
-            setTipNum(3);
-            setTipOpen(true);
-          });
-          return;
-        }
-        if (node.type === "choice") {
-          setTipNum(4);
-          setTipOpen(true);
-          return;
-        }
+      if (!node) return;
 
-        if (node.type === "video") {
-          setTipNum(5);
+      inspectNode(node.id);
+
+      if (node.type === "free_response") {
+        setTimeout(() => {
+          setTipNum(3);
           setTipOpen(true);
-          return;
-        }
+        });
+        return;
+      }
+
+      if (node.type === "choice") {
+        setTipNum(4);
+        setTipOpen(true);
+        return;
+      }
+
+      if (node.type === "video") {
+        setTipNum(5);
+        setTipOpen(true);
       }
     },
-    [inspectNode, tipNum],
+    [inspectNode],
   );
 
   const syncScenarioDraft = useCallback(async () => {
     if (state.status !== "loaded") return;
+
+    const scenarioSnapshot = state.doc;
+    const serializedSnapshot = JSON.stringify(scenarioSnapshot);
 
     setSyncStatus("syncing");
     setSyncMessage("");
@@ -225,9 +266,9 @@ const ScenarioCreator = ({
         token,
         {
           scenario_id: syncedScenarioId ?? undefined,
-          title: state.doc.title,
+          title: scenarioSnapshot.title,
           description: null,
-          draft_content: state.doc,
+          draft_content: scenarioSnapshot,
         },
       );
 
@@ -236,6 +277,7 @@ const ScenarioCreator = ({
       setSyncMessage(
         `Synced scenario #${response.item.id} at ${new Date().toLocaleTimeString()}`,
       );
+      setBaselineSerializedDoc(serializedSnapshot);
     } catch (error) {
       setSyncStatus("error");
       if (error instanceof ApiRequestError) {
@@ -250,74 +292,169 @@ const ScenarioCreator = ({
     }
   }, [state, syncedScenarioId]);
 
+  const handleLogoClick = useCallback(() => {
+    if (!confirmDiscardUnsavedChanges("open the homepage")) return;
+    navigate("/");
+  }, [confirmDiscardUnsavedChanges, navigate]);
+
+  const handleCreateNewScenario = useCallback(() => {
+    if (!confirmDiscardUnsavedChanges("create a new scenario")) return;
+    initializeEditor(buildStarterScenario());
+  }, [confirmDiscardUnsavedChanges, initializeEditor]);
+
+  const handleOpenScenarioLibrary = useCallback(() => {
+    if (!confirmDiscardUnsavedChanges("open the Scenario Library")) return;
+    navigate("/scenario/library");
+  }, [confirmDiscardUnsavedChanges, navigate]);
+
+  const handleBeforeImport = useCallback(() => {
+    return confirmDiscardUnsavedChanges("import a scenario");
+  }, [confirmDiscardUnsavedChanges]);
+
+  const handleImportedScenarioLoaded = useCallback(
+    (scenario: Scenario) => {
+      initializeEditor(scenario);
+    },
+    [initializeEditor],
+  );
+
+  const handleSaveDraft = useCallback(() => {
+    void syncScenarioDraft();
+  }, [syncScenarioDraft]);
+
+  const handleDownloadJson = useCallback(() => {
+    if (state.status !== "loaded") return;
+    downloadJson(state.doc, "scenario.json");
+  }, [state]);
+
+  const handleZoomIn = useCallback(() => {
+    reactFlowInstance?.zoomIn();
+  }, [reactFlowInstance]);
+
+  const handleZoomOut = useCallback(() => {
+    reactFlowInstance?.zoomOut();
+  }, [reactFlowInstance]);
+
+  const handleResetZoom = useCallback(() => {
+    if (!reactFlowInstance) return;
+    const viewport = reactFlowInstance.getViewport();
+    void reactFlowInstance.setViewport({ ...viewport, zoom: 1 });
+  }, [reactFlowInstance]);
+
+  const handleFitView = useCallback(() => {
+    reactFlowInstance?.fitView(fitViewOptions);
+  }, [reactFlowInstance]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+
+      const key = event.key.toLowerCase();
+
+      if (key === "n" && !event.shiftKey) {
+        event.preventDefault();
+        handleCreateNewScenario();
+        return;
+      }
+
+      if (key === "s") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          handleDownloadJson();
+          return;
+        }
+
+        handleSaveDraft();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [handleCreateNewScenario, handleDownloadJson, handleSaveDraft]);
+
+  const topBarStatus = useMemo(() => {
+    if (state.status !== "loaded") {
+      return {
+        message: "Loading scenario...",
+        tone: "neutral" as CreatorStatusTone,
+      };
+    }
+
+    if (syncStatus === "syncing") {
+      return {
+        message: "Saving...",
+        tone: "neutral" as CreatorStatusTone,
+      };
+    }
+
+    if (syncStatus === "error") {
+      return {
+        message: syncMessage || "Save failed",
+        tone: "error" as CreatorStatusTone,
+      };
+    }
+
+    if (isDirty) {
+      return {
+        message: "Unsaved changes",
+        tone: "warning" as CreatorStatusTone,
+      };
+    }
+
+    return {
+      message: `All changes saved`,
+      tone:
+        syncStatus === "success"
+          ? ("success" as CreatorStatusTone)
+          : ("neutral" as CreatorStatusTone),
+    };
+  }, [state.status, syncStatus, syncMessage, isDirty]);
+
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
-      <MenuBar>
-        {state.status === "loaded" && (
-          <input
-            type="text"
-            value={state.doc.title}
-            onChange={(event) =>
-              dispatch({ type: "setScenarioTitle", title: event.target.value })
-            }
-            placeholder="Scenario title"
-            className="w-64 rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-sky-500"
-          />
-        )}
-        {state.status === "loaded" && (
-          <button
-            className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20 disabled:opacity-60"
-            onClick={() => {
-              void syncScenarioDraft();
-            }}
-            disabled={syncStatus === "syncing"}
-          >
-            {syncStatus === "syncing" ? "Syncing..." : "Sync to Backend"}
-          </button>
-        )}
-        {state.status === "loaded" && (
-          <button
-            className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20"
-            onClick={() => downloadJson(state.doc, "scenario.json")}
-          >
-            Download JSON
-          </button>
-        )}
-        <ScenarioImportButton onLoaded={initializeEditor} />
-        <button
-          className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20"
-          onClick={() => {
-            setTipClosed(false);
-            setTipNum(1);
-            setTipOpen(true);
-          }}
-        >
-          Help
-        </button>
-        {state.status === "loaded" && (
-          <span
-            className={`max-w-xs truncate text-xs ${
-              syncStatus === "error"
-                ? "text-red-300"
-                : syncStatus === "success"
-                  ? "text-emerald-300"
-                  : "text-slate-300"
-            }`}
-            title={syncMessage || undefined}
-          >
-            {syncMessage ||
-              (syncedScenarioId
-                ? `Bound to scenario #${syncedScenarioId}`
-                : "Draft not synced")}
-          </span>
-        )}
-      </MenuBar>
+      <CreatorTopBar
+        title={state.status === "loaded" ? state.doc.title : ""}
+        titleDisabled={state.status !== "loaded"}
+        onLogoClick={handleLogoClick}
+        onTitleChange={(title) => dispatch({ type: "setScenarioTitle", title })}
+        fileActions={{
+          onNewScenario: handleCreateNewScenario,
+          onOpenLibrary: handleOpenScenarioLibrary,
+          onBeforeImport: handleBeforeImport,
+          onImportScenarioLoaded: handleImportedScenarioLoaded,
+          onSaveDraft: handleSaveDraft,
+          onDownloadJson: handleDownloadJson,
+          saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
+          downloadDisabled: state.status !== "loaded",
+          saveLabel: syncStatus === "syncing" ? "Saving..." : "Save",
+        }}
+        editActions={{
+          onUndo: undefined,
+          onRedo: undefined,
+        }}
+        viewActions={{
+          onZoomIn: handleZoomIn,
+          onZoomOut: handleZoomOut,
+          onResetZoom: handleResetZoom,
+          onFitView: handleFitView,
+          disabled: !reactFlowInstance,
+        }}
+        helpActions={{
+          onShowTutorial: reopenTutorial,
+          onOpenTutorial: openTutorialScenario,
+          onShowKeyboardShortcuts: undefined,
+        }}
+        statusMessage={topBarStatus.message}
+        statusTone={topBarStatus.tone}
+      />
       {!tipClosed && tipOpen && tipNum !== 0 && (
         <div
           className="fixed z-50 max-w-sm rounded-lg border border-[#0b1f3a] bg-[#081426] p-4 text-blue-100 shadow-lg"
           style={{
             top:
-              tipNum === 1
+              (tipNum === 1
                 ? 100
                 : tipNum === 2
                   ? 140
@@ -325,7 +462,7 @@ const ScenarioCreator = ({
                     ? 300
                     : tipNum === 4
                       ? 350
-                      : 250,
+                      : 250) + TUTORIAL_TOP_OFFSET,
             left:
               tipNum === 1
                 ? 215
@@ -374,13 +511,12 @@ const ScenarioCreator = ({
 
             <button
               type="button"
-              className="ml-2 !bg-blue-950 !text-blue-200 hover:!bg-blue-900 rounded-md px-2 py-1 transition"
+              className="ml-2 rounded-md !bg-blue-950 px-2 py-1 !text-blue-200 transition hover:!bg-blue-900"
               onClick={() => {
                 setTipClosed(true);
                 setTipOpen(false);
               }}
             >
-              {" "}
               X
             </button>
           </div>
@@ -401,7 +537,7 @@ const ScenarioCreator = ({
           inspectNode={inspectNode}
         >
           <ReactFlow
-            className="flex-1 min-h-0 min-w-0"
+            className="min-h-0 min-w-0 flex-1"
             onInit={(instance) => setReactFlowInstance(instance)}
             nodes={rfNodes}
             edges={rfEdges}
@@ -415,18 +551,10 @@ const ScenarioCreator = ({
             onNodeClick={onNodeClick}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            // TODO
             onConnect={onConnect}
-            // onNodesDelete={ }
-            // onEdgesDelete={}
           >
             <Background />
-
-            {/* Panels */}
             <MiniMap nodeStrokeWidth={3} />
-
-            {/* TODO Move these to toolbar below MenuBar */}
-            <Controls />
           </ReactFlow>
         </NodeInspectorProvider>
         <NodeEditorPanel editorState={state} dispatch={dispatch} />

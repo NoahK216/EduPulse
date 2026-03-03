@@ -4,36 +4,12 @@ import { Link, useParams } from 'react-router-dom';
 import type { Scenario } from './scenarioSchemas';
 import { ScenarioSchema } from './scenarioSchemas';
 import ScenarioCreator from './creator/ScenarioCreator';
+import { buildStarterScenario } from './creator/starterScenario';
 import '../scenario/creator/Creator.css';
 import { useApiData } from '../../lib/useApiData';
 import { ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
 import type { ItemResponse, PublicScenario } from '../../types/publicApi';
-
-function buildStarterScenario(scenarioId: number, title: string): Scenario {
-  const startNodeId = crypto.randomUUID();
-  return {
-    scenarioVersion: 1,
-    id: `scenario-${scenarioId}`,
-    title: title.trim().length > 0 ? title : `Scenario ${scenarioId}`,
-    startNodeId,
-    nodes: {
-      [startNodeId]: {
-        id: startNodeId,
-        type: 'video',
-        title: 'Start',
-        autoplay: false,
-      },
-    },
-    edges: [],
-    layout: {
-      [startNodeId]: {
-        x: 120,
-        y: 120,
-      },
-    },
-  };
-}
 
 function ScenarioEditorPage() {
   const { scenarioId } = useParams();
@@ -55,7 +31,10 @@ function ScenarioEditorPage() {
 
     if (item.draft_content === null || typeof item.draft_content === 'undefined') {
       return {
-        scenario: buildStarterScenario(item.id, item.title),
+        scenario: buildStarterScenario({
+          scenarioId: item.id,
+          title: item.title.trim().length > 0 ? item.title : `Scenario ${item.id}`,
+        }),
         parseError: null,
       };
     }
