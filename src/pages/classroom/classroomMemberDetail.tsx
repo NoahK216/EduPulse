@@ -1,9 +1,9 @@
 import { Link, useParams } from 'react-router-dom';
 
-import { useApiData } from './hooks/useApiData';
-import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from './ui/DataStatePanels';
-import PageShell from './ui/PageShell';
-import type { ItemResponse, PublicClassroomMember } from '../types/publicApi';
+import { useApiData } from '../../lib/useApiData';
+import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
+import PageShell from '../ui/PageShell';
+import type { ItemResponse, PublicClassroomMember } from '../../types/publicApi';
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString();

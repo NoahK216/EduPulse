@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 
-import { useApiData } from './hooks/useApiData';
-import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from './ui/DataStatePanels';
-import PageShell from './ui/PageShell';
+import { useApiData } from '../../lib/useApiData';
+import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
+import PageShell from '../ui/PageShell';
 import type {
   PagedResponse,
   PublicScenario,
   PublicScenarioVersion,
-} from '../types/publicApi';
+} from '../../types/publicApi';
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString();
@@ -48,7 +48,7 @@ function ScenarioLibrary() {
               {scenarios.data.items.map((scenario) => (
                 <Link
                   key={scenario.id}
-                  to={`/scenario/library/scenario/${scenario.id}`}
+                  to={`/scenario/${scenario.id}/editor`}
                   className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
                 >
                   <p className="font-medium">{scenario.title}</p>

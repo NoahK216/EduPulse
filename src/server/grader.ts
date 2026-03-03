@@ -2,7 +2,7 @@ import express from 'express';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-import { RubricSchema } from '../scenario/nodeSchemas.js';
+import { RubricSchema } from "../pages/scenario/nodeSchemas.js";
 
 export const gradeRequestSchema = z.object({
   question_prompt: z.string().min(1, 'question_prompt is required'),

@@ -1,7 +1,7 @@
-import NavBar from "./pages/ui/NavBar";
+import NavBar from "../ui/NavBar";
 import { Link } from "react-router-dom";
 
-function App() {
+function Home() {
   return (
     <div className="pt-12 min-h-screen bg-neutral-900 text-neutral-100">
       <NavBar />
@@ -37,4 +37,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;

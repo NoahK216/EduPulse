@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { ApiRequestError, publicApiGet, resolvePublicApiToken } from '../../lib/public-api-client';
+import { ApiRequestError, publicApiGet, resolvePublicApiToken } from './public-api-client';
 
 const DEBUG_PUBLIC_API =
   Boolean(import.meta.env.DEV) || import.meta.env.VITE_DEBUG_PUBLIC_API === '1';

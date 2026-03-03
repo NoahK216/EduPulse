@@ -148,12 +148,43 @@ export function clearPublicApiTokenCache() {
 }
 
 export async function publicApiGet<T>(path: string, token: string): Promise<T> {
+  return publicApiRequest<T>(path, {
+    method: 'GET',
+    token,
+  });
+}
+
+export async function publicApiPost<T>(
+  path: string,
+  token: string,
+  body: unknown
+): Promise<T> {
+  return publicApiRequest<T>(path, {
+    method: 'POST',
+    token,
+    body,
+  });
+}
+
+type PublicApiRequestArgs = {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  token: string;
+  body?: unknown;
+};
+
+async function publicApiRequest<T>(
+  path: string,
+  args: PublicApiRequestArgs
+): Promise<T> {
+  const { method, token, body } = args;
   debugPublicApi('request start', { path, token: maskToken(token) });
   const response = await fetch(path, {
-    method: 'GET',
+    method,
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(typeof body !== 'undefined' ? { 'Content-Type': 'application/json' } : {}),
     },
+    ...(typeof body !== 'undefined' ? { body: JSON.stringify(body) } : {}),
   });
 
   debugPublicApi('request finished', { path, status: response.status, ok: response.ok });

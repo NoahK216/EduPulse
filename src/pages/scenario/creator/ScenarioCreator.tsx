@@ -26,6 +26,12 @@ import { downloadJson } from "./DownloadJson";
 import { flowGraphFromScenario, loadScenario } from "./import";
 import { ScenarioImportButton } from "./ui/ScenarioImportButton";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
+import {
+  ApiRequestError,
+  publicApiPost,
+  resolvePublicApiToken,
+} from "../../../lib/public-api-client";
+import type { ItemResponse, PublicScenario } from "../../../types/publicApi";
 
 import { editorReducer } from "./EditorStore";
 import {
@@ -44,9 +50,21 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   animated: true,
 };
 
+type SyncStatus = "idle" | "syncing" | "success" | "error";
+
+type ScenarioCreatorProps = {
+  scenarioUrl?: string;
+  initialScenario?: Scenario;
+  initialScenarioId?: number | null;
+};
+
 // TODO rename initialNode to nodeData or something
 
-const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
+const ScenarioCreator = ({
+  scenarioUrl,
+  initialScenario,
+  initialScenarioId,
+}: ScenarioCreatorProps) => {
   const [state, dispatch] = useReducer(editorReducer, { status: "idle" });
 
   const [reactFlowInstance, setReactFlowInstance] =
@@ -58,6 +76,9 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
   const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(1);
   const [tipOpen, setTipOpen] = useState(true);
   const [tipClosed, setTipClosed] = useState(false);
+  const [syncedScenarioId, setSyncedScenarioId] = useState<number | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [syncMessage, setSyncMessage] = useState<string>("");
 
   const preserveReactFlowSelection = useCallback(
     (nextNodes: Node[], prevNodes: Node[]) => {
@@ -78,8 +99,11 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
     [],
   );
 
-  const initializeEditor = (e: Scenario) => {
+  const initializeEditor = (e: Scenario, scenarioId?: number | null) => {
     dispatch({ type: "initScenario", scenario: e });
+    setSyncedScenarioId(scenarioId ?? null);
+    setSyncStatus("idle");
+    setSyncMessage("");
     requestAnimationFrame(() => reactFlowInstance?.fitView());
   };
 
@@ -90,6 +114,11 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
       });
     }
   }, [scenarioUrl]);
+
+  useEffect(() => {
+    if (!initialScenario) return;
+    initializeEditor(initialScenario, initialScenarioId ?? null);
+  }, [initialScenario, initialScenarioId]);
 
   // Drives ReactFlow state by the SSoT: editorReducer
   useEffect(() => {
@@ -179,9 +208,73 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
     [inspectNode, tipNum],
   );
 
+  const syncScenarioDraft = useCallback(async () => {
+    if (state.status !== "loaded") return;
+
+    setSyncStatus("syncing");
+    setSyncMessage("");
+
+    try {
+      const token = await resolvePublicApiToken();
+      if (!token) {
+        throw new Error("No auth token available. Please log in.");
+      }
+
+      const response = await publicApiPost<ItemResponse<PublicScenario>>(
+        "/api/public/scenarios",
+        token,
+        {
+          scenario_id: syncedScenarioId ?? undefined,
+          title: state.doc.title,
+          description: null,
+          draft_content: state.doc,
+        },
+      );
+
+      setSyncedScenarioId(response.item.id);
+      setSyncStatus("success");
+      setSyncMessage(
+        `Synced scenario #${response.item.id} at ${new Date().toLocaleTimeString()}`,
+      );
+    } catch (error) {
+      setSyncStatus("error");
+      if (error instanceof ApiRequestError) {
+        setSyncMessage(error.message);
+        return;
+      }
+      if (error instanceof Error) {
+        setSyncMessage(error.message);
+        return;
+      }
+      setSyncMessage("Failed to sync scenario");
+    }
+  }, [state, syncedScenarioId]);
+
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
       <MenuBar>
+        {state.status === "loaded" && (
+          <input
+            type="text"
+            value={state.doc.title}
+            onChange={(event) =>
+              dispatch({ type: "setScenarioTitle", title: event.target.value })
+            }
+            placeholder="Scenario title"
+            className="w-64 rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 outline-none focus:border-sky-500"
+          />
+        )}
+        {state.status === "loaded" && (
+          <button
+            className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20 disabled:opacity-60"
+            onClick={() => {
+              void syncScenarioDraft();
+            }}
+            disabled={syncStatus === "syncing"}
+          >
+            {syncStatus === "syncing" ? "Syncing..." : "Sync to Backend"}
+          </button>
+        )}
         {state.status === "loaded" && (
           <button
             className="inline-flex items-center rounded-md !border !border-sky-400/45 !bg-sky-500/10 !px-3 !py-1.5 !text-xs font-semibold uppercase tracking-[0.08em] !text-sky-100 transition hover:!bg-sky-500/20"
@@ -201,6 +294,23 @@ const ScenarioCreator = ({ scenarioUrl }: { scenarioUrl?: string }) => {
         >
           Help
         </button>
+        {state.status === "loaded" && (
+          <span
+            className={`max-w-xs truncate text-xs ${
+              syncStatus === "error"
+                ? "text-red-300"
+                : syncStatus === "success"
+                  ? "text-emerald-300"
+                  : "text-slate-300"
+            }`}
+            title={syncMessage || undefined}
+          >
+            {syncMessage ||
+              (syncedScenarioId
+                ? `Bound to scenario #${syncedScenarioId}`
+                : "Draft not synced")}
+          </span>
+        )}
       </MenuBar>
       {!tipClosed && tipOpen && tipNum !== 0 && (
         <div

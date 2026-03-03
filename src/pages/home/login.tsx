@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import NavBar from "./ui/NavBar";
+import NavBar from "../ui/NavBar";
 
-import { authClient } from "../lib/auth-client";
+import { authClient } from "../../lib/auth-client";
 
 function Login() {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ function Login() {
       }
     } catch (e: any) {
       console.error("login error", e);
-      setError(e?.message || "An unexpected error occurred");
+      setError(e.message || "An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }

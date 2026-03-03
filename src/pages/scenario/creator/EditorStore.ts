@@ -26,6 +26,10 @@ export type EditorAction =|{
   id: string|null
 }
 |{
+  type: 'setScenarioTitle';
+  title: string;
+}
+|{
   type: 'setNodePositions';
   positions: Record<string, XYPosition>;
 }
@@ -84,6 +88,17 @@ export function editorReducer(
         ...state,
         ui: {...state.ui, inspectedNodeId: action.id},
       };
+
+    case 'setScenarioTitle': {
+      if (state.status !== 'loaded') return state;
+      return {
+        ...state,
+        doc: {
+          ...state.doc,
+          title: action.title,
+        },
+      };
+    }
 
 
     case 'setNodePositions': {

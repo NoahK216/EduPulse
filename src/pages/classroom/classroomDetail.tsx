@@ -1,15 +1,15 @@
 import { Link, useParams } from 'react-router-dom';
 
-import { useApiData } from './hooks/useApiData';
-import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from './ui/DataStatePanels';
-import PageShell from './ui/PageShell';
+import { useApiData } from '../../lib/useApiData';
+import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
+import PageShell from '../ui/PageShell';
 import type {
   ItemResponse,
   PagedResponse,
   PublicAssignment,
   PublicClassroom,
   PublicClassroomMember,
-} from '../types/publicApi';
+} from '../../types/publicApi';
 
 function formatDate(value: string | null) {
   if (!value) return 'N/A';
