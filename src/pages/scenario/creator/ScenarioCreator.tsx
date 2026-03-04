@@ -249,6 +249,7 @@ const ScenarioCreator = ({
 
     const scenarioSnapshot = state.doc;
     const serializedSnapshot = JSON.stringify(scenarioSnapshot);
+    const wasUnsyncedScenario = syncedScenarioId === null;
 
     setSyncStatus("syncing");
     setSyncMessage("");
@@ -276,6 +277,10 @@ const ScenarioCreator = ({
         `Synced scenario #${response.item.id} at ${new Date().toLocaleTimeString()}`,
       );
       setBaselineSerializedDoc(serializedSnapshot);
+
+      if (wasUnsyncedScenario) {
+        navigate(`/scenario/${response.item.id}/editor`, { replace: true });
+      }
     } catch (error) {
       setSyncStatus("error");
       if (error instanceof ApiRequestError) {
@@ -288,7 +293,7 @@ const ScenarioCreator = ({
       }
       setSyncMessage("Failed to sync scenario");
     }
-  }, [state, syncedScenarioId]);
+  }, [navigate, state, syncedScenarioId]);
 
   const handleLogoClick = useCallback(() => {
     if (!confirmDiscardUnsavedChanges("open the homepage")) return;

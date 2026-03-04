@@ -171,6 +171,58 @@ export function createPublicScenariosRouter() {
     }
   });
 
+  router.delete('/:id', async (req, res) => {
+    const authedReq = asAuthedRequest(req);
+    const id = parseIntParam('id', req.params.id);
+    if (!id.ok) {
+      return sendError(res, 400, 'BAD_REQUEST', id.message);
+    }
+
+    try {
+      const existing = await prisma.scenario.findFirst({
+        where: {
+          id: id.value,
+          owner_user_id: authedReq.auth.publicUserId,
+        },
+        select: {
+          id: true,
+          versions: {
+            select: {
+              _count: { select: { assignments: true } },
+            },
+          },
+        },
+      });
+
+      if (!existing) {
+        return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
+      }
+
+      const hasAssignedVersions = existing.versions.some(
+        (version) => version._count.assignments > 0
+      );
+      if (hasAssignedVersions) {
+        return sendError(
+          res,
+          400,
+          'BAD_REQUEST',
+          'Cannot delete a scenario with assigned published versions'
+        );
+      }
+
+      await prisma.scenario.delete({
+        where: { id: existing.id },
+      });
+
+      return res.json({
+        deleted: true,
+        id: existing.id,
+      });
+    } catch (error) {
+      return sendInternalError(res, 'Failed to delete scenario', error);
+    }
+  });
+
   router.post('/', async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const parsed = syncScenarioBodySchema.safeParse(req.body);

@@ -166,6 +166,16 @@ export async function publicApiPost<T>(
   });
 }
 
+export async function publicApiDelete<T>(
+  path: string,
+  token: string
+): Promise<T> {
+  return publicApiRequest<T>(path, {
+    method: 'DELETE',
+    token,
+  });
+}
+
 type PublicApiRequestArgs = {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   token: string;

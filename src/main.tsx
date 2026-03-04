@@ -14,6 +14,7 @@ import AttemptDetail from './pages/classroom/attemptDetail.tsx';
 import ResponseDetail from './pages/classroom/responseDetail.tsx';
 import ScenarioLibrary from './pages/scenario/scenarioLibrary.tsx';
 import ScenarioEditorPage from './pages/scenario/scenarioEditor.tsx';
+import ScenarioNewPage from './pages/scenario/scenarioNew.tsx';
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
         path: "scenario",
         children: [
           { index: true, Component: ScenarioLibrary },
+          { path: "new", Component: ScenarioNewPage },
           { path: ":scenarioId/editor", Component: ScenarioEditorPage },
           { path: "library", Component: ScenarioLibrary },
         ]
