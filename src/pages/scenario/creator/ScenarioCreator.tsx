@@ -325,6 +325,11 @@ const ScenarioCreator = ({
     void syncScenarioDraft();
   }, [syncScenarioDraft]);
 
+  const handleTestScenario = useCallback(() => {
+    syncScenarioDraft();
+    navigate(`/scenario/${syncedScenarioId}/viewer`);
+  }, [navigate, syncScenarioDraft, syncedScenarioId]);
+
   const handleDownloadJson = useCallback(() => {
     if (state.status !== "loaded") return;
     downloadJson(state.doc, "scenario.json");
@@ -428,6 +433,7 @@ const ScenarioCreator = ({
           onBeforeImport: handleBeforeImport,
           onImportScenarioLoaded: handleImportedScenarioLoaded,
           onSaveDraft: handleSaveDraft,
+          onTestScenario: handleTestScenario,
           onDownloadJson: handleDownloadJson,
           saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
           downloadDisabled: state.status !== "loaded",

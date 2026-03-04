@@ -74,7 +74,7 @@ const CreatorTopBar = ({
               type="text"
               value={title}
               onChange={(event) => onTitleChange(event.target.value)}
-              placeholder="Untitled Diagram"
+              placeholder="Untitled Scenario"
               disabled={titleDisabled}
               className="w-96 max-w-full rounded-md px-2 text-xl text-slate-100 outline-none transition focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
@@ -103,6 +103,16 @@ const CreatorTopBar = ({
           label={fileActions.saveLabel}
           disabled={fileActions.saveDisabled}
           onClick={fileActions.onSaveDraft}
+        />
+        {/* <Link
+          to={`/scenario/${scenario.id}/viewer`}
+          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold !text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/20"
+        >
+          Test Run
+        </Link> */}
+        <ToolbarButton
+          label="Test Scenario"
+          onClick={fileActions.onTestScenario}
         />
         <ToolbarButton
           label="Download"

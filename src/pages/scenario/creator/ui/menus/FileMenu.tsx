@@ -103,6 +103,12 @@ const FileMenu = ({ actions }: FileMenuProps) => {
     },
     {
       type: "item",
+      id: "test",
+      label: "Test Scenario",
+      onSelect: actions.onTestScenario,
+    },
+    {
+      type: "item",
       id: "download",
       label: "Download JSON",
       shortcut: "Ctrl/Cmd+Shift+S",

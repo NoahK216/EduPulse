@@ -6,6 +6,7 @@ export type CreatorFileActions = {
   onBeforeImport: () => boolean;
   onImportScenarioLoaded: (scenario: Scenario) => void;
   onSaveDraft: () => void;
+  onTestScenario: () => void;
   onDownloadJson: () => void;
   saveDisabled: boolean;
   downloadDisabled: boolean;

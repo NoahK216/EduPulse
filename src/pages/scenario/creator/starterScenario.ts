@@ -16,7 +16,7 @@ export function buildStarterScenario(
   return {
     scenarioVersion: 1,
     id: normalizedId,
-    title: options.title?.trim() || "Untitled Diagram",
+    title: options.title?.trim() || "Untitled Scenario",
     startNodeId,
     nodes: {
       [startNodeId]: {
