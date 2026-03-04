@@ -21,16 +21,6 @@ function Home() {
             className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-700">
             Scenario Library
           </Link>
-          <Link
-            to="/scenario"
-            className="rounded-md bg-blue-950 text-white! px-4 py-2 text-sm font-medium hover:bg-blue-500">
-            Open Scenario Demo
-          </Link>
-          <Link
-            to="/scenario/creator"
-            className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-600">
-            Open Creator Demo
-          </Link>
         </div>
       </main>
     </div>

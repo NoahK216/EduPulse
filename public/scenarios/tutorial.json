@@ -1,8 +1,8 @@
 {
   "scenarioVersion": 1,
   "id": "0",
-  "title": "Grade Appeal Demo",
-  "startNodeId": "1",
+  "title": "Tutorial",
+  "startNodeId": "start",
   "nodes": {
     "1": {
       "id": "1",
@@ -12,6 +12,7 @@
     },
     "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e": {
       "id": "0a64b8ad-0fdc-4811-afe3-555a09ca5d7e",
+      "title": "MCQ demo",
       "type": "choice",
       "prompt": "Understanding the choice node",
       "choices": [
@@ -31,11 +32,11 @@
           "id": "787510c2-0546-4ff5-96a2-7d4d264f670a",
           "label": "End tutorial"
         }
-      ],
-      "title": "MCQ demo"
+      ]
     },
     "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0": {
       "id": "0d87eb83-acdc-4b6e-88c8-d13206a7d3b0",
+      "title": "How many types of nodes are there?",
       "type": "choice",
       "prompt": "",
       "choices": [
@@ -55,11 +56,11 @@
           "id": "e8442737-99b0-4c19-9243-87515852ab3e",
           "label": "4"
         }
-      ],
-      "title": "How many types of nodes are there?"
+      ]
     },
     "78d6d601-143d-4e7e-8992-e6fa53ec3948": {
       "id": "78d6d601-143d-4e7e-8992-e6fa53ec3948",
+      "title": "FRQ Node",
       "type": "free_response",
       "prompt": "Explain what goes in the rubric context box.",
       "placeholder": "",
@@ -80,11 +81,11 @@
             "classifier": "Incorrect, irrelevant or incorrect response."
           }
         ]
-      },
-      "title": "FRQ Node"
+      }
     },
     "1a0e77ff-9399-4b24-982a-240a828cb738": {
       "id": "1a0e77ff-9399-4b24-982a-240a828cb738",
+      "title": "Incorrect",
       "type": "choice",
       "prompt": "",
       "choices": [
@@ -92,11 +93,11 @@
           "id": "b5580a4d-8e15-48c5-bfba-cb4556a221c0",
           "label": "Move to the next node."
         }
-      ],
-      "title": "Incorrect"
+      ]
     },
     "92356ee4-65a5-4b5e-9736-ca4e960406c7": {
       "id": "92356ee4-65a5-4b5e-9736-ca4e960406c7",
+      "title": "Correct!",
       "type": "choice",
       "prompt": "",
       "choices": [
@@ -104,11 +105,11 @@
           "id": "d34046ae-d9ab-4947-8535-6b45bc08efd1",
           "label": "Move to the next node"
         }
-      ],
-      "title": "Correct!"
+      ]
     },
     "0a3e35cb-40bd-4b08-b6d4-19812d654771": {
       "id": "0a3e35cb-40bd-4b08-b6d4-19812d654771",
+      "title": "Which follow-up?",
       "type": "choice",
       "prompt": "What do you want to do next?",
       "choices": [
@@ -128,8 +129,11 @@
           "id": "d2fbd3ad-5f11-44d7-809c-ca7dcdc506c5",
           "label": "End tutorial"
         }
-      ],
-      "title": "Which follow-up?"
+      ]
+    },
+    "start": {
+      "id": "start",
+      "type": "start"
     }
   },
   "edges": [
@@ -291,6 +295,15 @@
       "to": {
         "nodeId": "78d6d601-143d-4e7e-8992-e6fa53ec3948"
       }
+    },
+    {
+      "id": "edge-start-out-1",
+      "from": {
+        "nodeId": "start"
+      },
+      "to": {
+        "nodeId": "1"
+      }
     }
   ],
   "layout": {
@@ -321,6 +334,10 @@
     "0a3e35cb-40bd-4b08-b6d4-19812d654771": {
       "x": 966.5890593492026,
       "y": -183.77056338077566
+    },
+    "start": {
+      "x": -359.7291905954115,
+      "y": -286.57348127384904
     }
   }
 }

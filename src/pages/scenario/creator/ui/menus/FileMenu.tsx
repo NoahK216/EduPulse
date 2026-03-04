@@ -1,14 +1,57 @@
-import { useRef } from "react";
-import { importScenarioFromFile } from "../../import";
+import { useCallback, useRef, useState } from "react";
+import {
+  ApiRequestError,
+  publicApiGet,
+  resolvePublicApiToken,
+} from "../../../../../lib/public-api-client";
+import type { PublicScenarioTemplate } from "../../../../../types/publicApi";
+import { importScenarioFromFile, loadScenario } from "../../import";
 import MenuDropdown, { type MenuDropdownItem } from "./MenuDropdown";
+import TemplateImportModal from "./TemplateImportModal";
 import type { CreatorFileActions } from "./menuTypes";
 
 type FileMenuProps = {
   actions: CreatorFileActions;
 };
 
+type TemplateListResponse = {
+  items: PublicScenarioTemplate[];
+};
+
 const FileMenu = ({ actions }: FileMenuProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [templateItems, setTemplateItems] = useState<PublicScenarioTemplate[]>([]);
+  const [templateLoading, setTemplateLoading] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+
+  const loadTemplateItems = useCallback(async () => {
+    setTemplateLoading(true);
+    setTemplateError(null);
+
+    try {
+      const token = await resolvePublicApiToken();
+      if (!token) {
+        setTemplateError("You must be logged in to import templates.");
+        return;
+      }
+
+      const response = await publicApiGet<TemplateListResponse>(
+        "/api/public/scenario-templates",
+        token,
+      );
+      setTemplateItems(response.items);
+    } catch (error) {
+      if (error instanceof ApiRequestError) {
+        setTemplateError(error.message);
+        return;
+      }
+
+      setTemplateError(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setTemplateLoading(false);
+    }
+  }, []);
 
   const items: MenuDropdownItem[] = [
     {
@@ -35,6 +78,15 @@ const FileMenu = ({ actions }: FileMenuProps) => {
       onSelect: () => {
         if (!actions.onBeforeImport()) return;
         fileInputRef.current?.click();
+      },
+    },
+    {
+      type: "item",
+      id: "import-template",
+      label: "Import from template...",
+      onSelect: () => {
+        setTemplatePickerOpen(true);
+        void loadTemplateItems();
       },
     },
     {
@@ -80,6 +132,29 @@ const FileMenu = ({ actions }: FileMenuProps) => {
           } finally {
             event.currentTarget.value = "";
           }
+        }}
+      />
+      <TemplateImportModal
+        open={templatePickerOpen}
+        loading={templateLoading}
+        error={templateError}
+        templates={templateItems}
+        onClose={() => setTemplatePickerOpen(false)}
+        onRetry={() => {
+          void loadTemplateItems();
+        }}
+        onSelectTemplate={(template) => {
+          if (!actions.onBeforeImport()) return;
+
+          void loadScenario(template.url)
+            .then((scenario) => {
+              actions.onImportScenarioLoaded(scenario);
+              setTemplatePickerOpen(false);
+            })
+            .catch((error) => {
+              console.error(error);
+              alert(error instanceof Error ? error.message : "Import failed");
+            });
         }}
       />
     </>

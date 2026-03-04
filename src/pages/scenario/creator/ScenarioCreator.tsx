@@ -141,10 +141,7 @@ const ScenarioCreator = ({
   }, []);
 
   const openTutorialScenario = useCallback(() => {
-    const tutorialUrl = new URL(
-      "/scenario?url=/scenarios/tutorial.json",
-      window.location.origin,
-    );
+    const tutorialUrl = new URL("/EdupulseTutorial.mp4", window.location.origin);
     window.open(tutorialUrl.toString(), "_blank", "noopener,noreferrer");
   }, []);
 

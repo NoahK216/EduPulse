@@ -61,6 +61,13 @@ export type PublicScenario = PublicScenarioBase & {
   version_count: number;
 };
 
+export type PublicScenarioTemplate = {
+  id: string;
+  file_name: string;
+  title: string;
+  url: string;
+};
+
 export type PublicScenarioVersion = PublicScenarioVersionBase & {
   scenario_title: string;
   published_by_name: string;

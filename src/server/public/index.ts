@@ -7,6 +7,7 @@ import { createPublicClassroomMembersRouter } from './classroomMembers.js';
 import { createPublicClassroomsRouter } from './classrooms.js';
 import { createPublicResponsesRouter } from './responses.js';
 import { createPublicScenariosRouter } from './scenarios.js';
+import { createPublicScenarioTemplatesRouter } from './scenarioTemplates.js';
 import { createPublicScenarioVersionsRouter } from './scenarioVersions.js';
 import { createPublicUsersRouter } from './users.js';
 
@@ -18,6 +19,7 @@ export function createPublicRouter() {
   router.use('/classrooms', createPublicClassroomsRouter());
   router.use('/classroom-members', createPublicClassroomMembersRouter());
   router.use('/scenarios', createPublicScenariosRouter());
+  router.use('/scenario-templates', createPublicScenarioTemplatesRouter());
   router.use('/scenario-versions', createPublicScenarioVersionsRouter());
   router.use('/assignments', createPublicAssignmentsRouter());
   router.use('/attempts', createPublicAttemptsRouter());
