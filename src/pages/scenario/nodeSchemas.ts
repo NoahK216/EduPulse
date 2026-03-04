@@ -13,6 +13,10 @@ export const TextNodeSchema = BaseNodeSchema.extend({
 });
 export type TextNode = z.infer<typeof TextNodeSchema>;
 
+export const StartNodeSchema = BaseNodeSchema.extend({
+  type: z.literal("start")
+});
+export type StartNode = z.infer<typeof StartNodeSchema>;
 
 export const VideoNodeSchema = BaseNodeSchema.extend({
   type: z.literal('video'),

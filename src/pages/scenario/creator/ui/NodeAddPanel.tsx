@@ -20,7 +20,9 @@ const NodeAddPanel = ({ editorDispatch, onAddNode }: NodeAddPanelProps) => {
         Add Node
       </p>
       <div className="mt-3 space-y-2">
-        {Object.entries(nodeRegistry).map(([type, nodeEntry]) => (
+        {Object.entries(nodeRegistry)
+          .filter(([, nodeEntry]) => nodeEntry.type !== "start")
+          .map(([type, nodeEntry]) => (
           <button
             key={type}
             type="button"

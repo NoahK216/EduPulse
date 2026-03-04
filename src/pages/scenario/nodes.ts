@@ -2,14 +2,17 @@ import z from 'zod';
 
 import {ChoiceCard} from './creator/cards/Choice.Card';
 import {FreeResponseCard} from './creator/cards/FreeResponse.Card';
+import {StartCard} from './creator/cards/Start.Card';
 import {VideoCard} from './creator/cards/Video.Card';
 import {ChoiceTab} from './creator/tabs/Choice.Tab';
 import {FreeResponseTab} from './creator/tabs/FreeResponse.Tab';
+import {StartTab} from './creator/tabs/Start.Tab';
 import {VideoTab} from './creator/tabs/Video.Tab';
 import {defineNodeRegistry, pluck, tuple} from './nodeRegistry';
-import {ChoiceNodeSchema, FreeResponseNodeSchema, TextNodeSchema, VideoNodeSchema} from './nodeSchemas';
+import {ChoiceNodeSchema, FreeResponseNodeSchema, StartNodeSchema, TextNodeSchema, VideoNodeSchema} from './nodeSchemas';
 import {ChoiceScene} from './viewer/scenes/Choice.Scene';
 import {FreeResponseScene} from './viewer/scenes/FreeResponse.Scene';
+import {StartScene} from './viewer/scenes/Start.Scene';
 import {VideoScene} from './viewer/scenes/Video.Scene';
 import {TextTab} from './creator/tabs/Text.Tab';
 import { TextCard } from './creator/cards/Text.Card';
@@ -17,6 +20,17 @@ import { TextScene } from './viewer/scenes/Text.Scene';
 
 // TODO Create nodes server side
 export const nodeRegistry = defineNodeRegistry({
+  start: {
+    type: 'start',
+    schema: StartNodeSchema,
+    scene: StartScene,
+    card: StartCard,
+    tab: StartTab,
+    factory: (): z.infer<typeof StartNodeSchema> => ({
+      id: crypto.randomUUID(),
+      type: 'start',
+    }),
+  },
   text: {
     type: 'text',
     schema: TextNodeSchema,
@@ -81,6 +95,7 @@ export const nodeRegistry = defineNodeRegistry({
 
 
 const nodeSchemas = tuple(
+    nodeRegistry.start.schema,
     nodeRegistry.text.schema, 
     nodeRegistry.video.schema, 
     nodeRegistry.choice.schema,
@@ -88,6 +103,7 @@ const nodeSchemas = tuple(
 );
 
 export const NODE_TYPE_LABELS: Record<GenericNode["type"], string> = {
+    start: "Start",
     text: "Text",
     video: "Video",
     choice: "Multiple Choice",

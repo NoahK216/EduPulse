@@ -159,7 +159,8 @@ export function editorReducer(
 
       const nodes = {...state.doc.nodes};
       const layout = {...state.doc.layout};
-      const deletedIds = new Set(action.ids);
+      const deletedIds = new Set(
+          action.ids.filter((id) => id !== state.doc.startNodeId));
       for (const id of deletedIds) {
         delete nodes[id];
         delete layout[id];

@@ -221,6 +221,7 @@ const ScenarioCreator = ({
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       if (!node) return;
+      if (node.type === "start") return;
 
       inspectNode(node.id);
 

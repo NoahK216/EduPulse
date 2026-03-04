@@ -29,10 +29,12 @@ export function NodeInspectorProvider({
 export function NodeCardFrame({
   nodeId,
   selected,
+  inspectable = true,
   children,
 }: {
   nodeId: string;
   selected: boolean;
+  inspectable?: boolean;
   children: ReactNode;
 }) {
   const { inspectedNodeId, inspectNode } = useContext(NodeInspectorContext);
@@ -43,7 +45,10 @@ export function NodeCardFrame({
   return (
     <div
       className={`creator-card${selectedClassName}${inspectedClassName}`}
-      onClick={() => inspectNode(nodeId)}
+      onClick={() => {
+        if (!inspectable) return;
+        inspectNode(nodeId);
+      }}
     >
       {children}
     </div>

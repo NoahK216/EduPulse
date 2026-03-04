@@ -21,9 +21,7 @@ export function buildStarterScenario(
     nodes: {
       [startNodeId]: {
         id: startNodeId,
-        type: "video",
-        title: "Start",
-        autoplay: false,
+        type: "start",
       },
     },
     edges: [],
