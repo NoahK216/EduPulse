@@ -194,7 +194,13 @@ function ScenarioLibrary() {
                             to={`/scenario/${scenario.id}/editor`}
                             className="rounded-md border border-neutral-700 px-3 py-1.5 text-xs font-semibold !text-neutral-200 transition hover:border-cyan-400/60 hover:!text-cyan-100"
                           >
-                            Open
+                            Edit
+                          </Link>
+                          <Link
+                            to={`/scenario/${scenario.id}/viewer`}
+                            className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold !text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/20"
+                          >
+                            Test Run
                           </Link>
                           <button
                             type="button"
