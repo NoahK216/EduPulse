@@ -1,66 +1,59 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import type { ComponentType } from "react";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-import './index.css'
-import Home from './pages/home/home.tsx'
-import Login from "./pages/home/login.tsx";
-import Classroom from "./pages/classroom/classroom.tsx";
-import Signup from "./pages/home/signup.tsx";
-import ClassroomDetail from './pages/classroom/classroomDetail.tsx';
-import ClassroomMemberDetail from './pages/classroom/classroomMemberDetail.tsx';
-import AssignmentDetail from './pages/classroom/assignmentDetail.tsx';
-import AttemptDetail from './pages/classroom/attemptDetail.tsx';
-import ResponseDetail from './pages/classroom/responseDetail.tsx';
-import ScenarioLibrary from './pages/scenario/scenarioLibrary.tsx';
-import ScenarioEditorPage from './pages/scenario/scenarioEditor.tsx';
-import ScenarioNewPage from './pages/scenario/scenarioNew.tsx';
-import ScenarioViewerPage from './pages/scenario/scenarioViewerPage.tsx';
+import "./index.css";
+
+type LazyRouteModule = { default: ComponentType };
+const lazyComponent = (importer: () => Promise<LazyRouteModule>) => {
+  return async () => {
+    const { default: Component } = await importer();
+    return { Component };
+  };
+};
 
 const router = createBrowserRouter([
   {
     path: "/",
     children: [
-      { index: true, Component: Home },
-      { path: "login", Component: Login },
-      { path: "signup", Component: Signup },
-      { path: "classrooms", Component: Classroom },
+      { index: true, lazy: lazyComponent(() => import("./pages/home/home.tsx")) },
+      { path: "login", lazy: lazyComponent(() => import("./pages/home/login.tsx")) },
+      { path: "signup", lazy: lazyComponent(() => import("./pages/home/signup.tsx")) },
+      { path: "classrooms", lazy: lazyComponent(() => import("./pages/classroom/classroom.tsx")) },
       {
-        path: "classrooms/:classroomId", children:
+        path: "classrooms/:classroomId",
+        children:
           [
-            { index: true, Component: ClassroomDetail },
-            { path: "member/:userId", Component: ClassroomMemberDetail },
-            { path: "assignment/:assignmentId", Component: AssignmentDetail },
+            { index: true, lazy: lazyComponent(() => import("./pages/classroom/classroomDetail.tsx")) },
+            { path: "member/:userId", lazy: lazyComponent(() => import("./pages/classroom/classroomMemberDetail.tsx")) },
+            { path: "assignment/:assignmentId", lazy: lazyComponent(() => import("./pages/classroom/assignmentDetail.tsx")) },
             {
               path: "assignment/:assignmentId/attempt/:attemptId",
-              Component: AttemptDetail
+              lazy: lazyComponent(() => import("./pages/classroom/attemptDetail.tsx"))
             },
             {
               path: "assignment/:assignmentId/attempt/:attemptId/response/:responseId",
-              Component: ResponseDetail
+              lazy: lazyComponent(() => import("./pages/classroom/responseDetail.tsx"))
             },
           ]
       },
       {
         path: "scenario",
         children: [
-          { index: true, Component: ScenarioLibrary },
-          { path: "new", Component: ScenarioNewPage },
-          { path: ":scenarioId/viewer", Component: ScenarioViewerPage },
-          { path: ":scenarioId/editor", Component: ScenarioEditorPage },
-          { path: "library", Component: ScenarioLibrary },
+          { index: true, lazy: lazyComponent(() => import("./pages/scenario/scenarioLibrary.tsx")) },
+          { path: "new", lazy: lazyComponent(() => import("./pages/scenario/scenarioNew.tsx")) },
+          { path: ":scenarioId/viewer", lazy: lazyComponent(() => import("./pages/scenario/scenarioViewerPage.tsx")) },
+          { path: ":scenarioId/editor", lazy: lazyComponent(() => import("./pages/scenario/scenarioEditor.tsx")) },
+          { path: "library", lazy: lazyComponent(() => import("./pages/scenario/scenarioLibrary.tsx")) },
         ]
       },
     ]
   }
 ]);
 
-import { Providers } from './providers';
-
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Providers>
-      <RouterProvider router={router} />
-    </Providers>
+    <RouterProvider router={router} />
   </StrictMode>,
-)
+);
