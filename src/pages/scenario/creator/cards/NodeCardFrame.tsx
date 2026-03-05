@@ -1,4 +1,8 @@
 import { createContext, useContext, type ReactNode } from "react";
+import { FaRegTrashAlt } from "react-icons/fa";
+
+import { NODE_TYPE_LABELS, type GenericNode } from "../../nodes";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 
 type NodeInspectorContextValue = {
   inspectedNodeId: string | null;
@@ -28,16 +32,17 @@ export function NodeInspectorProvider({
 
 export function NodeCardFrame({
   nodeId,
+  nodeType,
   selected,
-  inspectable = true,
   children,
 }: {
   nodeId: string;
+  nodeType: GenericNode["type"];
   selected: boolean;
-  inspectable?: boolean;
   children: ReactNode;
 }) {
   const { inspectedNodeId, inspectNode } = useContext(NodeInspectorContext);
+  const dispatch = useEditorDispatch();
   const selectedClassName = selected ? " creator-card--selected" : "";
   const inspectedClassName =
     inspectedNodeId === nodeId ? " creator-card--inspected" : "";
@@ -46,10 +51,23 @@ export function NodeCardFrame({
     <div
       className={`creator-card${selectedClassName}${inspectedClassName}`}
       onClick={() => {
-        if (!inspectable) return;
+        if (nodeType === "start") return;
         inspectNode(nodeId);
       }}
     >
+      <div className="flex column justify-between w-full">
+        <p className="creator-card-kicker">{NODE_TYPE_LABELS[nodeType]}</p>
+        {nodeType !== "start" &&
+          <FaRegTrashAlt
+            color="red"
+            className="cursor-pointer"
+            onClick={(event) => {
+              event.stopPropagation();
+              dispatch({ type: "deleteNodes", ids: [nodeId] });
+            }}
+          />
+        }
+      </div>
       {children}
     </div>
   );

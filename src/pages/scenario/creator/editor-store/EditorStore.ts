@@ -1,5 +1,5 @@
-import type {GenericNode} from '../nodes';
-import type {NodeEdge, Scenario} from '../scenarioSchemas';
+import type {GenericNode} from '../../nodes';
+import type {NodeEdge, Scenario} from '../../scenarioSchemas';
 import type {XYPosition} from '@xyflow/react';
 
 export type EditorState =|{

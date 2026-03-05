@@ -12,9 +12,8 @@ export function VideoCard(props: NodeProps<ReactFlowCard<VideoNode>>) {
   const node = props.data.node;
 
   return (
-    <NodeCardFrame nodeId={node.id} selected={Boolean(props.selected)}>
+    <NodeCardFrame nodeId={node.id} nodeType={node.type} selected={Boolean(props.selected)}>
       <Handle type="target" position={Position.Left} className="creator-handle" />
-      <p className="creator-card-kicker">Video</p>
       <h2 className="creator-card-title">{node.title?.trim() || "Untitled video"}</h2>
       <p className="creator-card-description">
         {node.src?.trim() || "No source URL configured."}

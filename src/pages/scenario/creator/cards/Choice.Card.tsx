@@ -11,9 +11,8 @@ export function ChoiceCard(props: NodeProps<ReactFlowCard<ChoiceNode>>) {
   const node = props.data.node;
 
   return (
-    <NodeCardFrame nodeId={node.id} selected={Boolean(props.selected)}>
+    <NodeCardFrame nodeId={node.id} nodeType={node.type} selected={Boolean(props.selected)}>
       <Handle type="target" position={Position.Left} className="creator-handle" />
-      <p className="creator-card-kicker">Multiple Choice</p>
       <h2 className="creator-card-title">{node.title?.trim() || "Untitled choice"}</h2>
       <p className="creator-card-description">
         {node.prompt?.trim() || "Question prompt not set."}

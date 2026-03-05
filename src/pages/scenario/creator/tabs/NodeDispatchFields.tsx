@@ -1,5 +1,5 @@
 import type { GenericNode } from "../../nodes";
-import type { EditorDispatch } from "../EditorStore";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 
 function setPath(root: Record<string, any>, path: string, value: unknown) {
   const parts = path.split(".").filter(Boolean);
@@ -22,7 +22,6 @@ function getPath(obj: any, path: string) {
 type TextInputDispatchProps<N extends GenericNode> = {
   node: N;
   path: string; // "title" or "scoring.rubric.prompt"
-  dispatch: EditorDispatch;
   className?: string;
   placeholder?: string;
 };
@@ -30,11 +29,11 @@ type TextInputDispatchProps<N extends GenericNode> = {
 export function TextInputDispatch<N extends GenericNode>({
   node,
   path,
-  dispatch,
   className,
   placeholder,
 }: TextInputDispatchProps<N>) {
   const value = (getPath(node, path) ?? "") as string;
+  const dispatch = useEditorDispatch();
 
   return (
     <input

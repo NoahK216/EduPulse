@@ -25,6 +25,7 @@ import NodeEditorPanel from "./ui/NodeEditorPanel";
 import { downloadJson } from "./DownloadJson";
 import { flowGraphFromScenario, loadScenario } from "./import";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
+import { EditorDispatchProvider } from "./editor-store/EditorDispatchContext";
 import {
   ApiRequestError,
   publicApiPost,
@@ -32,7 +33,7 @@ import {
 } from "../../../lib/public-api-client";
 import type { ItemResponse, PublicScenario } from "../../../types/publicApi";
 
-import { editorReducer } from "./EditorStore";
+import { editorReducer } from "./editor-store/EditorStore";
 import {
   createEdgeFromConnection,
   dispatchOnEdgesChange,
@@ -421,7 +422,8 @@ const ScenarioCreator = ({
   }, [state.status, syncStatus, syncMessage, isDirty]);
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+    <EditorDispatchProvider dispatch={dispatch}>
+      <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
       <CreatorTopBar
         title={state.status === "loaded" ? state.doc.title : ""}
         titleDisabled={state.status !== "loaded"}
@@ -533,7 +535,6 @@ const ScenarioCreator = ({
       )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
         <NodeAddPanel
-          editorDispatch={dispatch}
           onAddNode={() => {
             if (tipNum === 1) {
               setTipNum(2);
@@ -566,9 +567,10 @@ const ScenarioCreator = ({
             <MiniMap nodeStrokeWidth={3} />
           </ReactFlow>
         </NodeInspectorProvider>
-        <NodeEditorPanel editorState={state} dispatch={dispatch} />
+        <NodeEditorPanel editorState={state} />
       </div>
-    </div>
+      </div>
+    </EditorDispatchProvider>
   );
 };
 

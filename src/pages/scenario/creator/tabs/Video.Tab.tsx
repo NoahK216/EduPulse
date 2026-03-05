@@ -1,4 +1,5 @@
 import type { VideoNode } from "../../nodeSchemas";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 import { TextInputDispatch } from "./NodeDispatchFields";
 import type { NodeTabProps } from "./TabRenderer";
 import {
@@ -8,7 +9,9 @@ import {
   sectionHeaderClassName,
 } from "./tabStyles";
 
-export function VideoTab({ node, dispatch }: NodeTabProps<VideoNode>) {
+export function VideoTab({ node }: NodeTabProps<VideoNode>) {
+  const dispatch = useEditorDispatch();
+  
   return (
     <>
       <section className={sectionClassName}>
@@ -17,7 +20,6 @@ export function VideoTab({ node, dispatch }: NodeTabProps<VideoNode>) {
         <TextInputDispatch
           node={node}
           path="title"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="Video title"
         />
@@ -25,7 +27,6 @@ export function VideoTab({ node, dispatch }: NodeTabProps<VideoNode>) {
         <TextInputDispatch
           node={node}
           path="src"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="https://..."
         />
@@ -33,7 +34,6 @@ export function VideoTab({ node, dispatch }: NodeTabProps<VideoNode>) {
         <TextInputDispatch
           node={node}
           path="captionsSrc"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="https://..."
         />

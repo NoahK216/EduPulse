@@ -1,9 +1,7 @@
 import { NODE_TYPE_LABELS, tabs, type GenericNode } from "../../nodes";
-import type { EditorDispatch } from "../EditorStore";
 
 export type NodeTabProps<N extends GenericNode = GenericNode> = {
   node: N;
-  dispatch: EditorDispatch;
   onClose?: () => void;
 };
 

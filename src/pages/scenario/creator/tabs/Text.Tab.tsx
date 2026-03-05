@@ -1,4 +1,5 @@
 import type { TextNode } from "../../nodeSchemas";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 import { TextInputDispatch } from "./NodeDispatchFields";
 import type { NodeTabProps } from "./TabRenderer";
 import {
@@ -9,7 +10,9 @@ import {
   sectionHeaderClassName,
 } from "./tabStyles";
 
-export function TextTab({ node, dispatch }: NodeTabProps<TextNode>) {
+export function TextTab({ node }: NodeTabProps<TextNode>) {
+  const dispatch = useEditorDispatch();
+
   return (
     <>
       <section className={sectionClassName}>
@@ -18,7 +21,6 @@ export function TextTab({ node, dispatch }: NodeTabProps<TextNode>) {
         <TextInputDispatch
           node={node}
           path="title"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="Title"
         />

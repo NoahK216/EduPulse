@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { EditorDispatch, EditorState } from "../EditorStore";
+import type { EditorState } from "../editor-store/EditorStore";
 import { TabRenderer } from "../tabs/TabRenderer";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 
 const DEFAULT_PANEL_WIDTH = 380;
 const MIN_PANEL_WIDTH = 300;
@@ -8,10 +9,11 @@ const MAX_PANEL_WIDTH = 640;
 
 export type NodeEditorPanelProps = {
     editorState?: EditorState;
-    dispatch: EditorDispatch;
 }
 
-const NodeEditorPanel = ({ editorState, dispatch }: NodeEditorPanelProps) => {
+const NodeEditorPanel = ({ editorState }: NodeEditorPanelProps) => {
+    const dispatch = useEditorDispatch();
+    
     const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
     const dragState = useRef<{
         pointerId: number | null;
@@ -96,7 +98,7 @@ const NodeEditorPanel = ({ editorState, dispatch }: NodeEditorPanelProps) => {
                 <div className="absolute inset-y-0 left-0 w-px bg-slate-600/70 transition group-hover:bg-sky-300/80" />
             </div>
             <div className="h-full min-w-0 flex-1 overflow-hidden">
-                <TabRenderer node={node} dispatch={dispatch} onClose={onCloseEditor} />
+                <TabRenderer node={node} onClose={onCloseEditor} />
             </div>
         </aside>
     );

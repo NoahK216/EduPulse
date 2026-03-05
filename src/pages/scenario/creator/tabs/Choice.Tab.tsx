@@ -1,4 +1,5 @@
 import type { ChoiceNode } from "../../nodeSchemas";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 import { TextInputDispatch } from "./NodeDispatchFields";
 import type { NodeTabProps } from "./TabRenderer";
 import {
@@ -12,7 +13,9 @@ import {
   sectionHeaderClassName,
 } from "./tabStyles";
 
-export function ChoiceTab({ node, dispatch }: NodeTabProps<ChoiceNode>) {
+export function ChoiceTab({ node }: NodeTabProps<ChoiceNode>) {
+  const dispatch = useEditorDispatch();
+
   const onChoiceLabelChange = (choiceId: string, label: string) => {
     dispatch({
       type: "updateNode",
@@ -64,7 +67,6 @@ export function ChoiceTab({ node, dispatch }: NodeTabProps<ChoiceNode>) {
         <TextInputDispatch
           node={node}
           path="title"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="Question title"
         />

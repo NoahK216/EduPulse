@@ -9,10 +9,9 @@ export function StartCard(props: NodeProps<ReactFlowCard<StartNode>>) {
   return (
     <NodeCardFrame
       nodeId={node.id}
+      nodeType={node.type}
       selected={Boolean(props.selected)}
-      inspectable={false}
     >
-      <p className="creator-card-kicker">Start</p>
       <p className="creator-card-description">
         Connect to the first scenario node.
       </p>

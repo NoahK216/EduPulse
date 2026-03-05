@@ -1,4 +1,5 @@
 import type { FreeResponseNode } from "../../nodeSchemas";
+import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 import { TextInputDispatch } from "./NodeDispatchFields";
 import type { NodeTabProps } from "./TabRenderer";
 import {
@@ -12,7 +13,9 @@ import {
   sectionHeaderClassName,
 } from "./tabStyles";
 
-export function FreeResponseTab({ node, dispatch }: NodeTabProps<FreeResponseNode>) {
+export function FreeResponseTab({ node }: NodeTabProps<FreeResponseNode>) {
+  const dispatch = useEditorDispatch();
+
   const updateRubric = (rubric: FreeResponseNode["rubric"]) => {
     dispatch({
       type: "updateNode",
@@ -65,7 +68,6 @@ export function FreeResponseTab({ node, dispatch }: NodeTabProps<FreeResponseNod
         <TextInputDispatch
           node={node}
           path="title"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="Prompt title"
         />
@@ -90,7 +92,6 @@ export function FreeResponseTab({ node, dispatch }: NodeTabProps<FreeResponseNod
         <TextInputDispatch
           node={node}
           path="placeholder"
-          dispatch={dispatch}
           className={panelInputClassName}
           placeholder="Start typing your response..."
         />

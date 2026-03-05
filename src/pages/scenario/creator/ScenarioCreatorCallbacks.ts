@@ -1,6 +1,6 @@
 import {addEdge, type Connection, type Edge, type EdgeChange, type NodeChange, type XYPosition} from '@xyflow/react';
 import type {NodeEdge} from '../scenarioSchemas';
-import type {EditorDispatch} from './EditorStore';
+import type { EditorDispatch } from "./editor-store/EditorStore";
 
 const reactFlowEdgeOutgoingHandleKey = (edge: Pick<Edge, 'source'|'sourceHandle'>) =>
   `${edge.source}::${edge.sourceHandle ?? ''}`;
