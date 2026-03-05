@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useReducer } from "react";
+import { useState, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { type Scenario } from "../scenarioSchemas";
 import { cards } from "../nodes";
@@ -6,11 +6,21 @@ import {
   ReactFlow,
   applyNodeChanges,
   addEdge,
+  type Connection,
+  type ConnectionLineComponentProps,
+  ConnectionLineType,
+  getBezierPath,
+  getSmoothStepPath,
+  getStraightPath,
+  Position,
   type Node,
   type Edge,
   type FitViewOptions,
   type OnConnect,
+  type OnConnectStart,
+  type OnConnectEnd,
   type OnNodesChange,
+  type NodeMouseHandler,
   type DefaultEdgeOptions,
   Background,
   MiniMap,
@@ -75,6 +85,17 @@ const ScenarioCreator = ({
     useState<ReactFlowInstance>();
   const [rfNodes, setRfNodes] = useState<Node[]>([]);
   const [rfEdges, setRfEdges] = useState<Edge[]>([]);
+  const [activeConnectionSource, setActiveConnectionSource] = useState<{
+    nodeId: string;
+    handleId: string | null;
+  } | null>(null);
+  const [snapTargetNodeId, setSnapTargetNodeId] = useState<string | null>(null);
+  const activeConnectionSourceRef = useRef<{
+    nodeId: string;
+    handleId: string | null;
+  } | null>(null);
+  const snapTargetNodeIdRef = useRef<string | null>(null);
+  const rfNodesRef = useRef<Node[]>([]);
   const inspectedNodeId =
     state.status === "loaded" ? state.ui.inspectedNodeId : null;
   const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
@@ -174,9 +195,13 @@ const ScenarioCreator = ({
     setRfEdges(edges);
   }, [state, preserveReactFlowSelection, setRfNodes, setRfEdges]);
 
-  const onConnect: OnConnect = useCallback(
-    (params) => {
-      const createdEdge = createEdgeFromConnection(params);
+  useEffect(() => {
+    rfNodesRef.current = rfNodes;
+  }, [rfNodes]);
+
+  const applyConnection = useCallback(
+    (connection: Connection) => {
+      const createdEdge = createEdgeFromConnection(connection);
       if (!createdEdge) return;
 
       dispatch({ type: "addEdge", edge: toScenarioEdge(createdEdge) });
@@ -188,6 +213,177 @@ const ScenarioCreator = ({
     },
     [dispatch],
   );
+
+  const onConnect: OnConnect = useCallback(
+    (params) => {
+      applyConnection(params);
+    },
+    [applyConnection],
+  );
+
+  const onConnectStart: OnConnectStart = useCallback((_, params) => {
+    if (params.handleType !== "source" || !params.nodeId) {
+      activeConnectionSourceRef.current = null;
+      snapTargetNodeIdRef.current = null;
+      setActiveConnectionSource(null);
+      setSnapTargetNodeId(null);
+      return;
+    }
+
+    const sourceSnapshot = {
+      nodeId: params.nodeId,
+      handleId: params.handleId,
+    };
+    activeConnectionSourceRef.current = sourceSnapshot;
+    snapTargetNodeIdRef.current = null;
+    setActiveConnectionSource(sourceSnapshot);
+    setSnapTargetNodeId(null);
+  }, []);
+
+  const getSnapTargetHandlePosition = useCallback(
+    (nodeId: string) => {
+      if (!reactFlowInstance) return null;
+
+      const escapedNodeId =
+        typeof CSS !== "undefined" && typeof CSS.escape === "function"
+          ? CSS.escape(nodeId)
+          : nodeId;
+      const handleElement = document.querySelector<HTMLElement>(
+        `.react-flow__node[data-id="${escapedNodeId}"] .react-flow__handle.target`,
+      );
+      if (!handleElement) return null;
+
+      const handleBounds = handleElement.getBoundingClientRect();
+      return reactFlowInstance.screenToFlowPosition({
+        x: handleBounds.left + handleBounds.width / 2,
+        y: handleBounds.top + handleBounds.height / 2,
+      });
+    },
+    [reactFlowInstance],
+  );
+
+  const snapConnectionLine = useCallback(
+    ({
+      connectionLineType,
+      connectionLineStyle,
+      fromX,
+      fromY,
+      toX,
+      toY,
+      fromPosition,
+      toPosition,
+    }: ConnectionLineComponentProps) => {
+      let resolvedToX = toX;
+      let resolvedToY = toY;
+      let resolvedToPosition = toPosition;
+
+      if (
+        activeConnectionSource &&
+        snapTargetNodeId &&
+        snapTargetNodeId !== activeConnectionSource.nodeId
+      ) {
+        const targetHandlePosition =
+          getSnapTargetHandlePosition(snapTargetNodeId);
+        if (targetHandlePosition) {
+          resolvedToX = targetHandlePosition.x;
+          resolvedToY = targetHandlePosition.y;
+          resolvedToPosition = Position.Left;
+        }
+      }
+
+      const pathParams = {
+        sourceX: fromX,
+        sourceY: fromY,
+        sourcePosition: fromPosition,
+        targetX: resolvedToX,
+        targetY: resolvedToY,
+        targetPosition: resolvedToPosition,
+      };
+
+      let path: string;
+      switch (connectionLineType) {
+        case ConnectionLineType.Straight:
+          [path] = getStraightPath(pathParams);
+          break;
+        case ConnectionLineType.Step:
+          [path] = getSmoothStepPath({ ...pathParams, borderRadius: 0 });
+          break;
+        case ConnectionLineType.SmoothStep:
+          [path] = getSmoothStepPath(pathParams);
+          break;
+        default:
+          [path] = getBezierPath(pathParams);
+          break;
+      }
+
+      return (
+        <path
+          style={connectionLineStyle}
+          d={path}
+          fill="none"
+          className="react-flow__connection-path"
+        />
+      );
+    },
+    [activeConnectionSource, getSnapTargetHandlePosition, snapTargetNodeId],
+  );
+
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (_, connectionState) => {
+      const sourceSnapshot = activeConnectionSourceRef.current;
+      const targetNodeId = snapTargetNodeIdRef.current;
+
+      activeConnectionSourceRef.current = null;
+      snapTargetNodeIdRef.current = null;
+      setActiveConnectionSource(null);
+      setSnapTargetNodeId(null);
+
+      if (!sourceSnapshot || connectionState.isValid || !targetNodeId) return;
+      if (targetNodeId === sourceSnapshot.nodeId) return;
+
+      const targetNode = rfNodesRef.current.find(
+        (nodeSnapshot) => nodeSnapshot.id === targetNodeId,
+      );
+      if (!targetNode || targetNode.type === "start") return;
+
+      applyConnection({
+        source: sourceSnapshot.nodeId,
+        sourceHandle: sourceSnapshot.handleId,
+        target: targetNode.id,
+        targetHandle: null,
+      });
+    },
+    [applyConnection],
+  );
+
+  const updateSnapTarget: NodeMouseHandler = useCallback(
+    (_, nodeSnapshot) => {
+      const sourceSnapshot = activeConnectionSourceRef.current;
+      if (!sourceSnapshot) return;
+
+      if (
+        nodeSnapshot.type === "start" ||
+        nodeSnapshot.id === sourceSnapshot.nodeId
+      ) {
+        snapTargetNodeIdRef.current = null;
+        setSnapTargetNodeId(null);
+        return;
+      }
+
+      snapTargetNodeIdRef.current = nodeSnapshot.id;
+      setSnapTargetNodeId(nodeSnapshot.id);
+    },
+    [],
+  );
+
+  const onNodeMouseLeave: NodeMouseHandler = useCallback((_, nodeSnapshot) => {
+    if (snapTargetNodeIdRef.current === nodeSnapshot.id) {
+      snapTargetNodeIdRef.current = null;
+    }
+    setSnapTargetNodeId((currentTargetNodeId) =>
+      currentTargetNodeId === nodeSnapshot.id ? null : currentTargetNodeId,
+    );
+  }, []);
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -556,12 +752,18 @@ const ScenarioCreator = ({
             fitView
             fitViewOptions={fitViewOptions}
             defaultEdgeOptions={defaultEdgeOptions}
+            connectionLineComponent={snapConnectionLine}
             panOnDrag={[2]}
             selectionOnDrag={true}
             onNodeClick={onNodeClick}
+            onNodeMouseEnter={updateSnapTarget}
+            onNodeMouseMove={updateSnapTarget}
+            onNodeMouseLeave={onNodeMouseLeave}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
+            onConnectStart={onConnectStart}
             onConnect={onConnect}
+            onConnectEnd={onConnectEnd}
           >
             <Background />
             <MiniMap nodeStrokeWidth={3} />

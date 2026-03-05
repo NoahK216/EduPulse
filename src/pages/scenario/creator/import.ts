@@ -43,15 +43,14 @@ export function flowGraphFromScenario(scenario: Scenario):
     return flowNodeFromGenericNode(node, scenario.layout[node.id]);
   });
 
-  const edges: Edge[] =
-      scenario.edges.filter((edge) => edge.to?.nodeId)
-          .map((edge) => ({
-                 id: edge.id,
-                 source: edge.from.nodeId,
-                 sourceHandle: edge.from.port,
-                 target: edge.to!.nodeId,
-                 ...(edge.from.port ? {label: edge.from.port} : {}),
-               }));
+  const edges: Edge[] = scenario.edges
+    .filter((edge) => edge.to?.nodeId)
+    .map((edge) => ({
+      id: edge.id,
+      source: edge.from.nodeId,
+      sourceHandle: edge.from.port,
+      target: edge.to!.nodeId,
+    }));
 
   return {nodes, edges};
 }
