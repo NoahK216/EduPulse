@@ -10,6 +10,8 @@ import type {
   CreatorViewActions,
 } from "./menus/menuTypes";
 
+import { FaMagnifyingGlassMinus, FaMagnifyingGlassPlus } from "react-icons/fa6";
+
 type CreatorTopBarProps = {
   title: string;
   titleDisabled: boolean;
@@ -32,21 +34,27 @@ const statusToneClass: Record<CreatorStatusTone, string> = {
 
 function ToolbarButton({
   label,
+  icon,
   disabled,
   onClick,
 }: {
-  label: string;
+    label?: string;
+    icon?: React.ReactNode;
   disabled?: boolean;
   onClick: () => void;
 }) {
+  const labelStyle = "rounded-md !border !border-slate-700/90 !bg-slate-900/70 !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] !text-slate-100 transition hover:!border-sky-500/70 hover:!bg-slate-800/90 disabled:cursor-not-allowed disabled:opacity-50";
+  const iconStyle = "rounded-md !border-transparent !bg-transparent !p-1 outline-none focus:!border-transparent focus-visible:!border-transparent focus:!outline-none focus-visible:!outline-none disabled:cursor-not-allowed disabled:opacity-50";
+
   return (
     <button
       type="button"
-      className="rounded-md !border !border-slate-700/90 !bg-slate-900/70 !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] !text-slate-100 transition hover:!border-sky-500/70 hover:!bg-slate-800/90 disabled:cursor-not-allowed disabled:opacity-50"
+      className={icon ? iconStyle : labelStyle}
       disabled={disabled}
       onClick={onClick}
     >
       {label}
+      {icon}
     </button>
   );
 }
@@ -104,12 +112,6 @@ const CreatorTopBar = ({
           disabled={fileActions.saveDisabled}
           onClick={fileActions.onSaveDraft}
         />
-        {/* <Link
-          to={`/scenario/${scenario.id}/viewer`}
-          className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold !text-emerald-200 transition hover:border-emerald-400 hover:bg-emerald-500/20"
-        >
-          Test Run
-        </Link> */}
         <ToolbarButton
           label="Test Scenario"
           onClick={fileActions.onTestScenario}
@@ -121,12 +123,12 @@ const CreatorTopBar = ({
         />
         <div className="mx-1 h-4 w-px bg-slate-700/90" />
         <ToolbarButton
-          label="Zoom -"
+          icon={<FaMagnifyingGlassMinus />}
           disabled={viewActions.disabled}
           onClick={viewActions.onZoomOut}
         />
         <ToolbarButton
-          label="Zoom +"
+          icon={<FaMagnifyingGlassPlus />}
           disabled={viewActions.disabled}
           onClick={viewActions.onZoomIn}
         />
