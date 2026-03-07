@@ -32,7 +32,7 @@ function ScenarioLibrary() {
   const versions = useApiData<PagedResponse<PublicScenarioVersion>>(
     '/api/public/scenario-versions?pageSize=100'
   );
-  const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(null);
+  const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -70,7 +70,7 @@ function ScenarioLibrary() {
           return;
         }
 
-        await publicApiDelete<{ deleted: boolean; id: number }>(
+        await publicApiDelete<{ deleted: boolean; id: string }>(
           `/api/public/scenarios/${scenario.id}`,
           token
         );

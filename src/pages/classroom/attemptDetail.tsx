@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
@@ -12,19 +13,14 @@ function formatDate(value: string | null) {
 
 function AttemptDetail() {
   const { classroomId, assignmentId, attemptId } = useParams();
-  const parsedClassroomId = Number.parseInt(classroomId ?? '', 10);
-  const parsedAssignmentId = Number.parseInt(assignmentId ?? '', 10);
-  const parsedAttemptId = Number.parseInt(attemptId ?? '', 10);
+  const classroomIdValue = isUuid(classroomId) ? classroomId : null;
+  const assignmentIdValue = isUuid(assignmentId) ? assignmentId : null;
+  const attemptIdValue = isUuid(attemptId) ? attemptId : null;
   const hasValidIds =
-    Number.isInteger(parsedClassroomId) &&
-    parsedClassroomId > 0 &&
-    Number.isInteger(parsedAssignmentId) &&
-    parsedAssignmentId > 0 &&
-    Number.isInteger(parsedAttemptId) &&
-    parsedAttemptId > 0;
+    classroomIdValue !== null && assignmentIdValue !== null && attemptIdValue !== null;
 
-  const attemptPath = hasValidIds ? `/api/public/attempts/${parsedAttemptId}` : null;
-  const responsesPath = hasValidIds ? `/api/public/responses?attemptId=${parsedAttemptId}` : null;
+  const attemptPath = hasValidIds ? `/api/public/attempts/${attemptIdValue}` : null;
+  const responsesPath = hasValidIds ? `/api/public/responses?attemptId=${attemptIdValue}` : null;
 
   const attempt = useApiData<ItemResponse<PublicAttempt>>(attemptPath);
   const responses = useApiData<PagedResponse<PublicResponse>>(responsesPath);
@@ -40,10 +36,10 @@ function AttemptDetail() {
   const unauthorized = attempt.unauthorized || responses.unauthorized;
 
   return (
-    <PageShell title="Attempt Details" subtitle={`Attempt ID: ${parsedAttemptId}`}>
+    <PageShell title="Attempt Details" subtitle={`Attempt ID: ${attemptIdValue}`}>
       <div className="mb-4">
         <Link
-          to={`/classrooms/${parsedClassroomId}/assignment/${parsedAssignmentId}`}
+          to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`}
           className="text-sm text-blue-300 hover:text-blue-200"
         >
           Back to assignment
@@ -91,7 +87,7 @@ function AttemptDetail() {
               {responses.data.items.map((response) => (
                 <Link
                   key={response.id}
-                  to={`/classrooms/${parsedClassroomId}/assignment/${parsedAssignmentId}/attempt/${parsedAttemptId}/response/${response.id}`}
+                  to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}/attempt/${attemptIdValue}/response/${response.id}`}
                   className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
                 >
                   <p className="font-medium">Node: {response.node_id}</p>

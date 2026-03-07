@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
@@ -11,21 +12,17 @@ function formatDate(value: string) {
 
 function ResponseDetail() {
   const { classroomId, assignmentId, attemptId, responseId } = useParams();
-  const parsedClassroomId = Number.parseInt(classroomId ?? '', 10);
-  const parsedAssignmentId = Number.parseInt(assignmentId ?? '', 10);
-  const parsedAttemptId = Number.parseInt(attemptId ?? '', 10);
-  const parsedResponseId = Number.parseInt(responseId ?? '', 10);
+  const classroomIdValue = isUuid(classroomId) ? classroomId : null;
+  const assignmentIdValue = isUuid(assignmentId) ? assignmentId : null;
+  const attemptIdValue = isUuid(attemptId) ? attemptId : null;
+  const responseIdValue = isUuid(responseId) ? responseId : null;
   const hasValidIds =
-    Number.isInteger(parsedClassroomId) &&
-    parsedClassroomId > 0 &&
-    Number.isInteger(parsedAssignmentId) &&
-    parsedAssignmentId > 0 &&
-    Number.isInteger(parsedAttemptId) &&
-    parsedAttemptId > 0 &&
-    Number.isInteger(parsedResponseId) &&
-    parsedResponseId > 0;
+    classroomIdValue !== null &&
+    assignmentIdValue !== null &&
+    attemptIdValue !== null &&
+    responseIdValue !== null;
 
-  const path = hasValidIds ? `/api/public/responses/${parsedResponseId}` : null;
+  const path = hasValidIds ? `/api/public/responses/${responseIdValue}` : null;
   const response = useApiData<ItemResponse<PublicResponse>>(path);
 
   return (
@@ -34,7 +31,7 @@ function ResponseDetail() {
         <Link
           to={
             hasValidIds
-              ? `/classrooms/${parsedClassroomId}/assignment/${parsedAssignmentId}/attempt/${parsedAttemptId}`
+              ? `/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}/attempt/${attemptIdValue}`
               : '/classrooms'
           }
           className="text-sm text-blue-300 hover:text-blue-200"

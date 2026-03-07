@@ -6,4 +6,10 @@ Currently, an assigned scenario is completed, and the responses stored. No grade
 ## Scenario storing
 Currently in our DB, scenarios are stored as opaque JSON objects. This means that for any part of one to be retrieved, the entire scenario must be fetched. This is undesirable.
 
-## Response analytics
+## Multi-Layered Caching
+Performance could be meaningfully improved by implementing a cache for clients and the server
+- Client: TanStack Query
+- Server: Redis free plan might be appropriate
+
+## Carmen-Messages style notifications
+

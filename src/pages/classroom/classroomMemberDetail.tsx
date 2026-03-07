@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
@@ -11,16 +12,12 @@ function formatDate(value: string) {
 
 function ClassroomMemberDetail() {
   const { classroomId, userId } = useParams();
-  const parsedClassroomId = Number.parseInt(classroomId ?? '', 10);
-  const parsedUserId = Number.parseInt(userId ?? '', 10);
-  const hasValidIds =
-    Number.isInteger(parsedClassroomId) &&
-    parsedClassroomId > 0 &&
-    Number.isInteger(parsedUserId) &&
-    parsedUserId > 0;
+  const classroomIdValue = isUuid(classroomId) ? classroomId : null;
+  const userIdValue = isUuid(userId) ? userId : null;
+  const hasValidIds = classroomIdValue !== null && userIdValue !== null;
 
   const path = hasValidIds
-    ? `/api/public/classroom-members/${parsedClassroomId}/${parsedUserId}`
+    ? `/api/public/classroom-members/${classroomIdValue}/${userIdValue}`
     : null;
   const member = useApiData<ItemResponse<PublicClassroomMember>>(path);
 
@@ -28,7 +25,7 @@ function ClassroomMemberDetail() {
     <PageShell title="Classroom Member" subtitle="Membership details">
       <div className="mb-4">
         <Link
-          to={hasValidIds ? `/classrooms/${parsedClassroomId}` : '/classrooms'}
+          to={hasValidIds ? `/classrooms/${classroomIdValue}` : '/classrooms'}
           className="text-sm text-blue-300 hover:text-blue-200"
         >
           Back

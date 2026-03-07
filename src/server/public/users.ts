@@ -3,35 +3,41 @@ import express from 'express';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 
+const userSelect = {
+  id: true,
+  auth_user: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
+  _count: {
+    select: {
+      created_classrooms: true,
+      classroom_members: true,
+      scenarios: true,
+      attempts: true,
+    },
+  },
+} as const;
+
 function mapUserRow(
   row: Awaited<
     ReturnType<
-      typeof prisma.public_user.findFirst<{
-        select: {
-          id: true;
-          auth_user_id: true;
-          email: true;
-          name: true;
-          created_at: true;
-          updated_at: true;
-          _count: {
-            select: {
-              created_classrooms: true;
-              classroom_members: true;
-              scenarios: true;
-              attempts: true;
-            };
-          };
-        };
+      typeof prisma.user_profile.findFirst<{
+        select: typeof userSelect;
       }>
     >
-  >
+  >,
 ) {
   if (!row) {
     return null;
@@ -39,11 +45,11 @@ function mapUserRow(
 
   return {
     id: row.id,
-    auth_user_id: row.auth_user_id,
-    email: row.email,
-    name: row.name,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    auth_user_id: row.auth_user.id,
+    email: row.auth_user.email,
+    name: row.auth_user.name,
+    created_at: row.auth_user.createdAt,
+    updated_at: row.auth_user.updatedAt,
     created_classroom_count: row._count.created_classrooms,
     classroom_membership_count: row._count.classroom_members,
     owned_scenario_count: row._count.scenarios,
@@ -54,11 +60,11 @@ function mapUserRow(
 export function createPublicUsersRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
     const { page, pageSize, skip, take } = pagination.value;
@@ -67,28 +73,13 @@ export function createPublicUsersRouter() {
       const where = { id: authedReq.auth.publicUserId };
 
       const [total, rows] = await Promise.all([
-        prisma.public_user.count({ where }),
-        prisma.public_user.findMany({
+        prisma.user_profile.count({ where }),
+        prisma.user_profile.findMany({
           where,
-          orderBy: { id: 'asc' },
+          orderBy: { id: "asc" },
           skip,
           take,
-          select: {
-            id: true,
-            auth_user_id: true,
-            email: true,
-            name: true,
-            created_at: true,
-            updated_at: true,
-            _count: {
-              select: {
-                created_classrooms: true,
-                classroom_members: true,
-                scenarios: true,
-                attempts: true,
-              },
-            },
-          },
+          select: userSelect,
         }),
       ]);
 
@@ -99,50 +90,35 @@ export function createPublicUsersRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list users', error);
+      return sendInternalError(res, "Failed to list users", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     if (id.value !== authedReq.auth.publicUserId) {
-      return sendError(res, 404, 'NOT_FOUND', 'User not found');
+      return sendError(res, 404, "NOT_FOUND", "User not found");
     }
 
     try {
-      const row = await prisma.public_user.findFirst({
+      const row = await prisma.user_profile.findFirst({
         where: { id: id.value },
-        select: {
-          id: true,
-          auth_user_id: true,
-          email: true,
-          name: true,
-          created_at: true,
-          updated_at: true,
-          _count: {
-            select: {
-              created_classrooms: true,
-              classroom_members: true,
-              scenarios: true,
-              attempts: true,
-            },
-          },
-        },
+        select: userSelect,
       });
 
       const item = mapUserRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'User not found');
+        return sendError(res, 404, "NOT_FOUND", "User not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch user', error);
+      return sendInternalError(res, "Failed to fetch user", error);
     }
   });
 

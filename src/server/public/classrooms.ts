@@ -4,27 +4,38 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
+  parseUuidParam,
   parsePagination,
   sendError,
   sendInternalError,
 } from './common.js';
 import { accessibleClassroomWhere } from './scopes.js';
 
+const classroomSelect = {
+  id: true,
+  created_by_id: true,
+  name: true,
+  code: true,
+  created_at: true,
+  updated_at: true,
+  created_by: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+  _count: { select: { members: true, assignments: true } },
+} as const;
+
 function mapClassroomRow(
   row: Awaited<
     ReturnType<
       typeof prisma.classroom.findFirst<{
-        select: {
-          id: true;
-          created_by_user_id: true;
-          name: true;
-          code: true;
-          created_at: true;
-          updated_at: true;
-          created_by: { select: { name: true; email: true } };
-          _count: { select: { members: true; assignments: true } };
-        };
+        select: typeof classroomSelect;
       }>
     >
   >
@@ -35,13 +46,13 @@ function mapClassroomRow(
 
   return {
     id: row.id,
-    created_by_user_id: row.created_by_user_id,
+    created_by_id: row.created_by_id,
     name: row.name,
     code: row.code,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    created_by_name: row.created_by.name,
-    created_by_email: row.created_by.email,
+    created_by_name: row.created_by.auth_user.name,
+    created_by_email: row.created_by.auth_user.email,
     member_count: row._count.members,
     assignment_count: row._count.assignments,
   };
@@ -68,16 +79,7 @@ export function createPublicClassroomsRouter() {
           orderBy: { created_at: 'desc' },
           skip,
           take,
-          select: {
-            id: true,
-            created_by_user_id: true,
-            name: true,
-            code: true,
-            created_at: true,
-            updated_at: true,
-            created_by: { select: { name: true, email: true } },
-            _count: { select: { members: true, assignments: true } },
-          },
+          select: classroomSelect,
         }),
       ]);
 
@@ -94,7 +96,7 @@ export function createPublicClassroomsRouter() {
 
   router.get('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
@@ -106,16 +108,7 @@ export function createPublicClassroomsRouter() {
     try {
       const row = await prisma.classroom.findFirst({
         where,
-        select: {
-          id: true,
-          created_by_user_id: true,
-          name: true,
-          code: true,
-          created_at: true,
-          updated_at: true,
-          created_by: { select: { name: true, email: true } },
-          _count: { select: { members: true, assignments: true } },
-        },
+        select: classroomSelect,
       });
 
       const item = mapClassroomRow(row);

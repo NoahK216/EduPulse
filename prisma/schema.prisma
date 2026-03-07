@@ -8,13 +8,10 @@ datasource db {
   schemas  = ["neon_auth", "public"]
 }
 
-model public_user {
-  id                  Int                @id @default(autoincrement())
-  auth_user_id        String?            @unique @db.Uuid
-  email               String             @unique
-  name                String             @db.VarChar(255)
-  created_at          DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime           @default(now()) @db.Timestamptz(6)
+model user_profile {
+  id        String @id @db.Uuid
+  auth_user user   @relation("auth_to_profile", fields: [id], references: [id], onDelete: Cascade)
+
   created_assignments assignment[]       @relation("assignment_creator")
   attempts            attempt[]
   classroom_members   classroom_member[]
@@ -22,46 +19,42 @@ model public_user {
   published_versions  scenario_version[] @relation("scenario_publisher")
   scenarios           scenario[]         @relation("scenario_owner")
 
-  @@index([auth_user_id])
-  @@map("users")
   @@schema("public")
 }
 
 model classroom {
-  id                 Int                @id @default(autoincrement())
-  created_by_user_id Int
-  name               String             @db.VarChar(255)
-  code               String?            @db.VarChar(64)
-  created_at         DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
-  assignments        assignment[]
-  members            classroom_member[]
-  created_by         public_user        @relation("classroom_creator", fields: [created_by_user_id], references: [id], onUpdate: NoAction)
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_by_id String             @db.Uuid
+  name          String             @db.VarChar(255)
+  code          String?            @db.VarChar(64)
+  created_at    DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime           @default(now()) @db.Timestamptz(6)
+  assignments   assignment[]
+  members       classroom_member[]
+  created_by    user_profile       @relation("classroom_creator", fields: [created_by_id], references: [id], onUpdate: NoAction)
 
-  @@index([created_by_user_id])
-  @@map("classrooms")
+  @@index([created_by_id])
   @@schema("public")
 }
 
 model classroom_member {
-  classroom_id Int
-  user_id      Int
+  classroom_id String         @db.Uuid
+  user_id      String         @db.Uuid
   role         classroom_role
   created_at   DateTime       @default(now()) @db.Timestamptz(6)
   updated_at   DateTime       @default(now()) @db.Timestamptz(6)
   classroom    classroom      @relation(fields: [classroom_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user         public_user    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         user_profile   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([classroom_id, user_id])
   @@index([user_id])
   @@index([classroom_id, role])
-  @@map("classroom_members")
   @@schema("public")
 }
 
 model scenario {
-  id                    Int                @id @default(autoincrement())
-  owner_user_id         Int
+  id                    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_user_id         String             @db.Uuid
   title                 String             @db.VarChar(255)
   description           String?
   draft_content         Json?
@@ -69,36 +62,34 @@ model scenario {
   created_at            DateTime           @default(now()) @db.Timestamptz(6)
   updated_at            DateTime           @default(now()) @db.Timestamptz(6)
   versions              scenario_version[]
-  owner                 public_user        @relation("scenario_owner", fields: [owner_user_id], references: [id], onUpdate: NoAction)
+  owner                 user_profile       @relation("scenario_owner", fields: [owner_user_id], references: [id], onUpdate: NoAction)
 
   @@index([owner_user_id])
-  @@map("scenarios")
   @@schema("public")
 }
 
 model scenario_version {
-  id                   Int          @id @default(autoincrement())
-  scenario_id          Int
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scenario_id          String       @db.Uuid
   version_number       Int
   title                String       @db.VarChar(255)
   content              Json
-  published_by_user_id Int
+  published_by_user_id String       @db.Uuid
   published_at         DateTime     @default(now()) @db.Timestamptz(6)
   assignments          assignment[]
-  published_by         public_user  @relation("scenario_publisher", fields: [published_by_user_id], references: [id], onUpdate: NoAction)
+  published_by         user_profile @relation("scenario_publisher", fields: [published_by_user_id], references: [id], onUpdate: NoAction)
   scenario             scenario     @relation(fields: [scenario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([scenario_id, version_number])
   @@index([published_by_user_id])
-  @@map("scenario_versions")
   @@schema("public")
 }
 
 model assignment {
-  id                  Int              @id @default(autoincrement())
-  classroom_id        Int
-  scenario_version_id Int
-  assigned_by_user_id Int
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classroom_id        String           @db.Uuid
+  scenario_version_id String           @db.Uuid
+  assigned_by_user_id String           @db.Uuid
   title               String           @db.VarChar(255)
   instructions        String?
   open_at             DateTime?        @db.Timestamptz(6)
@@ -107,7 +98,7 @@ model assignment {
   max_attempts        Int              @default(1)
   created_at          DateTime         @default(now()) @db.Timestamptz(6)
   updated_at          DateTime         @default(now()) @db.Timestamptz(6)
-  assigned_by         public_user      @relation("assignment_creator", fields: [assigned_by_user_id], references: [id], onUpdate: NoAction)
+  assigned_by         user_profile     @relation("assignment_creator", fields: [assigned_by_user_id], references: [id], onUpdate: NoAction)
   classroom           classroom        @relation(fields: [classroom_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   scenario_version    scenario_version @relation(fields: [scenario_version_id], references: [id], onUpdate: NoAction)
   attempts            attempt[]
@@ -115,33 +106,31 @@ model assignment {
   @@index([classroom_id])
   @@index([assigned_by_user_id])
   @@index([due_at])
-  @@map("assignments")
   @@schema("public")
 }
 
 model attempt {
-  id              Int            @id @default(autoincrement())
-  assignment_id   Int
-  student_user_id Int
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assignment_id   String         @db.Uuid
+  student_user_id String         @db.Uuid
   attempt_number  Int            @default(1)
   status          attempt_status @default(in_progress)
   started_at      DateTime       @default(now()) @db.Timestamptz(6)
   submitted_at    DateTime?      @db.Timestamptz(6)
   assignment      assignment     @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  student         public_user    @relation(fields: [student_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  student         user_profile   @relation(fields: [student_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   responses       response[]
 
   @@unique([assignment_id, student_user_id, attempt_number])
   @@index([student_user_id])
   @@index([assignment_id, status])
   @@index([submitted_at])
-  @@map("attempts")
   @@schema("public")
 }
 
 model response {
-  id               Int      @id @default(autoincrement())
-  attempt_id       Int
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attempt_id       String   @db.Uuid
   node_id          String   @db.VarChar(255)
   response_payload Json?
   feedback         String?
@@ -150,7 +139,6 @@ model response {
 
   @@unique([attempt_id, node_id])
   @@index([created_at])
-  @@map("responses")
   @@schema("public")
 }
 
@@ -278,6 +266,8 @@ model user {
   invitation    invitation[]
   member        member[]
   session       session[]
+
+  userProfiles user_profile[] @relation("auth_to_profile")
 
   @@schema("neon_auth")
 }

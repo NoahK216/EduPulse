@@ -4,27 +4,38 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
-  parseOptionalIntQuery,
+  parseOptionalUuidQuery,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 import { accessibleClassroomWhere } from './scopes.js';
 
+const classroomMemberSelect = {
+  classroom_id: true,
+  user_id: true,
+  role: true,
+  created_at: true,
+  updated_at: true,
+  classroom: { select: { name: true } },
+  user: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+} as const;
+
 function mapClassroomMemberRow(
   row: Awaited<
     ReturnType<
       typeof prisma.classroom_member.findFirst<{
-        select: {
-          classroom_id: true;
-          user_id: true;
-          role: true;
-          created_at: true;
-          updated_at: true;
-          classroom: { select: { name: true } };
-          user: { select: { name: true; email: true } };
-        };
+        select: typeof classroomMemberSelect;
       }>
     >
   >
@@ -40,8 +51,8 @@ function mapClassroomMemberRow(
     created_at: row.created_at,
     updated_at: row.updated_at,
     classroom_name: row.classroom.name,
-    user_name: row.user.name,
-    user_email: row.user.email,
+    user_name: row.user.auth_user.name,
+    user_email: row.user.auth_user.email,
   };
 }
 
@@ -55,7 +66,7 @@ export function createPublicClassroomMembersRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const classroomId = parseOptionalIntQuery(req.query, 'classroomId');
+    const classroomId = parseOptionalUuidQuery(req.query, 'classroomId');
     if (!classroomId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
     }
@@ -77,15 +88,7 @@ export function createPublicClassroomMembersRouter() {
           orderBy: { created_at: 'desc' },
           skip,
           take,
-          select: {
-            classroom_id: true,
-            user_id: true,
-            role: true,
-            created_at: true,
-            updated_at: true,
-            classroom: { select: { name: true } },
-            user: { select: { name: true, email: true } },
-          },
+          select: classroomMemberSelect,
         }),
       ]);
 
@@ -102,12 +105,12 @@ export function createPublicClassroomMembersRouter() {
 
   router.get('/:classroomId/:userId', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const classroomId = parseIntParam('classroomId', req.params.classroomId);
+    const classroomId = parseUuidParam('classroomId', req.params.classroomId);
     if (!classroomId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
     }
 
-    const userId = parseIntParam('userId', req.params.userId);
+    const userId = parseUuidParam('userId', req.params.userId);
     if (!userId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', userId.message);
     }
@@ -120,15 +123,7 @@ export function createPublicClassroomMembersRouter() {
             { classroom: accessibleClassroomWhere(authedReq.auth.publicUserId) },
           ],
         },
-        select: {
-          classroom_id: true,
-          user_id: true,
-          role: true,
-          created_at: true,
-          updated_at: true,
-          classroom: { select: { name: true } },
-          user: { select: { name: true, email: true } },
-        },
+        select: classroomMemberSelect,
       });
 
       const item = mapClassroomMemberRow(row);

@@ -3,11 +3,10 @@ import type {
   attemptModel,
   classroom_memberModel,
   classroomModel,
-  public_userModel,
   responseModel,
   scenario_versionModel,
   scenarioModel,
-} from '../../prisma/generated/models.js';
+} from "../../prisma/generated/models.js";
 
 type Serialized<T> = T extends Date
   ? string
@@ -17,7 +16,18 @@ type Serialized<T> = T extends Date
       ? { [K in keyof T]: Serialized<T[K]> }
       : T;
 
-export type PublicUserBase = Serialized<public_userModel>;
+export type PublicUser = {
+  id: string;
+  auth_user_id: string;
+  email: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  created_classroom_count: number;
+  classroom_membership_count: number;
+  owned_scenario_count: number;
+  attempt_count: number;
+};
 export type PublicClassroomBase = Serialized<classroomModel>;
 export type PublicClassroomMemberBase = Serialized<classroom_memberModel>;
 export type PublicScenarioBase = Serialized<scenarioModel>;
@@ -87,7 +97,7 @@ export type PublicAssignment = PublicAssignmentBase & {
 
 export type PublicAttempt = PublicAttemptBase & {
   assignment_title: string;
-  classroom_id: number;
+  classroom_id: string;
   classroom_name: string;
   student_name: string;
   student_email: string;
@@ -96,9 +106,9 @@ export type PublicAttempt = PublicAttemptBase & {
 
 export type PublicResponse = PublicResponseBase & {
   attempt_number: number;
-  assignment_id: number;
+  assignment_id: string;
   assignment_title: string;
-  classroom_id: number;
+  classroom_id: string;
   classroom_name: string;
   student_name: string;
   student_email: string;

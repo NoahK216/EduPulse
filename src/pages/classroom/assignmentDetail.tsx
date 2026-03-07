@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
@@ -12,17 +13,13 @@ function formatDate(value: string | null) {
 
 function AssignmentDetail() {
   const { classroomId, assignmentId } = useParams();
-  const parsedClassroomId = Number.parseInt(classroomId ?? '', 10);
-  const parsedAssignmentId = Number.parseInt(assignmentId ?? '', 10);
-  const hasValidIds =
-    Number.isInteger(parsedClassroomId) &&
-    parsedClassroomId > 0 &&
-    Number.isInteger(parsedAssignmentId) &&
-    parsedAssignmentId > 0;
+  const classroomIdValue = isUuid(classroomId) ? classroomId : null;
+  const assignmentIdValue = isUuid(assignmentId) ? assignmentId : null;
+  const hasValidIds = classroomIdValue !== null && assignmentIdValue !== null;
 
-  const assignmentPath = hasValidIds ? `/api/public/assignments/${parsedAssignmentId}` : null;
+  const assignmentPath = hasValidIds ? `/api/public/assignments/${assignmentIdValue}` : null;
   const attemptsPath = hasValidIds
-    ? `/api/public/attempts?assignmentId=${parsedAssignmentId}`
+    ? `/api/public/attempts?assignmentId=${assignmentIdValue}`
     : null;
 
   const assignment = useApiData<ItemResponse<PublicAssignment>>(assignmentPath);
@@ -39,10 +36,10 @@ function AssignmentDetail() {
   const unauthorized = assignment.unauthorized || attempts.unauthorized;
 
   return (
-    <PageShell title="Assignment Details" subtitle={`Assignment ID: ${parsedAssignmentId}`}>
+    <PageShell title="Assignment Details" subtitle={`Assignment ID: ${assignmentIdValue}`}>
       <div className="mb-4">
         <Link
-          to={`/classrooms/${parsedClassroomId}`}
+          to={`/classrooms/${classroomIdValue}`}
           className="text-sm text-blue-300 hover:text-blue-200"
         >
           Back to classroom
@@ -95,7 +92,7 @@ function AssignmentDetail() {
               {attempts.data.items.map((attempt) => (
                 <Link
                   key={attempt.id}
-                  to={`/classrooms/${parsedClassroomId}/assignment/${parsedAssignmentId}/attempt/${attempt.id}`}
+                  to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}/attempt/${attempt.id}`}
                   className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
                 >
                   <p className="font-medium">

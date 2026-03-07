@@ -4,36 +4,47 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
-  parseOptionalIntQuery,
+  parseOptionalUuidQuery,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 import { accessibleAssignmentWhere } from './scopes.js';
 
+const assignmentSelect = {
+  id: true,
+  classroom_id: true,
+  scenario_version_id: true,
+  assigned_by_user_id: true,
+  title: true,
+  instructions: true,
+  open_at: true,
+  due_at: true,
+  close_at: true,
+  max_attempts: true,
+  created_at: true,
+  updated_at: true,
+  classroom: { select: { name: true } },
+  scenario_version: { select: { title: true, version_number: true } },
+  assigned_by: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+  _count: { select: { attempts: true } },
+} as const;
+
 function mapAssignmentRow(
   row: Awaited<
     ReturnType<
       typeof prisma.assignment.findFirst<{
-        select: {
-          id: true;
-          classroom_id: true;
-          scenario_version_id: true;
-          assigned_by_user_id: true;
-          title: true;
-          instructions: true;
-          open_at: true;
-          due_at: true;
-          close_at: true;
-          max_attempts: true;
-          created_at: true;
-          updated_at: true;
-          classroom: { select: { name: true } };
-          scenario_version: { select: { title: true; version_number: true } };
-          assigned_by: { select: { name: true; email: true } };
-          _count: { select: { attempts: true } };
-        };
+        select: typeof assignmentSelect;
       }>
     >
   >
@@ -58,8 +69,8 @@ function mapAssignmentRow(
     classroom_name: row.classroom.name,
     scenario_version_title: row.scenario_version.title,
     scenario_version_number: row.scenario_version.version_number,
-    assigned_by_name: row.assigned_by.name,
-    assigned_by_email: row.assigned_by.email,
+    assigned_by_name: row.assigned_by.auth_user.name,
+    assigned_by_email: row.assigned_by.auth_user.email,
     attempt_count: row._count.attempts,
   };
 }
@@ -74,7 +85,7 @@ export function createPublicAssignmentsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const classroomId = parseOptionalIntQuery(req.query, 'classroomId');
+    const classroomId = parseOptionalUuidQuery(req.query, 'classroomId');
     if (!classroomId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
     }
@@ -96,24 +107,7 @@ export function createPublicAssignmentsRouter() {
           orderBy: { created_at: 'desc' },
           skip,
           take,
-          select: {
-            id: true,
-            classroom_id: true,
-            scenario_version_id: true,
-            assigned_by_user_id: true,
-            title: true,
-            instructions: true,
-            open_at: true,
-            due_at: true,
-            close_at: true,
-            max_attempts: true,
-            created_at: true,
-            updated_at: true,
-            classroom: { select: { name: true } },
-            scenario_version: { select: { title: true, version_number: true } },
-            assigned_by: { select: { name: true, email: true } },
-            _count: { select: { attempts: true } },
-          },
+          select: assignmentSelect,
         }),
       ]);
 
@@ -130,7 +124,7 @@ export function createPublicAssignmentsRouter() {
 
   router.get('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
@@ -143,24 +137,7 @@ export function createPublicAssignmentsRouter() {
             accessibleAssignmentWhere(authedReq.auth.publicUserId),
           ],
         },
-        select: {
-          id: true,
-          classroom_id: true,
-          scenario_version_id: true,
-          assigned_by_user_id: true,
-          title: true,
-          instructions: true,
-          open_at: true,
-          due_at: true,
-          close_at: true,
-          max_attempts: true,
-          created_at: true,
-          updated_at: true,
-          classroom: { select: { name: true } },
-          scenario_version: { select: { title: true, version_number: true } },
-          assigned_by: { select: { name: true, email: true } },
-          _count: { select: { attempts: true } },
-        },
+        select: assignmentSelect,
       });
 
       const item = mapAssignmentRow(row);

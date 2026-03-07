@@ -16,7 +16,7 @@ export type ApiErrorCode =
 export type AuthContext = {
   sessionId: string;
   authUserId: string;
-  publicUserId: number;
+  publicUserId: string;
 };
 
 export type AuthedRequest = express.Request & { auth: AuthContext };
@@ -56,6 +56,20 @@ function parsePositiveInt(field: string, raw: string): ParseResult<number> {
   return { ok: true, value };
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseUuid(field: string, raw: string): ParseResult<string> {
+  if (!UUID_PATTERN.test(raw)) {
+    return {
+      ok: false,
+      message: `${field} must be a valid UUID`,
+    };
+  }
+
+  return { ok: true, value: raw };
+}
+
 export function parsePagination(
   query: express.Request['query']
 ): ParseResult<Pagination> {
@@ -92,25 +106,25 @@ export function parsePagination(
   };
 }
 
-export function parseIntParam(
+export function parseUuidParam(
   field: string,
   rawValue: string | undefined
-): ParseResult<number> {
+): ParseResult<string> {
   if (!rawValue) {
     return { ok: false, message: `${field} is required` };
   }
-  return parsePositiveInt(field, rawValue);
+  return parseUuid(field, rawValue);
 }
 
-export function parseOptionalIntQuery(
+export function parseOptionalUuidQuery(
   query: express.Request['query'],
   key: string
-): ParseResult<number | undefined> {
+): ParseResult<string | undefined> {
   const rawValue = readQueryString(query, key);
   if (!rawValue) {
     return { ok: true, value: undefined };
   }
-  return parsePositiveInt(key, rawValue);
+  return parseUuid(key, rawValue);
 }
 
 export function sendError(

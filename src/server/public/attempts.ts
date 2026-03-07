@@ -4,36 +4,47 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
-  parseOptionalIntQuery,
+  parseOptionalUuidQuery,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 import { accessibleAttemptWhere } from './scopes.js';
 
+const attemptSelect = {
+  id: true,
+  assignment_id: true,
+  student_user_id: true,
+  attempt_number: true,
+  status: true,
+  started_at: true,
+  submitted_at: true,
+  assignment: {
+    select: {
+      id: true,
+      title: true,
+      classroom: { select: { id: true, name: true } },
+    },
+  },
+  student: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+  _count: { select: { responses: true } },
+} as const;
+
 function mapAttemptRow(
   row: Awaited<
     ReturnType<
       typeof prisma.attempt.findFirst<{
-        select: {
-          id: true;
-          assignment_id: true;
-          student_user_id: true;
-          attempt_number: true;
-          status: true;
-          started_at: true;
-          submitted_at: true;
-          assignment: {
-            select: {
-              id: true;
-              title: true;
-              classroom: { select: { id: true; name: true } };
-            };
-          };
-          student: { select: { name: true; email: true } };
-          _count: { select: { responses: true } };
-        };
+        select: typeof attemptSelect;
       }>
     >
   >
@@ -53,8 +64,8 @@ function mapAttemptRow(
     assignment_title: row.assignment.title,
     classroom_id: row.assignment.classroom.id,
     classroom_name: row.assignment.classroom.name,
-    student_name: row.student.name,
-    student_email: row.student.email,
+    student_name: row.student.auth_user.name,
+    student_email: row.student.auth_user.email,
     response_count: row._count.responses,
   };
 }
@@ -69,7 +80,7 @@ export function createPublicAttemptsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const assignmentId = parseOptionalIntQuery(req.query, 'assignmentId');
+    const assignmentId = parseOptionalUuidQuery(req.query, 'assignmentId');
     if (!assignmentId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', assignmentId.message);
     }
@@ -91,24 +102,7 @@ export function createPublicAttemptsRouter() {
           orderBy: { started_at: 'desc' },
           skip,
           take,
-          select: {
-            id: true,
-            assignment_id: true,
-            student_user_id: true,
-            attempt_number: true,
-            status: true,
-            started_at: true,
-            submitted_at: true,
-            assignment: {
-              select: {
-                id: true,
-                title: true,
-                classroom: { select: { id: true, name: true } },
-              },
-            },
-            student: { select: { name: true, email: true } },
-            _count: { select: { responses: true } },
-          },
+          select: attemptSelect,
         }),
       ]);
 
@@ -125,7 +119,7 @@ export function createPublicAttemptsRouter() {
 
   router.get('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
@@ -135,24 +129,7 @@ export function createPublicAttemptsRouter() {
         where: {
           AND: [{ id: id.value }, accessibleAttemptWhere(authedReq.auth.publicUserId)],
         },
-        select: {
-          id: true,
-          assignment_id: true,
-          student_user_id: true,
-          attempt_number: true,
-          status: true,
-          started_at: true,
-          submitted_at: true,
-          assignment: {
-            select: {
-              id: true,
-              title: true,
-              classroom: { select: { id: true, name: true } },
-            },
-          },
-          student: { select: { name: true, email: true } },
-          _count: { select: { responses: true } },
-        },
+        select: attemptSelect,
       });
 
       const item = mapAttemptRow(row);

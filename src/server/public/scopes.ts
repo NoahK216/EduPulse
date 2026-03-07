@@ -1,18 +1,18 @@
 import type { Prisma } from '../../../prisma/generated/client.js';
 
 export function accessibleClassroomWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.classroomWhereInput {
   return {
     OR: [
-      { created_by_user_id: publicUserId },
+      { created_by_id: publicUserId },
       { members: { some: { user_id: publicUserId } } },
     ],
   };
 }
 
 export function accessibleAssignmentWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.assignmentWhereInput {
   return {
     classroom: accessibleClassroomWhere(publicUserId),
@@ -20,7 +20,7 @@ export function accessibleAssignmentWhere(
 }
 
 export function accessibleAttemptWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.attemptWhereInput {
   return {
     assignment: {
@@ -30,7 +30,7 @@ export function accessibleAttemptWhere(
 }
 
 export function accessibleResponseWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.responseWhereInput {
   return {
     attempt: {

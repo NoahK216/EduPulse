@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import type { Scenario } from './scenarioSchemas';
 import { ScenarioSchema } from './scenarioSchemas';
 import { buildStarterScenario } from './creator/starterScenario';
@@ -12,11 +13,11 @@ import type { ItemResponse, PublicScenario } from '../../types/publicApi';
 
 function ScenarioViewerPage() {
   const { scenarioId } = useParams();
-  const parsedScenarioId = Number.parseInt(scenarioId ?? '', 10);
-  const hasValidId = Number.isInteger(parsedScenarioId) && parsedScenarioId > 0;
+  const scenarioIdValue = isUuid(scenarioId) ? scenarioId : null;
+  const hasValidId = scenarioIdValue !== null;
 
   const scenario = useApiData<ItemResponse<PublicScenario>>(
-    hasValidId ? `/api/public/scenarios/${parsedScenarioId}` : null,
+    hasValidId ? `/api/public/scenarios/${scenarioIdValue}` : null,
   );
 
   const parsedScenario = useMemo(() => {
@@ -62,7 +63,7 @@ function ScenarioViewerPage() {
 
   if (scenario.unauthorized) {
     return (
-      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${parsedScenarioId}`}>
+      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${scenarioIdValue}`}>
         <UnauthorizedPanel />
       </PageShell>
     );
@@ -70,7 +71,7 @@ function ScenarioViewerPage() {
 
   if (scenario.loading) {
     return (
-      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${parsedScenarioId}`}>
+      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${scenarioIdValue}`}>
         <LoadingPanel />
       </PageShell>
     );
@@ -78,7 +79,7 @@ function ScenarioViewerPage() {
 
   if (scenario.error) {
     return (
-      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${parsedScenarioId}`}>
+      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${scenarioIdValue}`}>
         <ErrorPanel message={scenario.error} onRetry={scenario.refetch} />
       </PageShell>
     );
@@ -86,7 +87,7 @@ function ScenarioViewerPage() {
 
   if (!scenario.data?.item) {
     return (
-      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${parsedScenarioId}`}>
+      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${scenarioIdValue}`}>
         <ErrorPanel message="Scenario not found." />
       </PageShell>
     );
@@ -94,7 +95,7 @@ function ScenarioViewerPage() {
 
   if (parsedScenario.parseError || !parsedScenario.scenario) {
     return (
-      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${parsedScenarioId}`}>
+      <PageShell title="Scenario Test Run" subtitle={`Scenario ID: ${scenarioIdValue}`}>
         <ErrorPanel message={parsedScenario.parseError ?? 'Failed to load scenario draft'} />
       </PageShell>
     );

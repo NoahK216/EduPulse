@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
+import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
 import PageShell from '../ui/PageShell';
@@ -18,15 +19,15 @@ function formatDate(value: string | null) {
 
 function ClassroomDetail() {
   const { classroomId } = useParams();
-  const parsedClassroomId = Number.parseInt(classroomId ?? '', 10);
-  const hasValidId = Number.isInteger(parsedClassroomId) && parsedClassroomId > 0;
+  const classroomIdValue = isUuid(classroomId) ? classroomId : null;
+  const hasValidId = classroomIdValue !== null;
 
-  const classroomPath = hasValidId ? `/api/public/classrooms/${parsedClassroomId}` : null;
+  const classroomPath = hasValidId ? `/api/public/classrooms/${classroomIdValue}` : null;
   const membersPath = hasValidId
-    ? `/api/public/classroom-members?classroomId=${parsedClassroomId}`
+    ? `/api/public/classroom-members?classroomId=${classroomIdValue}`
     : null;
   const assignmentsPath = hasValidId
-    ? `/api/public/assignments?classroomId=${parsedClassroomId}`
+    ? `/api/public/assignments?classroomId=${classroomIdValue}`
     : null;
 
   const classroom = useApiData<ItemResponse<PublicClassroom>>(classroomPath);
@@ -48,7 +49,7 @@ function ClassroomDetail() {
   const classroomItem = classroom.data?.item;
 
   return (
-    <PageShell title="Classroom Details" subtitle={`Classroom ID: ${parsedClassroomId}`}>
+    <PageShell title="Classroom Details" subtitle={`Classroom ID: ${classroomIdValue}`}>
       <div className="mb-4">
         <Link to="/classrooms" className="text-sm text-blue-300 hover:text-blue-200">
           Back to classrooms
@@ -92,7 +93,7 @@ function ClassroomDetail() {
               {members.data.items.map((member) => (
                 <Link
                   key={`${member.classroom_id}-${member.user_id}`}
-                  to={`/classrooms/${parsedClassroomId}/member/${member.user_id}`}
+                  to={`/classrooms/${classroomIdValue}/member/${member.user_id}`}
                   className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
                 >
                   {member.user_name} ({member.role})
@@ -124,7 +125,7 @@ function ClassroomDetail() {
               {assignments.data.items.map((assignment) => (
                 <Link
                   key={assignment.id}
-                  to={`/classrooms/${parsedClassroomId}/assignment/${assignment.id}`}
+                  to={`/classrooms/${classroomIdValue}/assignment/${assignment.id}`}
                   className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
                 >
                   <p className="font-medium">{assignment.title}</p>

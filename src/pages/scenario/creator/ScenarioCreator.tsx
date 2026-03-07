@@ -69,7 +69,7 @@ type SyncStatus = "idle" | "syncing" | "success" | "error";
 type ScenarioCreatorProps = {
   scenarioUrl?: string;
   initialScenario?: Scenario;
-  initialScenarioId?: number | null;
+  initialScenarioId?: string | null;
 };
 
 const TUTORIAL_TOP_OFFSET = 84;
@@ -101,7 +101,7 @@ const ScenarioCreator = ({
   const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
   const [tipOpen, setTipOpen] = useState(false);
   const [tipClosed, setTipClosed] = useState(true);
-  const [syncedScenarioId, setSyncedScenarioId] = useState<number | null>(null);
+  const [syncedScenarioId, setSyncedScenarioId] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string>("");
   const [baselineSerializedDoc, setBaselineSerializedDoc] = useState<
@@ -128,7 +128,7 @@ const ScenarioCreator = ({
   );
 
   const initializeEditor = useCallback(
-    (scenario: Scenario, scenarioId?: number | null) => {
+    (scenario: Scenario, scenarioId?: string | null) => {
       dispatch({ type: "initScenario", scenario });
       setSyncedScenarioId(scenarioId ?? null);
       setSyncStatus("idle");
@@ -442,7 +442,7 @@ const ScenarioCreator = ({
   );
 
   const syncScenarioDraft = useCallback(async () => {
-    if (state.status !== "loaded") return;
+    if (state.status !== "loaded") return null;
 
     const scenarioSnapshot = state.doc;
     const serializedSnapshot = JSON.stringify(scenarioSnapshot);
@@ -452,9 +452,9 @@ const ScenarioCreator = ({
     setSyncMessage("");
 
     try {
-      const token = await resolvePublicApiToken();
-      if (!token) {
-        throw new Error("No auth token available. Please log in.");
+        const token = await resolvePublicApiToken();
+        if (!token) {
+          throw new Error("No auth token available. Please log in.");
       }
 
       const response = await publicApiPost<ItemResponse<PublicScenario>>(
@@ -471,24 +471,27 @@ const ScenarioCreator = ({
       setSyncedScenarioId(response.item.id);
       setSyncStatus("success");
       setSyncMessage(
-        `Synced scenario #${response.item.id} at ${new Date().toLocaleTimeString()}`,
+        `Synced scenario ${response.item.id} at ${new Date().toLocaleTimeString()}`,
       );
       setBaselineSerializedDoc(serializedSnapshot);
 
       if (wasUnsyncedScenario) {
         navigate(`/scenario/${response.item.id}/editor`, { replace: true });
       }
+
+      return response.item.id;
     } catch (error) {
       setSyncStatus("error");
       if (error instanceof ApiRequestError) {
         setSyncMessage(error.message);
-        return;
+        return null;
       }
       if (error instanceof Error) {
         setSyncMessage(error.message);
-        return;
+        return null;
       }
       setSyncMessage("Failed to sync scenario");
+      return null;
     }
   }, [navigate, state, syncedScenarioId]);
 
@@ -523,9 +526,12 @@ const ScenarioCreator = ({
   }, [syncScenarioDraft]);
 
   const handleTestScenario = useCallback(() => {
-    syncScenarioDraft();
-    navigate(`/scenario/${syncedScenarioId}/viewer`);
-  }, [navigate, syncScenarioDraft, syncedScenarioId]);
+    void (async () => {
+      const scenarioId = await syncScenarioDraft();
+      if (!scenarioId) return;
+      navigate(`/scenario/${scenarioId}/viewer`);
+    })();
+  }, [navigate, syncScenarioDraft]);
 
   const handleDownloadJson = useCallback(() => {
     if (state.status !== "loaded") return;
