@@ -102,11 +102,12 @@ function Login() {
           </button>
         </form>
             <div className="mt-2 text-right">
-              <button
-                type="button"
-                className="w-full text-sm text-blue-400 hover:text-blue-300">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
                 Forgot your password?
-              </button>
+              </Link>
             </div>
         <div className="mt-6 text-center text-sm text-neutral-300">
           Don’t have an account?

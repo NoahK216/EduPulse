@@ -20,6 +20,9 @@ const router = createBrowserRouter([
       { index: true, lazy: lazyComponent(() => import("./pages/home/home.tsx")) },
       { path: "login", lazy: lazyComponent(() => import("./pages/home/login.tsx")) },
       { path: "signup", lazy: lazyComponent(() => import("./pages/home/signup.tsx")) },
+      { path: "forgot-password", lazy: lazyComponent(() => import("./pages/home/forgot-password.tsx")) },
+      { path: "reset-password", lazy: lazyComponent(() => import("./pages/home/reset-password.tsx")) },
+      { path: "profile", lazy: lazyComponent(() => import("./pages/home/profile.tsx")) },
       { path: "classrooms", lazy: lazyComponent(() => import("./pages/classroom/classroom.tsx")) },
       {
         path: "classrooms/:classroomId",

@@ -55,6 +55,12 @@ function NavBar() {
                 <p className="block !text-white px-3 py-2 text-sm">
                   {userName}
                 </p>
+                <Link
+                  to="/profile"
+                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700"
+                >
+                  Profile
+                </Link>
                 <a
                   href="#"
                   onClick={async (e) => {

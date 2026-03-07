@@ -166,6 +166,18 @@ export async function publicApiPost<T>(
   });
 }
 
+export async function publicApiPut<T>(
+  path: string,
+  token: string,
+  body: unknown
+): Promise<T> {
+  return publicApiRequest<T>(path, {
+    method: 'PUT',
+    token,
+    body,
+  });
+}
+
 export async function publicApiDelete<T>(
   path: string,
   token: string

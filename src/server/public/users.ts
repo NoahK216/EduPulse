@@ -146,5 +146,79 @@ export function createPublicUsersRouter() {
     }
   });
 
+  router.put('/:id', async (req, res) => {
+    const authedReq = asAuthedRequest(req);
+    const id = parseIntParam('id', req.params.id);
+    if (!id.ok) {
+      return sendError(res, 400, 'BAD_REQUEST', id.message);
+    }
+
+    if (id.value !== authedReq.auth.publicUserId) {
+      return sendError(res, 403, 'FORBIDDEN', 'You can only update your own profile');
+    }
+
+    const { name, email } = req.body;
+
+    // Validate input
+    if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
+      return sendError(res, 400, 'BAD_REQUEST', 'Name must be a non-empty string');
+    }
+
+    if (email !== undefined && (typeof email !== 'string' || !email.includes('@'))) {
+      return sendError(res, 400, 'BAD_REQUEST', 'Invalid email format');
+    }
+
+    try {
+      const updateData: { name?: string; email?: string; updated_at: Date } = {
+        updated_at: new Date(),
+      };
+
+      if (name !== undefined) {
+        updateData.name = name.trim();
+      }
+
+      if (email !== undefined) {
+        // Check if email is already taken by another user
+        const existingUser = await prisma.public_user.findFirst({
+          where: {
+            email: email.trim(),
+            id: { not: id.value },
+          },
+        });
+
+        if (existingUser) {
+          return sendError(res, 409, 'CONFLICT', 'Email is already in use');
+        }
+
+        updateData.email = email.trim();
+      }
+
+      const updatedUser = await prisma.public_user.update({
+        where: { id: id.value },
+        data: updateData,
+        select: {
+          id: true,
+          auth_user_id: true,
+          email: true,
+          name: true,
+          created_at: true,
+          updated_at: true,
+          _count: {
+            select: {
+              created_classrooms: true,
+              classroom_members: true,
+              scenarios: true,
+              attempts: true,
+            },
+          },
+        },
+      });
+
+      return res.json({ item: mapUserRow(updatedUser) });
+    } catch (error) {
+      return sendInternalError(res, 'Failed to update user', error);
+    }
+  });
+
   return router;
 }
