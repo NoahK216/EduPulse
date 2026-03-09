@@ -60,7 +60,9 @@ function Login() {
     <div className="min-h-screen pt-10 w-screen dark:bg-neutral-900 dark:text-neutral-150">
       <NavBar />
       <main className="mx-auto max-w-md px-8 py-20">
-        <h1 className="text-3xl font-semibold">Log in</h1>
+        <h1 className="text-3xl text-neutral dark:text-neutral-50 font-semibold">
+          Log in
+        </h1>
         <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div aria-live="polite">
             {error && <div className="text-red-400 text-sm">{error}</div>}
@@ -98,7 +100,7 @@ function Login() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
+            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm text-white font-medium hover:bg-blue-500 disabled:opacity-50"
           >
             {isSubmitting ? "Signing in…" : "Sign in"}
           </button>

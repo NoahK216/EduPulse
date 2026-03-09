@@ -72,13 +72,13 @@ function NavBar() {
               <>
                 <Link
                   to="/login"
-                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
                 >
                   Sign up
                 </Link>
@@ -86,14 +86,14 @@ function NavBar() {
             )}
             <Link
               to="/classrooms"
-              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
             >
               Classroom
             </Link>
             <div className="h-px bg-neutral-500 dark:bg-gray-700" />
             <Link
               to="/settings"
-              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
             >
               Settings
             </Link>
