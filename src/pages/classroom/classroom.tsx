@@ -1,9 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
-import { useApiData } from '../../lib/useApiData';
-import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
-import PageShell from '../ui/PageShell';
-import type { PagedResponse, PublicClassroom } from '../../types/publicApi';
+import { useApiData } from "../../lib/useApiData";
+import {
+  EmptyPanel,
+  ErrorPanel,
+  LoadingPanel,
+  UnauthorizedPanel,
+} from "../ui/DataStatePanels";
+import PageShell from "../ui/PageShell";
+import type { PagedResponse, PublicClassroom } from "../../types/publicApi";
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString();
@@ -12,7 +17,7 @@ function formatDate(value: string) {
 function ClassroomList() {
   const { data, loading, error, unauthorized, refetch } = useApiData<
     PagedResponse<PublicClassroom>
-  >('/api/public/classrooms');
+  >("/api/public/classrooms");
 
   return (
     <PageShell
@@ -24,7 +29,11 @@ function ClassroomList() {
       {!unauthorized && !loading && error ? (
         <ErrorPanel message={error} onRetry={refetch} />
       ) : null}
-      {!unauthorized && !loading && !error && data && data.items.length === 0 ? (
+      {!unauthorized &&
+      !loading &&
+      !error &&
+      data &&
+      data.items.length === 0 ? (
         <EmptyPanel message="No classrooms are available yet." />
       ) : null}
 
@@ -40,10 +49,11 @@ function ClassroomList() {
                 <div>
                   <h2 className="text-lg font-semibold">{classroom.name}</h2>
                   <p className="mt-1 text-sm text-neutral-300">
-                    Code: {classroom.code ?? 'N/A'}
+                    Code: {classroom.code ?? "N/A"}
                   </p>
                   <p className="mt-1 text-xs text-neutral-400">
-                    Created by {classroom.created_by_name} on {formatDate(classroom.created_at)}
+                    Created by {classroom.created_by_name} on{" "}
+                    {formatDate(classroom.created_at)}
                   </p>
                 </div>
                 <div className="text-right text-sm text-neutral-300">

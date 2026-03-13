@@ -1,24 +1,29 @@
-import { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 
-import { useApiData } from '../../lib/useApiData';
-import { EmptyPanel, ErrorPanel, LoadingPanel, UnauthorizedPanel } from '../ui/DataStatePanels';
-import PageShell from '../ui/PageShell';
+import { useApiData } from "../../lib/useApiData";
+import {
+  EmptyPanel,
+  ErrorPanel,
+  LoadingPanel,
+  UnauthorizedPanel,
+} from "../ui/DataStatePanels";
+import PageShell from "../ui/PageShell";
 import {
   ApiRequestError,
   publicApiDelete,
   resolvePublicApiToken,
-} from '../../lib/public-api-client';
+} from "../../lib/public-api-client";
 import type {
   PagedResponse,
   PublicScenario,
   PublicScenarioVersion,
-} from '../../types/publicApi';
+} from "../../types/publicApi";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    dateStyle: "medium",
+    timeStyle: "short",
   }).format(new Date(value));
 }
 
@@ -28,11 +33,15 @@ function pluralize(count: number, singular: string, plural: string) {
 }
 
 function ScenarioLibrary() {
-  const scenarios = useApiData<PagedResponse<PublicScenario>>('/api/public/scenarios?pageSize=100');
-  const versions = useApiData<PagedResponse<PublicScenarioVersion>>(
-    '/api/public/scenario-versions?pageSize=100'
+  const scenarios = useApiData<PagedResponse<PublicScenario>>(
+    "/api/public/scenarios?pageSize=100",
   );
-  const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(null);
+  const versions = useApiData<PagedResponse<PublicScenarioVersion>>(
+    "/api/public/scenario-versions?pageSize=100",
+  );
+  const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(
+    null,
+  );
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
@@ -45,15 +54,17 @@ function ScenarioLibrary() {
   const handleDeleteScenario = useCallback(
     async (scenario: PublicScenario) => {
       const scenarioTitle =
-        scenario.title.trim().length > 0 ? scenario.title : `Scenario ${scenario.id}`;
+        scenario.title.trim().length > 0
+          ? scenario.title
+          : `Scenario ${scenario.id}`;
       const versionSummary = `${scenario.version_count} ${pluralize(
         scenario.version_count,
-        'published version',
-        'published versions'
+        "published version",
+        "published versions",
       )}`;
 
       const shouldDelete = window.confirm(
-        `Delete "${scenarioTitle}"?\n\nThis removes the draft and ${versionSummary}. This action cannot be undone.`
+        `Delete "${scenarioTitle}"?\n\nThis removes the draft and ${versionSummary}. This action cannot be undone.`,
       );
       if (!shouldDelete) {
         return;
@@ -66,13 +77,13 @@ function ScenarioLibrary() {
       try {
         const token = await resolvePublicApiToken();
         if (!token) {
-          setActionError('Your session is missing or expired.');
+          setActionError("Your session is missing or expired.");
           return;
         }
 
         await publicApiDelete<{ deleted: boolean; id: string }>(
           `/api/public/scenarios/${scenario.id}`,
-          token
+          token,
         );
         setActionMessage(`Deleted "${scenarioTitle}".`);
         scenarios.refetch();
@@ -88,12 +99,12 @@ function ScenarioLibrary() {
           return;
         }
 
-        setActionError('Failed to delete scenario');
+        setActionError("Failed to delete scenario");
       } finally {
         setDeletingScenarioId(null);
       }
     },
-    [scenarios, versions]
+    [scenarios, versions],
   );
 
   return (
@@ -115,7 +126,11 @@ function ScenarioLibrary() {
 
       {!unauthorized && !isLoading && !hasError ? (
         <div className="space-y-6">
-          <section className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/40 p-6">
+          <section
+            className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br 
+          from-sky-800 via-sky-600 to-cyan-800 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/40 p-6"
+          >
+            {" "}
             <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl" />
             <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="max-w-2xl">
@@ -126,7 +141,8 @@ function ScenarioLibrary() {
                   Build your next scenario
                 </h2>
                 <p className="mt-2 text-sm text-slate-300">
-                  Start a blank scenario, continue a draft, or manage published versions.
+                  Start a blank scenario, continue a draft, or manage published
+                  versions.
                 </p>
               </div>
               <Link
@@ -150,9 +166,11 @@ function ScenarioLibrary() {
           ) : null}
 
           <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-            <section className="rounded-2xl border border-neutral-800 bg-neutral-900/80">
+            <section className="rounded-2xl border border-neutral-800 dark:bg-neutral-900/80">
               <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
-                <h3 className="text-base font-semibold text-neutral-100">Scenarios</h3>
+                <h3 className="text-base font-semibold dark:text-neutral-100">
+                  Scenarios
+                </h3>
                 <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300">
                   {scenarioItems.length}
                 </span>
@@ -184,8 +202,13 @@ function ScenarioLibrary() {
                             {scenarioTitle}
                           </Link>
                           <p className="mt-1 text-xs text-neutral-400">
-                            Updated {formatDate(scenario.updated_at)} | {scenario.version_count}{' '}
-                            {pluralize(scenario.version_count, 'published version', 'published versions')}
+                            Updated {formatDate(scenario.updated_at)} |{" "}
+                            {scenario.version_count}{" "}
+                            {pluralize(
+                              scenario.version_count,
+                              "published version",
+                              "published versions",
+                            )}
                           </p>
                         </div>
 
@@ -210,7 +233,7 @@ function ScenarioLibrary() {
                             disabled={isDeleting || deletingScenarioId !== null}
                             className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:border-red-400 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {isDeleting ? 'Deleting...' : 'Delete'}
+                            {isDeleting ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                       </li>
@@ -220,9 +243,11 @@ function ScenarioLibrary() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-neutral-800 bg-neutral-900/80">
+            <section className="rounded-2xl border border-neutral-800 dark:bg-neutral-900/80">
               <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-3">
-                <h3 className="text-base font-semibold text-neutral-100">Published Versions</h3>
+                <h3 className="text-base font-semibold dark:text-neutral-100">
+                  Published Versions
+                </h3>
                 <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs text-neutral-300">
                   {versionItems.length}
                 </span>
@@ -247,8 +272,12 @@ function ScenarioLibrary() {
                         Published {formatDate(version.published_at)}
                       </p>
                       <p className="mt-2 text-xs text-cyan-200">
-                        {version.assignment_count}{' '}
-                        {pluralize(version.assignment_count, 'assignment', 'assignments')}
+                        {version.assignment_count}{" "}
+                        {pluralize(
+                          version.assignment_count,
+                          "assignment",
+                          "assignments",
+                        )}
                       </p>
                     </Link>
                   ))}

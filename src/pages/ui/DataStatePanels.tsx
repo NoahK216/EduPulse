@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 export function LoadingPanel() {
   return (
-    <div className="rounded-md border border-neutral-800 bg-neutral-800 p-4 text-sm text-neutral-300">
+    <div className="rounded-md border border-neutral-300 bg-neutral-100 p-4 text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300">
       Loading...
     </div>
   );
@@ -10,7 +10,7 @@ export function LoadingPanel() {
 
 export function EmptyPanel({ message }: { message: string }) {
   return (
-    <div className="rounded-md border border-neutral-800 bg-neutral-800 p-4 text-sm text-neutral-300">
+    <div className="rounded-md border border-neutral-300 bg-neutral-100 p-4 text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-300">
       {message}
     </div>
   );

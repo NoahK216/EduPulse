@@ -38,13 +38,15 @@ function ToolbarButton({
   disabled,
   onClick,
 }: {
-    label?: string;
-    icon?: React.ReactNode;
+  label?: string;
+  icon?: React.ReactNode;
   disabled?: boolean;
   onClick: () => void;
 }) {
-  const labelStyle = "rounded-md !border !border-slate-700/90 !bg-slate-900/70 !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] !text-slate-100 transition hover:!border-sky-500/70 hover:!bg-slate-800/90 disabled:cursor-not-allowed disabled:opacity-50";
-  const iconStyle = "rounded-md !border-transparent !bg-transparent !p-1 outline-none focus:!border-transparent focus-visible:!border-transparent focus:!outline-none focus-visible:!outline-none disabled:cursor-not-allowed disabled:opacity-50";
+  const labelStyle =
+    "rounded-md !border !border-slate-700/90 !bg-slate-900/70 !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] !text-slate-100 transition hover:!border-sky-500/70 hover:!bg-slate-800/90 disabled:cursor-not-allowed disabled:opacity-50";
+  const iconStyle =
+    "rounded-md !border-transparent !bg-transparent !p-1 outline-none focus:!border-transparent focus-visible:!border-transparent focus:!outline-none focus-visible:!outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <button
@@ -74,7 +76,12 @@ const CreatorTopBar = ({
   return (
     <header className="w-full shrink-0 border-b border-slate-700/80 bg-slate-950 text-slate-100">
       <div className="w-full flex column pb-1 border-b border-slate-800/90 ">
-        <img src="/vite.svg" alt="Vite logo" className="cursor-pointer pl-4 pr-2" onClick={onLogoClick} />
+        <img
+          src="/vite.svg"
+          alt="Vite logo"
+          className="cursor-pointer pl-4 pr-2"
+          onClick={onLogoClick}
+        />
 
         <div className="w-full">
           <div className="flex pt-2 items-center">
@@ -89,7 +96,10 @@ const CreatorTopBar = ({
           </div>
 
           <div className="flex items-center gap-1 pr-3">
-            <nav className="flex items-center gap-1" aria-label="Creator menu bar">
+            <nav
+              className="flex items-center gap-1"
+              aria-label="Creator menu bar"
+            >
               <FileMenu actions={fileActions} />
               <EditMenu actions={editActions} />
               <ViewMenu actions={viewActions} />
