@@ -34,7 +34,7 @@ function NavBar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-9 h-9 rounded bg-neutral-300 hover:bg-neutral-200 flex items-center justify-center dark:bg-gray-800 dark:hover:bg-gray-600"
+          className="w-9 h-9 rounded hover:bg-neutral-200 flex items-center justify-center dark:bg-gray-800 dark:hover:bg-gray-600"
           aria-label="Menu"
           aria-expanded={open}
         >

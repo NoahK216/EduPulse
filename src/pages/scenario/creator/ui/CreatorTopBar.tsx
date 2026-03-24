@@ -26,10 +26,10 @@ type CreatorTopBarProps = {
 };
 
 const statusToneClass: Record<CreatorStatusTone, string> = {
-  neutral: "text-slate-300",
-  success: "text-emerald-300",
-  warning: "text-amber-300",
-  error: "text-red-300",
+  neutral: "text-slate-600 dark:text-slate-300",
+  success: "text-emerald-700 dark:text-emerald-300",
+  warning: "text-amber-700 dark:text-amber-300",
+  error: "text-red-700 dark:text-red-300",
 };
 
 function ToolbarButton({
@@ -44,7 +44,7 @@ function ToolbarButton({
   onClick: () => void;
 }) {
   const labelStyle =
-    "rounded-md !border !border-slate-700/90 !bg-slate-900/70 !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] !text-slate-100 transition hover:!border-sky-500/70 hover:!bg-slate-800/90 disabled:cursor-not-allowed disabled:opacity-50";
+    "rounded-md !border !px-2.5 !py-1 !text-[11px] font-semibold uppercase tracking-[0.08em] transition disabled:cursor-not-allowed disabled:opacity-50 !border-slate-300 !bg-white !text-slate-700 transition hover:!border-sky-500 hover:!bg-slate-100 dark:!border-slate-700/90 dark:!bg-slate-900/70 dark:!text-slate-100 dark:hover:!border-sky-500/70 dark:hover:!bg-slate-800/90";
   const iconStyle =
     "rounded-md !border-transparent !bg-transparent !p-1 outline-none focus:!border-transparent focus-visible:!border-transparent focus:!outline-none focus-visible:!outline-none disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -74,8 +74,8 @@ const CreatorTopBar = ({
   statusTone,
 }: CreatorTopBarProps) => {
   return (
-    <header className="w-full shrink-0 border-b border-slate-700/80 bg-slate-950 text-slate-100">
-      <div className="w-full flex column pb-1 border-b border-slate-800/90 ">
+    <header className="w-full shrink-0 border-b border-slate-300 bg-white text-slate-700 dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100">
+      <div className="w-full flex column pb-1 border-b border-slate-400 dark:border-slate-800/90">
         <img
           src="/vite.svg"
           alt="Vite logo"
@@ -91,7 +91,7 @@ const CreatorTopBar = ({
               onChange={(event) => onTitleChange(event.target.value)}
               placeholder="Untitled Scenario"
               disabled={titleDisabled}
-              className="w-96 max-w-full rounded-md px-2 text-xl text-slate-100 outline-none transition focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-96 max-w-full rounded-md px-2 text-xl text-slate-800 dark:text-slate-100  outline-none transition focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 
@@ -131,7 +131,7 @@ const CreatorTopBar = ({
           disabled={fileActions.downloadDisabled}
           onClick={fileActions.onDownloadJson}
         />
-        <div className="mx-1 h-4 w-px bg-slate-700/90" />
+        <div className="mx-1 h-4 w-px bg-slate-400 dark:bg-slate-700/90" />
         <ToolbarButton
           icon={<FaMagnifyingGlassMinus />}
           disabled={viewActions.disabled}

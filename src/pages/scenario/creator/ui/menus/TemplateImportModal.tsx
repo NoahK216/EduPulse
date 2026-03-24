@@ -23,7 +23,7 @@ const TemplateImportModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 px-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 dark:bg-slate-950/70 px-4"
       role="dialog"
       aria-modal="true"
       aria-label="Import from template"
@@ -32,7 +32,9 @@ const TemplateImportModal = ({
         <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
           <div>
             <p className="text-sm font-semibold">Import from template</p>
-            <p className="text-xs text-slate-400">Templates from /public/scenarios</p>
+            <p className="text-xs text-slate-400">
+              Templates from /public/scenarios
+            </p>
           </div>
           <button
             type="button"
@@ -45,7 +47,9 @@ const TemplateImportModal = ({
 
         <div className="max-h-80 overflow-y-auto px-3 py-2">
           {loading ? (
-            <p className="px-1 py-2 text-sm text-slate-300">Loading templates...</p>
+            <p className="px-1 py-2 text-sm text-slate-300">
+              Loading templates...
+            </p>
           ) : null}
 
           {!loading && error ? (
@@ -62,7 +66,9 @@ const TemplateImportModal = ({
           ) : null}
 
           {!loading && !error && templates.length === 0 ? (
-            <p className="px-1 py-2 text-sm text-slate-300">No templates found.</p>
+            <p className="px-1 py-2 text-sm text-slate-300">
+              No templates found.
+            </p>
           ) : null}
 
           {!loading && !error && templates.length > 0 ? (
@@ -75,7 +81,9 @@ const TemplateImportModal = ({
                   onClick={() => onSelectTemplate(template)}
                 >
                   <span>{template.title}</span>
-                  <span className="text-xs text-slate-400">{template.file_name}</span>
+                  <span className="text-xs text-slate-400">
+                    {template.file_name}
+                  </span>
                 </button>
               ))}
             </div>
