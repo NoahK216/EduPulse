@@ -13,3 +13,6 @@ Performance could be meaningfully improved by implementing a cache for clients a
 
 ## Carmen-Messages style notifications
 
+## Allow Instructors to modify assignments, using an assignment_version model. Similar to scenarios and scenario_versions
+
+The join classroom flow should include a route where students browse to something like edupulse.net/join/<join code>

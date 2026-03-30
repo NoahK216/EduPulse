@@ -74,7 +74,7 @@ const CreatorTopBar = ({
   return (
     <header className="w-full shrink-0 border-b border-slate-700/80 bg-slate-950 text-slate-100">
       <div className="w-full flex column pb-1 border-b border-slate-800/90 ">
-        <img src="/vite.svg" alt="Vite logo" className="cursor-pointer pl-4 pr-2" onClick={onLogoClick} />
+        <img src="/logos/edupulse.svg" alt="EduPulse logo" className="cursor-pointer pl-4 pr-2 h-14 pt-4" onClick={onLogoClick} />
 
         <div className="w-full">
           <div className="flex pt-2 items-center">

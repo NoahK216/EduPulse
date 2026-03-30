@@ -27,7 +27,7 @@ function NavBar() {
   return (
     <div className="fixed top-0 left-0 right-0 h-14 bg-neutral-900 text-white px-6 flex items-center justify-between">
       <Link to="/" className="font-semibold">
-        EduPulse
+        <img src="/logos/edupulse-with-wordmark.svg" className="h-10" />
       </Link>
 
       <div className="relative" ref={ref}>
