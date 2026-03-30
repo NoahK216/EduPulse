@@ -25,7 +25,7 @@ function NavBar() {
   }, [open]);
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-14 bg-neutral-900 text-white px-6 flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-neutral-200 px-6 flex items-center justify-between dark:bg-neutral-900 dark:border-neutral-800">
       <Link to="/" className="font-semibold">
         <img src="/logos/edupulse-with-wordmark.svg" className="h-10" />
       </Link>
@@ -34,22 +34,22 @@ function NavBar() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-9 h-9 rounded bg-gray-800 hover:bg-gray-600 flex items-center justify-center"
+          className="w-9 h-9 rounded bg-neutral-300 hover:bg-neutral-200 flex items-center justify-center dark:bg-gray-800 dark:hover:bg-gray-600"
           aria-label="Menu"
           aria-expanded={open}
         >
           <div className="flex flex-col gap-1">
-            <span className="block w-4 h-[2px] bg-white" />
-            <span className="block w-4 h-[2px] bg-white" />
-            <span className="block w-4 h-[2px] bg-white" />
+            <span className="block w-4 h-[2px] bg-black dark:bg-white" />
+            <span className="block w-4 h-[2px] bg-black dark:bg-white" />
+            <span className="block w-4 h-[2px] bg-black dark:bg-white" />
           </div>
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-48 rounded-md bg-neutral-800 border border-gray-700 shadow-lg overflow-hidden">
+          <div className="absolute right-0 mt-2 w-48 rounded-md bg-white border border-neutral-200 shadow-lg overflow-hidden dark:bg-neutral-800 dark:border-gray-700">
             {isPending ? (
-            <p className="block !text-white px-3 py-2 text-sm">Loading…</p>
-          ) : session?.session ? (
+              <p className="block !text-white px-3 py-2 text-sm">Loading…</p>
+            ) : session?.session ? (
               // logged-in menu
               <>
                 <p className="block !text-white px-3 py-2 text-sm">
@@ -62,7 +62,8 @@ function NavBar() {
                     await authClient.signOut();
                     navigate("/");
                   }}
-                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700"
+                >
                   Logout
                 </a>
               </>
@@ -71,24 +72,31 @@ function NavBar() {
               <>
                 <Link
                   to="/login"
-                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+                >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+                  className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+                >
                   Sign up
                 </Link>
               </>
             )}
             <Link
               to="/classrooms"
-              className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
+              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+            >
               Classroom
             </Link>
-            <div className="h-px bg-gray-700" />
-              <p className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">
-                Settings</p>
+            <div className="h-px bg-neutral-500 dark:bg-gray-700" />
+            <Link
+              to="/settings"
+              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-100 dark:text-white dark:hover:bg-gray-700"
+            >
+              Settings
+            </Link>
           </div>
         )}
       </div>

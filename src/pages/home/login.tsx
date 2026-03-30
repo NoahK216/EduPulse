@@ -41,7 +41,7 @@ function Login() {
             msg = "No account exists with that email.";
             break;
           default:
-            // keep existing message
+          // keep existing message
         }
         setError(msg);
       } else {
@@ -57,17 +57,17 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-neutral-900 text-neutral-150 pt-10">
-      <NavBar/>
+    <div className="min-h-screen pt-10 w-screen dark:bg-neutral-900 dark:text-neutral-150">
+      <NavBar />
       <main className="mx-auto max-w-md px-8 py-20">
         <h1 className="text-3xl font-semibold">Log in</h1>
-                <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
           <div aria-live="polite">
             {error && <div className="text-red-400 text-sm">{error}</div>}
             {message && <div className="text-green-400 text-sm">{message}</div>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-200">
+            <label className="block text-sm font-medium dark:text-neutral-200">
               Email
             </label>
             <input
@@ -77,10 +77,11 @@ function Login() {
               autoComplete="email"
               placeholder="Email"
               required
-              className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}/>
+              className={`mt-2 w-full rounded-md border bg-neutral-300 dark:text-white dark:border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? "border-red-500" : "border-neutral-700"}`}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-200">
+            <label className="block text-sm font-medium dark:text-neutral-200">
               Password
             </label>
             <input
@@ -90,7 +91,8 @@ function Login() {
               autoComplete="current-password"
               placeholder="Password"
               required
-              className={`mt-2 w-full rounded-md border bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? 'border-red-500' : 'border-neutral-700'}`}/>
+              className={`mt-2 w-full rounded-md border bg-neutral-300 dark:text-white dark:border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500 ${error ? "border-red-500" : "border-neutral-700"}`}
+            />
           </div>
 
           <button
@@ -98,26 +100,28 @@ function Login() {
             disabled={isSubmitting}
             className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
           >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+            {isSubmitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
-            <div className="mt-2 text-right">
-              <button
-                type="button"
-                className="w-full text-sm text-blue-400 hover:text-blue-300">
-                Forgot your password?
-              </button>
-            </div>
-        <div className="mt-6 text-center text-sm text-neutral-300">
+        <div className="mt-2 text-right">
+          <button
+            type="button"
+            className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-300"
+          >
+            Forgot your password?
+          </button>
+        </div>
+        <div className="mt-6 text-center text-sm dark:text-neutral-300">
           Don’t have an account?
           <Link
             to="/signup"
-            className="rounded-md bg-neutral-800 text-white! px-4 py-2 text-sm font-medium hover:bg-neutral-600">
+            className="ml-2 rounded-md px-4 py-2 text-sm font-medium border bg-neutral-300 text-neutral-900 border-neutral-300 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-white dark:border-neutral-700 dark:hover:bg-neutral-600"
+          >
             Sign up
           </Link>
         </div>
       </main>
-      </div>
+    </div>
   );
 }
 
