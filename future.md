@@ -16,3 +16,6 @@ Performance could be meaningfully improved by implementing a cache for clients a
 ## Allow Instructors to modify assignments, using an assignment_version model. Similar to scenarios and scenario_versions
 
 The join classroom flow should include a route where students browse to something like edupulse.net/join/<join code>
+
+## Time zones are ever tricky, our current implementation doesn't take them into account, it probably should!
+
