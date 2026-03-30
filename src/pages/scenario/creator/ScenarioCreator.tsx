@@ -1,4 +1,11 @@
-import { useState, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { type Scenario } from "../scenarioSchemas";
 import { cards } from "../nodes";
@@ -52,9 +59,7 @@ import {
   toScenarioEdge,
 } from "./ScenarioCreatorCallbacks";
 import { buildStarterScenario } from "./starterScenario";
-import type {
-  CreatorStatusTone,
-} from "./ui/menus/menuTypes";
+import type { CreatorStatusTone } from "./ui/menus/menuTypes";
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -163,10 +168,12 @@ const ScenarioCreator = ({
   }, []);
 
   const openTutorialScenario = useCallback(() => {
-    const tutorialUrl = new URL("/EdupulseTutorial.mp4", window.location.origin);
+    const tutorialUrl = new URL(
+      "/EdupulseTutorial.mp4",
+      window.location.origin,
+    );
     window.open(tutorialUrl.toString(), "_blank", "noopener,noreferrer");
   }, []);
-
 
   useEffect(() => {
     if (!scenarioUrl) return;
@@ -356,25 +363,22 @@ const ScenarioCreator = ({
     [applyConnection],
   );
 
-  const updateSnapTarget: NodeMouseHandler = useCallback(
-    (_, nodeSnapshot) => {
-      const sourceSnapshot = activeConnectionSourceRef.current;
-      if (!sourceSnapshot) return;
+  const updateSnapTarget: NodeMouseHandler = useCallback((_, nodeSnapshot) => {
+    const sourceSnapshot = activeConnectionSourceRef.current;
+    if (!sourceSnapshot) return;
 
-      if (
-        nodeSnapshot.type === "start" ||
-        nodeSnapshot.id === sourceSnapshot.nodeId
-      ) {
-        snapTargetNodeIdRef.current = null;
-        setSnapTargetNodeId(null);
-        return;
-      }
+    if (
+      nodeSnapshot.type === "start" ||
+      nodeSnapshot.id === sourceSnapshot.nodeId
+    ) {
+      snapTargetNodeIdRef.current = null;
+      setSnapTargetNodeId(null);
+      return;
+    }
 
-      snapTargetNodeIdRef.current = nodeSnapshot.id;
-      setSnapTargetNodeId(nodeSnapshot.id);
-    },
-    [],
-  );
+    snapTargetNodeIdRef.current = nodeSnapshot.id;
+    setSnapTargetNodeId(nodeSnapshot.id);
+  }, []);
 
   const onNodeMouseLeave: NodeMouseHandler = useCallback((_, nodeSnapshot) => {
     if (snapTargetNodeIdRef.current === nodeSnapshot.id) {
@@ -452,9 +456,9 @@ const ScenarioCreator = ({
     setSyncMessage("");
 
     try {
-        const token = await resolvePublicApiToken();
-        if (!token) {
-          throw new Error("No auth token available. Please log in.");
+      const token = await resolvePublicApiToken();
+      if (!token) {
+        throw new Error("No auth token available. Please log in.");
       }
 
       const response = await publicApiPost<ItemResponse<PublicScenario>>(
@@ -626,157 +630,160 @@ const ScenarioCreator = ({
   return (
     <EditorDispatchProvider dispatch={dispatch}>
       <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
-      <CreatorTopBar
-        title={state.status === "loaded" ? state.doc.title : ""}
-        titleDisabled={state.status !== "loaded"}
-        onLogoClick={handleLogoClick}
-        onTitleChange={(title) => dispatch({ type: "setScenarioTitle", title })}
-        fileActions={{
-          onNewScenario: handleCreateNewScenario,
-          onOpenLibrary: handleOpenScenarioLibrary,
-          onBeforeImport: handleBeforeImport,
-          onImportScenarioLoaded: handleImportedScenarioLoaded,
-          onSaveDraft: handleSaveDraft,
-          onTestScenario: handleTestScenario,
-          onDownloadJson: handleDownloadJson,
-          saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
-          downloadDisabled: state.status !== "loaded",
-          saveLabel: syncStatus === "syncing" ? "Saving..." : "Save",
-        }}
-        editActions={{
-          onUndo: undefined,
-          onRedo: undefined,
-        }}
-        viewActions={{
-          onZoomIn: handleZoomIn,
-          onZoomOut: handleZoomOut,
-          onResetZoom: handleResetZoom,
-          onFitView: handleFitView,
-          disabled: !reactFlowInstance,
-        }}
-        helpActions={{
-          onShowTutorial: reopenTutorial,
-          onOpenTutorial: openTutorialScenario,
-          onShowKeyboardShortcuts: undefined,
-        }}
-        statusMessage={topBarStatus.message}
-        statusTone={topBarStatus.tone}
-      />
-      {!tipClosed && tipOpen && tipNum !== 0 && (
-        <div
-          className="fixed z-50 max-w-sm rounded-lg border border-[#0b1f3a] bg-[#081426] p-4 text-blue-100 shadow-lg"
-          style={{
-            top:
-              (tipNum === 1
-                ? 100
-                : tipNum === 2
-                  ? 140
-                  : tipNum === 3
-                    ? 300
-                    : tipNum === 4
-                      ? 350
-                      : 250) + TUTORIAL_TOP_OFFSET,
-            left:
-              tipNum === 1
-                ? 215
-                : tipNum === 2
-                  ? 250
-                  : tipNum === 5
-                    ? 735
-                    : 700,
+        <CreatorTopBar
+          title={state.status === "loaded" ? state.doc.title : ""}
+          titleDisabled={state.status !== "loaded"}
+          onLogoClick={handleLogoClick}
+          onTitleChange={(title) =>
+            dispatch({ type: "setScenarioTitle", title })
+          }
+          fileActions={{
+            onNewScenario: handleCreateNewScenario,
+            onOpenLibrary: handleOpenScenarioLibrary,
+            onBeforeImport: handleBeforeImport,
+            onImportScenarioLoaded: handleImportedScenarioLoaded,
+            onSaveDraft: handleSaveDraft,
+            onTestScenario: handleTestScenario,
+            onDownloadJson: handleDownloadJson,
+            saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
+            downloadDisabled: state.status !== "loaded",
+            saveLabel: syncStatus === "syncing" ? "Saving..." : "Save",
           }}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold">
-                {tipNum === 1 && "Add nodes"}
-                {tipNum === 2 && "Edit nodes"}
-                {tipNum === 3 && "Free Response"}
-                {tipNum === 4 && "Multiple Choice"}
-                {tipNum === 5 && "Video node"}
-              </div>
-
-              <div className="mt-1 text-sm text-neutral-300">
-                {tipNum === 1 &&
-                  "Click a node in the left panel to add it to the scenario."}
-
-                {tipNum === 2 &&
-                  "Click any node on the canvas to edit its content on the right."}
-                {tipNum === 3 && (
-                  <div className="space-y-2">
-                    <div>
-                      <b>Prompt</b>: The question
-                    </div>
-                    <div>
-                      <b>Rubric Context</b>: Context for the AI grader to use
-                    </div>
-                    <div>
-                      <b>Answer Buckets</b>: How the responses should be scored
-                    </div>
-                  </div>
-                )}
-                {tipNum === 4 &&
-                  "Input prompt and add as many choices as necessary."}
-                {tipNum === 5 &&
-                  "Edit title, video, and captions if available."}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="ml-2 rounded-md !bg-blue-950 px-2 py-1 !text-blue-200 transition hover:!bg-blue-900"
-              onClick={() => {
-                setTipClosed(true);
-                setTipOpen(false);
-              }}
-            >
-              X
-            </button>
-          </div>
-        </div>
-      )}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
-        <NodeAddPanel
-          onAddNode={() => {
-            if (tipNum === 1) {
-              setTipNum(2);
-              setTipOpen(true);
-            }
+          editActions={{
+            onUndo: undefined,
+            onRedo: undefined,
           }}
+          viewActions={{
+            onZoomIn: handleZoomIn,
+            onZoomOut: handleZoomOut,
+            onResetZoom: handleResetZoom,
+            onFitView: handleFitView,
+            disabled: !reactFlowInstance,
+          }}
+          helpActions={{
+            onShowTutorial: reopenTutorial,
+            onOpenTutorial: openTutorialScenario,
+            onShowKeyboardShortcuts: undefined,
+          }}
+          statusMessage={topBarStatus.message}
+          statusTone={topBarStatus.tone}
         />
-        <NodeInspectorProvider
-          inspectedNodeId={inspectedNodeId}
-          inspectNode={inspectNode}
-        >
-          <ReactFlow
-            className="min-h-0 min-w-0 flex-1"
-            onInit={(instance) => setReactFlowInstance(instance)}
-            nodes={rfNodes}
-            edges={rfEdges}
-            nodeTypes={cards}
-            proOptions={{ hideAttribution: true }}
-            fitView
-            fitViewOptions={fitViewOptions}
-            defaultEdgeOptions={defaultEdgeOptions}
-            connectionLineComponent={snapConnectionLine}
-            panOnDrag={[2]}
-            selectionOnDrag={true}
-            onNodeClick={onNodeClick}
-            onNodeMouseEnter={updateSnapTarget}
-            onNodeMouseMove={updateSnapTarget}
-            onNodeMouseLeave={onNodeMouseLeave}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnectStart={onConnectStart}
-            onConnect={onConnect}
-            onConnectEnd={onConnectEnd}
+        {!tipClosed && tipOpen && tipNum !== 0 && (
+          <div
+            className="fixed z-50 max-w-sm rounded-lg border border-[#0b1f3a] bg-[#081426] p-4 text-blue-100 shadow-lg"
+            style={{
+              top:
+                (tipNum === 1
+                  ? 100
+                  : tipNum === 2
+                    ? 140
+                    : tipNum === 3
+                      ? 300
+                      : tipNum === 4
+                        ? 350
+                        : 250) + TUTORIAL_TOP_OFFSET,
+              left:
+                tipNum === 1
+                  ? 215
+                  : tipNum === 2
+                    ? 250
+                    : tipNum === 5
+                      ? 735
+                      : 700,
+            }}
           >
-            <Background />
-            <MiniMap nodeStrokeWidth={3} />
-          </ReactFlow>
-        </NodeInspectorProvider>
-        <NodeEditorPanel editorState={state} />
-      </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold">
+                  {tipNum === 1 && "Add nodes"}
+                  {tipNum === 2 && "Edit nodes"}
+                  {tipNum === 3 && "Free Response"}
+                  {tipNum === 4 && "Multiple Choice"}
+                  {tipNum === 5 && "Video node"}
+                </div>
+
+                <div className="mt-1 text-sm text-neutral-300">
+                  {tipNum === 1 &&
+                    "Click a node in the left panel to add it to the scenario."}
+
+                  {tipNum === 2 &&
+                    "Click any node on the canvas to edit its content on the right."}
+                  {tipNum === 3 && (
+                    <div className="space-y-2">
+                      <div>
+                        <b>Prompt</b>: The question
+                      </div>
+                      <div>
+                        <b>Rubric Context</b>: Context for the AI grader to use
+                      </div>
+                      <div>
+                        <b>Answer Buckets</b>: How the responses should be
+                        scored
+                      </div>
+                    </div>
+                  )}
+                  {tipNum === 4 &&
+                    "Input prompt and add as many choices as necessary."}
+                  {tipNum === 5 &&
+                    "Edit title, video, and captions if available."}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="ml-2 rounded-md !bg-blue-950 px-2 py-1 !text-blue-200 transition hover:!bg-blue-900"
+                onClick={() => {
+                  setTipClosed(true);
+                  setTipOpen(false);
+                }}
+              >
+                X
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
+          <NodeAddPanel
+            onAddNode={() => {
+              if (tipNum === 1) {
+                setTipNum(2);
+                setTipOpen(true);
+              }
+            }}
+          />
+          <NodeInspectorProvider
+            inspectedNodeId={inspectedNodeId}
+            inspectNode={inspectNode}
+          >
+            <ReactFlow
+              className="min-h-0 min-w-0 flex-1"
+              onInit={(instance) => setReactFlowInstance(instance)}
+              nodes={rfNodes}
+              edges={rfEdges}
+              nodeTypes={cards}
+              proOptions={{ hideAttribution: true }}
+              fitView
+              fitViewOptions={fitViewOptions}
+              defaultEdgeOptions={defaultEdgeOptions}
+              connectionLineComponent={snapConnectionLine}
+              panOnDrag={[2]}
+              selectionOnDrag={true}
+              onNodeClick={onNodeClick}
+              onNodeMouseEnter={updateSnapTarget}
+              onNodeMouseMove={updateSnapTarget}
+              onNodeMouseLeave={onNodeMouseLeave}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnectStart={onConnectStart}
+              onConnect={onConnect}
+              onConnectEnd={onConnectEnd}
+            >
+              <Background />
+              <MiniMap nodeStrokeWidth={3} />
+            </ReactFlow>
+          </NodeInspectorProvider>
+          <NodeEditorPanel editorState={state} />
+        </div>
       </div>
     </EditorDispatchProvider>
   );

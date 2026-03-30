@@ -19,9 +19,7 @@ function Settings() {
       <NavBar />
       <main className="mx-auto max-w-5xl px-6 py-10">
         <h1 className="mt-2 text-4xl font-semibold">Settings</h1>
-        <p className="mt-4 max-w-2xl text-neutral-200">
-          Interactive training scenarios with AI grading.
-        </p>
+        <p className="mt-4 max-w-2xl text-neutral">Placeholder.</p>
         <div className="mt-16 flex flex-wrap gap-6">
           <button
             onClick={toggleTheme}
