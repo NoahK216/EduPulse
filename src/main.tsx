@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
+import { PublicApiQueryProvider } from "./lib/query-client";
 import "./index.css";
 
 type LazyRouteModule = { default: ComponentType };
@@ -117,6 +118,8 @@ if (localStorage.getItem("theme") === "dark") {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <PublicApiQueryProvider>
+      <RouterProvider router={router} />
+    </PublicApiQueryProvider>
   </StrictMode>,
 );

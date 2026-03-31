@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { ApiRequestError, publicApiGet, resolvePublicApiToken } from './public-api-client';
 
@@ -22,97 +23,94 @@ export type ApiState<T> = {
   refetch: () => void;
 };
 
-export function useApiData<T>(path: string | null): ApiState<T> {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [unauthorized, setUnauthorized] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+async function fetchPublicApiData<T>(path: string): Promise<T> {
+  const requestId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
-  useEffect(() => {
-    let cancelled = false;
-    const requestId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  debugUseApiData('run start', { requestId, path });
 
-    if (!path) {
-      debugUseApiData('missing path', { requestId });
-      setData(null);
-      setError(null);
-      setUnauthorized(false);
-      setLoading(false);
-      return () => {
-        cancelled = true;
-      };
+  const token = await resolvePublicApiToken();
+  debugUseApiData('token resolved', {
+    requestId,
+    hasToken: Boolean(token),
+  });
+
+  if (!token) {
+    debugUseApiData('marking unauthorized due to missing token', { requestId, path });
+    throw new ApiRequestError(
+      401,
+      'You must be logged in to access this page',
+      'UNAUTHORIZED',
+    );
+  }
+
+  try {
+    const result = await publicApiGet<T>(path, token);
+    debugUseApiData('request success', { requestId, path });
+    return result;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      debugUseApiData('api request error', {
+        requestId,
+        path,
+        status: error.status,
+        code: error.code,
+        message: error.message,
+      });
+      throw error;
     }
 
-    const run = async () => {
-      debugUseApiData('run start', { requestId, path });
-      setLoading(true);
-      setError(null);
-      setUnauthorized(false);
+    if (error instanceof Error) {
+      debugUseApiData('generic error', { requestId, path, message: error.message });
+      throw error;
+    }
 
-      try {
-        const token = await resolvePublicApiToken();
-        debugUseApiData('token resolved', {
-          requestId,
-          hasToken: Boolean(token),
-        });
-        if (!token) {
-          if (!cancelled) {
-            setUnauthorized(true);
-            setError('You must be logged in to access this page');
-          }
-          debugUseApiData('marking unauthorized due to missing token', { requestId, path });
-          return;
-        }
+    debugUseApiData('unknown error', { requestId, path });
+    throw new Error('Unknown request error');
+  } finally {
+    debugUseApiData('run finished', { requestId, path });
+  }
+}
 
-        const result = await publicApiGet<T>(path, token);
-        if (!cancelled) {
-          setData(result);
-        }
-        debugUseApiData('request success', { requestId, path });
-      } catch (err) {
-        if (cancelled) {
-          debugUseApiData('request cancelled before error handling', { requestId, path });
-          return;
-        }
+export function useApiData<T>(path: string | null): ApiState<T> {
+  useEffect(() => {
+    if (!path) {
+      debugUseApiData('missing path');
+    }
+  }, [path]);
 
-        if (err instanceof ApiRequestError) {
-          setUnauthorized(err.status === 401);
-          setError(err.message);
-          debugUseApiData('api request error', {
-            requestId,
-            path,
-            status: err.status,
-            code: err.code,
-            message: err.message,
-          });
-        } else if (err instanceof Error) {
-          setError(err.message);
-          debugUseApiData('generic error', { requestId, path, message: err.message });
-        } else {
-          setError('Unknown request error');
-          debugUseApiData('unknown error', { requestId, path });
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-        debugUseApiData('run finished', { requestId, path, cancelled });
-      }
+  const query = useQuery({
+    queryKey: ['public-api', path],
+    queryFn: () => fetchPublicApiData<T>(path!),
+    enabled: Boolean(path),
+  });
+
+  if (!path) {
+    return {
+      data: null,
+      loading: false,
+      error: null,
+      unauthorized: false,
+      refetch: () => {},
     };
+  }
 
-    void run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [path, refreshKey]);
+  const loading = query.isPending || (query.isFetching && typeof query.data === 'undefined');
+  const error =
+    query.error instanceof ApiRequestError
+      ? query.error.message
+      : query.error instanceof Error
+        ? query.error.message
+        : null;
+  const unauthorized =
+    query.error instanceof ApiRequestError && query.error.status === 401;
 
   return {
-    data,
+    data: query.data ?? null,
     loading,
     error,
     unauthorized,
-    refetch: () => setRefreshKey((value) => value + 1),
+    refetch: () => {
+      void query.refetch();
+    },
   };
 }
