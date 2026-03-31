@@ -120,14 +120,14 @@ function mapScenarioDetailRow(
 export function createPublicScenariosRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const where = { owner_user_id: authedReq.auth.publicUserId };
+    const where = { owner_user_id: authedReq.auth.userId };
     const { page, pageSize, skip, take } = pagination.value;
 
     try {
@@ -135,7 +135,7 @@ export function createPublicScenariosRouter() {
         prisma.scenario.count({ where }),
         prisma.scenario.findMany({
           where,
-          orderBy: { updated_at: 'desc' },
+          orderBy: { updated_at: "desc" },
           skip,
           take,
           select: scenarioListSelect,
@@ -149,49 +149,49 @@ export function createPublicScenariosRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list scenarios', error);
+      return sendInternalError(res, "Failed to list scenarios", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
       const row = await prisma.scenario.findFirst({
         where: {
           id: id.value,
-          owner_user_id: authedReq.auth.publicUserId,
+          owner_user_id: authedReq.auth.userId,
         },
         select: scenarioDetailSelect,
       });
 
       const item = mapScenarioDetailRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
+        return sendError(res, 404, "NOT_FOUND", "Scenario not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch scenario', error);
+      return sendInternalError(res, "Failed to fetch scenario", error);
     }
   });
 
-  router.delete('/:id', async (req, res) => {
+  router.delete("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
       const existing = await prisma.scenario.findFirst({
         where: {
           id: id.value,
-          owner_user_id: authedReq.auth.publicUserId,
+          owner_user_id: authedReq.auth.userId,
         },
         select: {
           id: true,
@@ -204,18 +204,18 @@ export function createPublicScenariosRouter() {
       });
 
       if (!existing) {
-        return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
+        return sendError(res, 404, "NOT_FOUND", "Scenario not found");
       }
 
       const hasAssignedVersions = existing.versions.some(
-        (version) => version._count.assignments > 0
+        (version) => version._count.assignments > 0,
       );
       if (hasAssignedVersions) {
         return sendError(
           res,
           400,
-          'BAD_REQUEST',
-          'Cannot delete a scenario with assigned published versions'
+          "BAD_REQUEST",
+          "Cannot delete a scenario with assigned published versions",
         );
       }
 
@@ -228,24 +228,24 @@ export function createPublicScenariosRouter() {
         id: existing.id,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to delete scenario', error);
+      return sendInternalError(res, "Failed to delete scenario", error);
     }
   });
 
-  router.post('/', async (req, res) => {
+  router.post("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const parsed = syncScenarioBodySchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
-        error: 'BAD_REQUEST',
-        message: 'Invalid request body',
+        error: "BAD_REQUEST",
+        message: "Invalid request body",
         details: parsed.error.flatten(),
       });
     }
 
     const jsonDraft = toJsonInput(parsed.data.draft_content);
     if (!jsonDraft.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', jsonDraft.message);
+      return sendError(res, 400, "BAD_REQUEST", jsonDraft.message);
     }
 
     const title = parsed.data.title;
@@ -262,13 +262,13 @@ export function createPublicScenariosRouter() {
         const existing = await prisma.scenario.findFirst({
           where: {
             id: scenarioId,
-            owner_user_id: authedReq.auth.publicUserId,
+            owner_user_id: authedReq.auth.userId,
           },
           select: { id: true },
         });
 
         if (!existing) {
-          return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
+          return sendError(res, 404, "NOT_FOUND", "Scenario not found");
         }
 
         const updated = await prisma.scenario.update({
@@ -285,7 +285,7 @@ export function createPublicScenariosRouter() {
       } else {
         const created = await prisma.scenario.create({
           data: {
-            owner_user_id: authedReq.auth.publicUserId,
+            owner_user_id: authedReq.auth.userId,
             title,
             description,
             draft_content: jsonDraft.value,
@@ -300,19 +300,24 @@ export function createPublicScenariosRouter() {
       const row = await prisma.scenario.findFirst({
         where: {
           id: savedId,
-          owner_user_id: authedReq.auth.publicUserId,
+          owner_user_id: authedReq.auth.userId,
         },
         select: scenarioDetailSelect,
       });
 
       const item = mapScenarioDetailRow(row);
       if (!item) {
-        return sendError(res, 500, 'INTERNAL_ERROR', 'Scenario saved but could not be loaded');
+        return sendError(
+          res,
+          500,
+          "INTERNAL_ERROR",
+          "Scenario saved but could not be loaded",
+        );
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to sync scenario draft', error);
+      return sendInternalError(res, "Failed to sync scenario draft", error);
     }
   });
 

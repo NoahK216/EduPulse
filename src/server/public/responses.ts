@@ -1,7 +1,7 @@
-import express from 'express';
-import type { Prisma } from '../../../prisma/generated/client.js';
+import express from "express";
+import type { Prisma } from "../../../prisma/generated/client.js";
 
-import { prisma } from '../prisma.js';
+import { prisma } from "../prisma.js";
 import {
   asAuthedRequest,
   parseOptionalUuidQuery,
@@ -9,8 +9,8 @@ import {
   parseUuidParam,
   sendError,
   sendInternalError,
-} from './common.js';
-import { accessibleResponseWhere } from './scopes.js';
+} from "./common.js";
+import { accessibleResponseWhere } from "./scopes.js";
 
 export const responseSelect = {
   id: true,
@@ -52,7 +52,7 @@ export function mapResponseRow(
       }>
     >
   >,
-  includePayload: boolean
+  includePayload: boolean,
 ) {
   if (!row) {
     return null;
@@ -79,20 +79,20 @@ export function mapResponseRow(
 export function createPublicResponsesRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const attemptId = parseOptionalUuidQuery(req.query, 'attemptId');
+    const attemptId = parseOptionalUuidQuery(req.query, "attemptId");
     if (!attemptId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', attemptId.message);
+      return sendError(res, 400, "BAD_REQUEST", attemptId.message);
     }
 
     const where: Prisma.responseWhereInput = accessibleResponseWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.userId,
     );
     if (attemptId.value !== undefined) {
       where.attempt_id = attemptId.value;
@@ -105,7 +105,7 @@ export function createPublicResponsesRouter() {
         prisma.response.count({ where }),
         prisma.response.findMany({
           where,
-          orderBy: { created_at: 'desc' },
+          orderBy: { created_at: "desc" },
           skip,
           take,
           select: responseSelect,
@@ -119,33 +119,36 @@ export function createPublicResponsesRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list responses', error);
+      return sendInternalError(res, "Failed to list responses", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
       const row = await prisma.response.findFirst({
         where: {
-          AND: [{ id: id.value }, accessibleResponseWhere(authedReq.auth.publicUserId)],
+          AND: [
+            { id: id.value },
+            accessibleResponseWhere(authedReq.auth.userId),
+          ],
         },
         select: responseSelect,
       });
 
       const item = mapResponseRow(row, true);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Response not found');
+        return sendError(res, 404, "NOT_FOUND", "Response not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch response', error);
+      return sendInternalError(res, "Failed to fetch response", error);
     }
   });
 

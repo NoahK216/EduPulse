@@ -28,22 +28,22 @@ async function fetchPublicApiData<T>(path: string): Promise<T> {
 
   debugUseApiData('run start', { requestId, path });
 
-  const token = await resolvePublicApiToken();
-  debugUseApiData('token resolved', {
-    requestId,
-    hasToken: Boolean(token),
-  });
-
-  if (!token) {
-    debugUseApiData('marking unauthorized due to missing token', { requestId, path });
-    throw new ApiRequestError(
-      401,
-      'You must be logged in to access this page',
-      'UNAUTHORIZED',
-    );
-  }
-
   try {
+    const token = await resolvePublicApiToken();
+    debugUseApiData('token resolved', {
+      requestId,
+      hasToken: Boolean(token),
+    });
+
+    if (!token) {
+      debugUseApiData('marking unauthorized due to missing token', { requestId, path });
+      throw new ApiRequestError(
+        401,
+        'You must be logged in to access this page',
+        'UNAUTHORIZED',
+      );
+    }
+
     const result = await publicApiGet<T>(path, token);
     debugUseApiData('request success', { requestId, path });
     return result;

@@ -154,20 +154,20 @@ function normalizeNextNodeId(
 export function createPublicAttemptsRouter(openai: OpenAI) {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const assignmentId = parseOptionalUuidQuery(req.query, 'assignmentId');
+    const assignmentId = parseOptionalUuidQuery(req.query, "assignmentId");
     if (!assignmentId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', assignmentId.message);
+      return sendError(res, 400, "BAD_REQUEST", assignmentId.message);
     }
 
     const where: Prisma.attemptWhereInput = accessibleAttemptWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.userId,
     );
     if (assignmentId.value !== undefined) {
       where.assignment_id = assignmentId.value;
@@ -180,7 +180,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         prisma.attempt.count({ where }),
         prisma.attempt.findMany({
           where,
-          orderBy: { started_at: 'desc' },
+          orderBy: { started_at: "desc" },
           skip,
           take,
           select: attemptSelect,
@@ -194,48 +194,51 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list attempts', error);
+      return sendInternalError(res, "Failed to list attempts", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
       const row = await prisma.attempt.findFirst({
         where: {
-          AND: [{ id: id.value }, accessibleAttemptWhere(authedReq.auth.publicUserId)],
+          AND: [
+            { id: id.value },
+            accessibleAttemptWhere(authedReq.auth.userId),
+          ],
         },
         select: attemptSelect,
       });
 
       const item = mapAttemptRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Attempt not found');
+        return sendError(res, 404, "NOT_FOUND", "Attempt not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch attempt', error);
+      return sendInternalError(res, "Failed to fetch attempt", error);
     }
   });
 
-  router.post('/:id/progress', async (req, res) => {
+  router.post("/:id/progress", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     const parsed = progressBodySchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
-        error: 'BAD_REQUEST',
-        message: 'Invalid request body',
+        error: "BAD_REQUEST",
+        message: "Invalid request body",
         details: parsed.error.flatten(),
       });
     }
@@ -244,51 +247,51 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
       const attempt = await prisma.attempt.findFirst({
         where: {
           id: id.value,
-          student_user_id: authedReq.auth.publicUserId,
+          student_user_id: authedReq.auth.userId,
         },
         select: progressAttemptSelect,
       });
 
       if (!attempt) {
-        return sendError(res, 404, 'NOT_FOUND', 'Attempt not found');
+        return sendError(res, 404, "NOT_FOUND", "Attempt not found");
       }
 
-      if (attempt.status !== 'in_progress') {
+      if (attempt.status !== "in_progress") {
         return sendError(
           res,
           400,
-          'BAD_REQUEST',
-          'Only in-progress attempts can be updated'
+          "BAD_REQUEST",
+          "Only in-progress attempts can be updated",
         );
       }
 
       const now = new Date();
       if (attempt.assignment.open_at && attempt.assignment.open_at > now) {
-        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is not open yet');
+        return sendError(res, 400, "BAD_REQUEST", "Assignment is not open yet");
       }
 
       if (attempt.assignment.close_at && attempt.assignment.close_at <= now) {
-        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is closed');
+        return sendError(res, 400, "BAD_REQUEST", "Assignment is closed");
       }
 
       if (!attempt.current_node_id) {
         return sendError(
           res,
           409,
-          'BAD_REQUEST',
-          'Attempt progress is out of sync. Reopen the assignment and try again.'
+          "BAD_REQUEST",
+          "Attempt progress is out of sync. Reopen the assignment and try again.",
         );
       }
 
       const parsedScenario = ScenarioSchema.safeParse(
-        attempt.assignment.scenario_version.content
+        attempt.assignment.scenario_version.content,
       );
       if (!parsedScenario.success) {
         return sendError(
           res,
           500,
-          'INTERNAL_ERROR',
-          'Published scenario content is invalid for this assignment'
+          "INTERNAL_ERROR",
+          "Published scenario content is invalid for this assignment",
         );
       }
 
@@ -298,8 +301,8 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         return sendError(
           res,
           500,
-          'INTERNAL_ERROR',
-          'Current scenario node could not be found for this attempt'
+          "INTERNAL_ERROR",
+          "Current scenario node could not be found for this attempt",
         );
       }
 
@@ -308,55 +311,57 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
       let responseFeedback: string | null = null;
 
       switch (currentNode.type) {
-        case 'start':
-        case 'text':
-        case 'video':
-          if (parsed.data.type !== 'advance') {
+        case "start":
+        case "text":
+        case "video":
+          if (parsed.data.type !== "advance") {
             return sendError(
               res,
               400,
-              'BAD_REQUEST',
-              `Node ${currentNode.id} only supports an advance action`
+              "BAD_REQUEST",
+              `Node ${currentNode.id} only supports an advance action`,
             );
           }
           break;
-        case 'choice':
-        {
-          if (parsed.data.type !== 'answer_choice') {
+        case "choice": {
+          if (parsed.data.type !== "answer_choice") {
             return sendError(
               res,
               400,
-              'BAD_REQUEST',
-              `Node ${currentNode.id} requires a choice answer`
+              "BAD_REQUEST",
+              `Node ${currentNode.id} requires a choice answer`,
             );
           }
 
           const choiceAction = parsed.data;
 
-          if (!currentNode.choices.some((choice) => choice.id === choiceAction.choice_id)) {
+          if (
+            !currentNode.choices.some(
+              (choice) => choice.id === choiceAction.choice_id,
+            )
+          ) {
             return sendError(
               res,
               400,
-              'BAD_REQUEST',
-              'Selected choice does not exist on the current node'
+              "BAD_REQUEST",
+              "Selected choice does not exist on the current node",
             );
           }
 
           nextNodePort = choiceAction.choice_id;
           responsePayload = {
-            kind: 'choice',
+            kind: "choice",
             choice_id: choiceAction.choice_id,
           } satisfies Prisma.InputJsonObject;
           break;
         }
-        case 'free_response':
-        {
-          if (parsed.data.type !== 'answer_free_response') {
+        case "free_response": {
+          if (parsed.data.type !== "answer_free_response") {
             return sendError(
               res,
               400,
-              'BAD_REQUEST',
-              `Node ${currentNode.id} requires a free response answer`
+              "BAD_REQUEST",
+              `Node ${currentNode.id} requires a free response answer`,
             );
           }
 
@@ -366,8 +371,8 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
             return sendError(
               res,
               500,
-              'INTERNAL_ERROR',
-              'OPENAI_API_KEY is not set'
+              "INTERNAL_ERROR",
+              "OPENAI_API_KEY is not set",
             );
           }
 
@@ -381,17 +386,20 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
             nextNodePort = result.bucket_id;
             responseFeedback = result.feedback;
             responsePayload = {
-              kind: 'free_response',
+              kind: "free_response",
               answer_text: freeResponseAction.answer_text,
               bucket_id: result.bucket_id,
             } satisfies Prisma.InputJsonObject;
           } catch (error) {
-            console.error('Failed to grade free response during attempt progress', error);
+            console.error(
+              "Failed to grade free response during attempt progress",
+              error,
+            );
             return sendError(
               res,
               502,
-              'INTERNAL_ERROR',
-              'Failed to evaluate the free response'
+              "INTERNAL_ERROR",
+              "Failed to evaluate the free response",
             );
           }
           break;
@@ -400,7 +408,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
 
       const resolvedNextNodeId = normalizeNextNodeId(
         scenario,
-        getNextNodeIdForScenarioNode(currentNode, scenario.edges, nextNodePort)
+        getNextNodeIdForScenarioNode(currentNode, scenario.edges, nextNodePort),
       );
 
       const updatedAt = new Date();
@@ -408,28 +416,28 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         const updateResult = await tx.attempt.updateMany({
           where: {
             id: attempt.id,
-            student_user_id: authedReq.auth.publicUserId,
-            status: 'in_progress',
+            student_user_id: authedReq.auth.userId,
+            status: "in_progress",
             current_node_id: currentNode.id,
           },
           data: resolvedNextNodeId
             ? {
-              current_node_id: resolvedNextNodeId,
-              last_activity_at: updatedAt,
-            }
+                current_node_id: resolvedNextNodeId,
+                last_activity_at: updatedAt,
+              }
             : {
-              current_node_id: null,
-              last_activity_at: updatedAt,
-              status: 'submitted',
-              submitted_at: updatedAt,
-            },
+                current_node_id: null,
+                last_activity_at: updatedAt,
+                status: "submitted",
+                submitted_at: updatedAt,
+              },
         });
 
         if (updateResult.count !== 1) {
           return null;
         }
 
-        if (typeof responsePayload !== 'undefined') {
+        if (typeof responsePayload !== "undefined") {
           await tx.response.upsert({
             where: {
               attempt_id_node_id: {
@@ -455,14 +463,14 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
             where: { id: attempt.id },
             select: attemptSelect,
           }),
-          typeof responsePayload !== 'undefined'
+          typeof responsePayload !== "undefined"
             ? tx.response.findFirst({
-              where: {
-                attempt_id: attempt.id,
-                node_id: currentNode.id,
-              },
-              select: responseSelect,
-            })
+                where: {
+                  attempt_id: attempt.id,
+                  node_id: currentNode.id,
+                },
+                select: responseSelect,
+              })
             : Promise.resolve(null),
         ]);
 
@@ -476,21 +484,23 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         return sendError(
           res,
           409,
-          'BAD_REQUEST',
-          'Attempt progress is out of sync. Reopen the assignment and try again.'
+          "BAD_REQUEST",
+          "Attempt progress is out of sync. Reopen the assignment and try again.",
         );
       }
 
       return res.json({
         item: {
           attempt: mapAttemptRow(result.attempt),
-          response: result.response ? mapResponseRow(result.response, true) : null,
+          response: result.response
+            ? mapResponseRow(result.response, true)
+            : null,
           next_node_id: resolvedNextNodeId,
           completed: resolvedNextNodeId === null,
         },
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to update attempt progress', error);
+      return sendInternalError(res, "Failed to update attempt progress", error);
     }
   });
 

@@ -42,7 +42,7 @@ export function ErrorPanel({
 export function UnauthorizedPanel() {
   return (
     <div className="rounded-md border border-yellow-900 bg-yellow-950/40 p-4 text-sm text-yellow-200">
-      <p>Your session is missing or expired.</p>
+      <p>Your token is missing or expired.</p>
       <Link
         to="/login"
         className="mt-3 inline-block rounded bg-yellow-800 px-3 py-1 text-xs font-medium text-yellow-50 hover:bg-yellow-700"

@@ -59,7 +59,7 @@ export function createPublicMeRouter() {
 
     try {
       const row = await prisma.user_profile.findFirst({
-        where: { id: authedReq.auth.publicUserId },
+        where: { id: authedReq.auth.userId },
         select: userSelect,
       });
 

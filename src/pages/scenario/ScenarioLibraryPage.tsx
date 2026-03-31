@@ -64,7 +64,7 @@ function ScenarioLibraryPage() {
       try {
         const token = await resolvePublicApiToken();
         if (!token) {
-          setActionError("Your session is missing or expired.");
+          setActionError("Your token is missing or expired.");
           return;
         }
 

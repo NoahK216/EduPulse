@@ -1,11 +1,11 @@
-import { authClient } from './auth-client';
-import type { PublicApiError } from '../types/publicApi';
+import { authClient } from "./auth-client";
+import type { PublicApiError } from "../types/publicApi";
 
 const DEBUG_PUBLIC_API =
-  Boolean(import.meta.env.DEV) || import.meta.env.VITE_DEBUG_PUBLIC_API === '1';
+  Boolean(import.meta.env.DEV) || import.meta.env.VITE_DEBUG_PUBLIC_API === "1";
 
 function maskToken(token: string | null) {
-  if (!token) return 'null';
+  if (!token) return "null";
   if (token.length <= 12) return `${token.slice(0, 3)}...${token.slice(-2)}`;
   return `${token.slice(0, 6)}...${token.slice(-4)}`;
 }
@@ -20,12 +20,12 @@ function debugPublicApi(message: string, details?: Record<string, unknown>) {
 }
 
 function isPublicApiError(value: unknown): value is PublicApiError {
-  if (!value || typeof value !== 'object') {
+  if (!value || typeof value !== "object") {
     return false;
   }
 
   const record = value as Record<string, unknown>;
-  return typeof record.error === 'string' && typeof record.message === 'string';
+  return typeof record.error === "string" && typeof record.message === "string";
 }
 
 export class ApiRequestError extends Error {
@@ -39,42 +39,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-type SessionShape = {
-  session?: {
-    token?: string;
-  };
-} | null;
-
-let cachedSessionToken: string | null = null;
-let tokenResolverInFlight: Promise<string | null> | null = null;
-
-function readSessionToken(value: unknown): string | null {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const record = value as Record<string, unknown>;
-  const session = record.session;
-  if (!session || typeof session !== 'object') {
-    return null;
-  }
-
-  const token = (session as Record<string, unknown>).token;
-  return typeof token === 'string' && token.length > 0 ? token : null;
-}
-
-function unwrapSession(value: unknown): SessionShape {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const record = value as Record<string, unknown>;
-  if ('data' in record) {
-    return (record.data as SessionShape) ?? null;
-  }
-
-  return value as SessionShape;
-}
+let cachedPublicApiToken: string | null = null;
+let publicApiTokenResolverInFlight: Promise<string | null> | null = null;
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
@@ -82,74 +48,90 @@ function sleep(ms: number) {
   });
 }
 
-async function resolveSessionTokenFromClient(): Promise<string | null> {
-  const sessionResult = (await authClient.getSession()) as unknown;
-  const session = unwrapSession(sessionResult);
-  const token = readSessionToken(session);
-  debugPublicApi('getSession resolved', {
-    hasSession: Boolean(session),
+async function resolvePublicApiTokenFromClient(): Promise<string | null> {
+  const { data, error } = await authClient.token();
+
+  if (error) {
+    const message = error.message || "Failed to retrieve auth token";
+    debugPublicApi("token() failed", { message });
+    throw new Error(message);
+  }
+
+  const token = data?.token ?? null;
+  debugPublicApi("token() resolved", {
+    hasToken: Boolean(token),
     token: maskToken(token),
   });
   return token;
 }
 
-async function resolveSessionTokenWithRetries(): Promise<string | null> {
-  const maxAttempts = 8;
-  const waitMs = 250;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    debugPublicApi('resolving token attempt', { attempt: attempt + 1, maxAttempts });
-    const token = await resolveSessionTokenFromClient();
-    if (token) {
-      debugPublicApi('token resolved', { token: maskToken(token), attempt: attempt + 1 });
-      return token;
-    }
-
-    if (attempt < maxAttempts - 1) {
-      await sleep(waitMs);
-    }
-  }
-
-  return null;
-}
-
 export async function resolvePublicApiToken(): Promise<string | null> {
-  if (cachedSessionToken) {
-    debugPublicApi('using cached token', { token: maskToken(cachedSessionToken) });
-    return cachedSessionToken;
+  if (cachedPublicApiToken) {
+    debugPublicApi("using cached token", {
+      token: maskToken(cachedPublicApiToken),
+    });
+    return cachedPublicApiToken;
   }
 
-  if (!tokenResolverInFlight) {
-    debugPublicApi('starting token resolver');
-    tokenResolverInFlight = resolveSessionTokenWithRetries()
-      .then((token) => {
-        if (token) {
-          cachedSessionToken = token;
-          debugPublicApi('token cached', { token: maskToken(token) });
-        } else {
-          debugPublicApi('token resolver finished without token');
+  if (!publicApiTokenResolverInFlight) {
+    debugPublicApi("starting token resolver");
+    publicApiTokenResolverInFlight = (async () => {
+      const maxAttempts = 8;
+      const waitMs = 250;
+      let lastError: Error | null = null;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        debugPublicApi("resolving token attempt", {
+          attempt: attempt + 1,
+          maxAttempts,
+        });
+
+        try {
+          const token = await resolvePublicApiTokenFromClient();
+          if (token) {
+            cachedPublicApiToken = token;
+            debugPublicApi("token cached", { token: maskToken(token) });
+            return token;
+          }
+        } catch (error) {
+          lastError =
+            error instanceof Error
+              ? error
+              : new Error("Failed to retrieve auth token");
         }
-        return token;
-      })
-      .finally(() => {
-        debugPublicApi('token resolver settled');
-        tokenResolverInFlight = null;
-      });
+
+        if (attempt < maxAttempts - 1) {
+          await sleep(waitMs);
+        }
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
+
+      debugPublicApi("token resolver finished without token");
+      return null;
+    })().finally(() => {
+      debugPublicApi("token resolver settled");
+      publicApiTokenResolverInFlight = null;
+    });
   } else {
-    debugPublicApi('awaiting token resolver already in flight');
+    debugPublicApi("awaiting token resolver already in flight");
   }
 
-  return tokenResolverInFlight;
+  return publicApiTokenResolverInFlight;
 }
 
 export function clearPublicApiTokenCache() {
-  debugPublicApi('clearing token cache', { priorToken: maskToken(cachedSessionToken) });
-  cachedSessionToken = null;
+  debugPublicApi("clearing token cache", {
+    priorToken: maskToken(cachedPublicApiToken),
+  });
+  cachedPublicApiToken = null;
 }
 
 export async function publicApiGet<T>(path: string, token: string): Promise<T> {
   return publicApiRequest<T>(path, {
-    method: 'GET',
+    method: "GET",
     token,
   });
 }
@@ -157,10 +139,10 @@ export async function publicApiGet<T>(path: string, token: string): Promise<T> {
 export async function publicApiPost<T>(
   path: string,
   token: string,
-  body: unknown
+  body: unknown,
 ): Promise<T> {
   return publicApiRequest<T>(path, {
-    method: 'POST',
+    method: "POST",
     token,
     body,
   });
@@ -168,36 +150,42 @@ export async function publicApiPost<T>(
 
 export async function publicApiDelete<T>(
   path: string,
-  token: string
+  token: string,
 ): Promise<T> {
   return publicApiRequest<T>(path, {
-    method: 'DELETE',
+    method: "DELETE",
     token,
   });
 }
 
 type PublicApiRequestArgs = {
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   token: string;
   body?: unknown;
 };
 
 async function publicApiRequest<T>(
   path: string,
-  args: PublicApiRequestArgs
+  args: PublicApiRequestArgs,
 ): Promise<T> {
   const { method, token, body } = args;
-  debugPublicApi('request start', { path, token: maskToken(token) });
+  debugPublicApi("request start", { path, token: maskToken(token) });
   const response = await fetch(path, {
     method,
     headers: {
       Authorization: `Bearer ${token}`,
-      ...(typeof body !== 'undefined' ? { 'Content-Type': 'application/json' } : {}),
+      ...(typeof body !== "undefined"
+        ? { "Content-Type": "application/json" }
+        : {}),
     },
-    ...(typeof body !== 'undefined' ? { body: JSON.stringify(body) } : {}),
+    ...(typeof body !== "undefined" ? { body: JSON.stringify(body) } : {}),
   });
 
-  debugPublicApi('request finished', { path, status: response.status, ok: response.ok });
+  debugPublicApi("request finished", {
+    path,
+    status: response.status,
+    ok: response.ok,
+  });
 
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
@@ -217,7 +205,12 @@ async function publicApiRequest<T>(
       clearPublicApiTokenCache();
     }
 
-    debugPublicApi('request failed', { path, status: response.status, code, message });
+    debugPublicApi("request failed", {
+      path,
+      status: response.status,
+      code,
+      message,
+    });
     throw new ApiRequestError(response.status, message, code);
   }
 

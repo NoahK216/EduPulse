@@ -61,22 +61,22 @@ function mapClassroomRow(
 export function createPublicClassroomsRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
     const { page, pageSize, skip, take } = pagination.value;
-    const where = accessibleClassroomWhere(authedReq.auth.publicUserId);
+    const where = accessibleClassroomWhere(authedReq.auth.userId);
 
     try {
       const [total, rows] = await Promise.all([
         prisma.classroom.count({ where }),
         prisma.classroom.findMany({
           where,
-          orderBy: { created_at: 'desc' },
+          orderBy: { created_at: "desc" },
           skip,
           take,
           select: classroomSelect,
@@ -90,19 +90,19 @@ export function createPublicClassroomsRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list classrooms', error);
+      return sendInternalError(res, "Failed to list classrooms", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     const where: Prisma.classroomWhereInput = {
-      AND: [{ id: id.value }, accessibleClassroomWhere(authedReq.auth.publicUserId)],
+      AND: [{ id: id.value }, accessibleClassroomWhere(authedReq.auth.userId)],
     };
 
     try {
@@ -113,12 +113,12 @@ export function createPublicClassroomsRouter() {
 
       const item = mapClassroomRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Classroom not found');
+        return sendError(res, 404, "NOT_FOUND", "Classroom not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch classroom', error);
+      return sendInternalError(res, "Failed to fetch classroom", error);
     }
   });
 

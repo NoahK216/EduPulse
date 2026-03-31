@@ -59,20 +59,20 @@ function mapClassroomMemberRow(
 export function createPublicClassroomMembersRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const classroomId = parseOptionalUuidQuery(req.query, 'classroomId');
+    const classroomId = parseOptionalUuidQuery(req.query, "classroomId");
     if (!classroomId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
+      return sendError(res, 400, "BAD_REQUEST", classroomId.message);
     }
 
     const where: Prisma.classroom_memberWhereInput = {
-      classroom: accessibleClassroomWhere(authedReq.auth.publicUserId),
+      classroom: accessibleClassroomWhere(authedReq.auth.userId),
     };
     if (classroomId.value !== undefined) {
       where.classroom_id = classroomId.value;
@@ -85,7 +85,7 @@ export function createPublicClassroomMembersRouter() {
         prisma.classroom_member.count({ where }),
         prisma.classroom_member.findMany({
           where,
-          orderBy: { created_at: 'desc' },
+          orderBy: { created_at: "desc" },
           skip,
           take,
           select: classroomMemberSelect,
@@ -99,20 +99,20 @@ export function createPublicClassroomMembersRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list classroom members', error);
+      return sendInternalError(res, "Failed to list classroom members", error);
     }
   });
 
-  router.get('/:classroomId/:userId', async (req, res) => {
+  router.get("/:classroomId/:userId", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const classroomId = parseUuidParam('classroomId', req.params.classroomId);
+    const classroomId = parseUuidParam("classroomId", req.params.classroomId);
     if (!classroomId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
+      return sendError(res, 400, "BAD_REQUEST", classroomId.message);
     }
 
-    const userId = parseUuidParam('userId', req.params.userId);
+    const userId = parseUuidParam("userId", req.params.userId);
     if (!userId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', userId.message);
+      return sendError(res, 400, "BAD_REQUEST", userId.message);
     }
 
     try {
@@ -120,7 +120,9 @@ export function createPublicClassroomMembersRouter() {
         where: {
           AND: [
             { classroom_id: classroomId.value, user_id: userId.value },
-            { classroom: accessibleClassroomWhere(authedReq.auth.publicUserId) },
+            {
+              classroom: accessibleClassroomWhere(authedReq.auth.userId),
+            },
           ],
         },
         select: classroomMemberSelect,
@@ -128,12 +130,12 @@ export function createPublicClassroomMembersRouter() {
 
       const item = mapClassroomMemberRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Classroom member not found');
+        return sendError(res, 404, "NOT_FOUND", "Classroom member not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch classroom member', error);
+      return sendInternalError(res, "Failed to fetch classroom member", error);
     }
   });
 

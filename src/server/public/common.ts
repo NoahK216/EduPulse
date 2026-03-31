@@ -14,9 +14,8 @@ export type ApiErrorCode =
   | 'INTERNAL_ERROR';
 
 export type AuthContext = {
-  sessionId: string;
-  authUserId: string;
-  publicUserId: string;
+  token: string;
+  userId: string;
 };
 
 export type AuthedRequest = express.Request & { auth: AuthContext };

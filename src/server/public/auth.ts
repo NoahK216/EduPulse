@@ -1,14 +1,15 @@
-import type { NextFunction, Request, Response } from 'express';
-import { decodeProtectedHeader, importJWK, jwtVerify } from 'jose';
+import type { NextFunction, Request, Response } from "express";
+import { decodeProtectedHeader, importJWK, jwtVerify } from "jose";
 
-import { prisma } from '../prisma.js';
-import { asAuthedRequest, sendError, sendInternalError } from './common.js';
+import { prisma } from "../prisma.js";
+import { asAuthedRequest, sendError, sendInternalError } from "./common.js";
 
 const DEBUG_PUBLIC_AUTH =
-  process.env.DEBUG_PUBLIC_AUTH === '1' || process.env.NODE_ENV !== 'production';
+  process.env.DEBUG_PUBLIC_AUTH === "1" ||
+  process.env.NODE_ENV !== "production";
 
 function maskToken(token: string | null) {
-  if (!token) return 'null';
+  if (!token) return "null";
   if (token.length <= 12) return `${token.slice(0, 3)}...${token.slice(-2)}`;
   return `${token.slice(0, 6)}...${token.slice(-4)}`;
 }
@@ -22,17 +23,19 @@ function debugAuth(message: string, details?: Record<string, unknown>) {
   console.log(`[public-auth] ${message}`);
 }
 
-function readBearerToken(authorizationHeader: string | undefined): string | null {
+function readBearerToken(
+  authorizationHeader: string | undefined,
+): string | null {
   if (!authorizationHeader) {
     return null;
   }
 
-  const [scheme, token] = authorizationHeader.split(' ');
+  const [scheme, token] = authorizationHeader.split(" ");
   if (!scheme || !token) {
     return null;
   }
 
-  if (scheme.toLowerCase() !== 'bearer') {
+  if (scheme.toLowerCase() !== "bearer") {
     return null;
   }
 
@@ -40,18 +43,18 @@ function readBearerToken(authorizationHeader: string | undefined): string | null
 }
 
 function looksLikeJwt(token: string) {
-  return token.split('.').length === 3;
+  return token.split(".").length === 3;
 }
 
 function normalizeJwk(raw: unknown): Record<string, unknown> | null {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== "object") {
     return null;
   }
 
   const jwk = { ...(raw as Record<string, unknown>) };
-  if (!('kty' in jwk) && typeof jwk.crv === 'string') {
+  if (!("kty" in jwk) && typeof jwk.crv === "string") {
     // Neon stores Ed25519 keys as minimal JWK payloads; jose expects kty.
-    jwk.kty = 'OKP';
+    jwk.kty = "OKP";
   }
 
   return jwk;
@@ -59,16 +62,16 @@ function normalizeJwk(raw: unknown): Record<string, unknown> | null {
 
 async function resolveAuthUserIdFromJwt(token: string, requestId: string) {
   if (!looksLikeJwt(token)) {
-    debugAuth('token is not JWT-shaped', { requestId });
+    debugAuth("token is not JWT-shaped", { requestId });
     return null;
   }
 
   try {
     const header = decodeProtectedHeader(token);
-    const alg = typeof header.alg === 'string' ? header.alg : 'EdDSA';
-    const headerKid = typeof header.kid === 'string' ? header.kid : null;
+    const alg = typeof header.alg === "string" ? header.alg : "EdDSA";
+    const headerKid = typeof header.kid === "string" ? header.kid : null;
 
-    debugAuth('attempting JWT verification', {
+    debugAuth("attempting JWT verification", {
       requestId,
       alg,
       kid: headerKid,
@@ -79,7 +82,7 @@ async function resolveAuthUserIdFromJwt(token: string, requestId: string) {
       where: {
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         publicKey: true,
@@ -91,11 +94,11 @@ async function resolveAuthUserIdFromJwt(token: string, requestId: string) {
         const parsed = JSON.parse(keyRow.publicKey) as unknown;
         const jwk = normalizeJwk(parsed);
         if (!jwk) {
-          debugAuth('invalid JWK payload', { requestId, jwkId: keyRow.id });
+          debugAuth("invalid JWK payload", { requestId, jwkId: keyRow.id });
           continue;
         }
 
-        const jwkKid = typeof jwk.kid === 'string' ? jwk.kid : null;
+        const jwkKid = typeof jwk.kid === "string" ? jwk.kid : null;
         if (headerKid && jwkKid && headerKid !== jwkKid) {
           continue;
         }
@@ -105,8 +108,11 @@ async function resolveAuthUserIdFromJwt(token: string, requestId: string) {
           algorithms: [alg],
         });
 
-        const authUserId = typeof verified.payload.sub === 'string' ? verified.payload.sub : null;
-        debugAuth('JWT verified', {
+        const authUserId =
+          typeof verified.payload.sub === "string"
+            ? verified.payload.sub
+            : null;
+        debugAuth("JWT verified", {
           requestId,
           jwkId: keyRow.id,
           authUserId,
@@ -117,84 +123,58 @@ async function resolveAuthUserIdFromJwt(token: string, requestId: string) {
           return authUserId;
         }
       } catch (error) {
-        debugAuth('JWT verify attempt failed', {
+        debugAuth("JWT verify attempt failed", {
           requestId,
           jwkId: keyRow.id,
-          message: error instanceof Error ? error.message : 'Unknown JWT error',
+          message: error instanceof Error ? error.message : "Unknown JWT error",
         });
       }
     }
 
-    debugAuth('JWT verification failed for all keys', { requestId });
+    debugAuth("JWT verification failed for all keys", { requestId });
     return null;
   } catch (error) {
-    debugAuth('JWT decode failed', {
+    debugAuth("JWT decode failed", {
       requestId,
-      message: error instanceof Error ? error.message : 'Unknown decode error',
+      message: error instanceof Error ? error.message : "Unknown decode error",
     });
     return null;
   }
 }
 
-export async function requireSession(
+export async function requireAuthToken(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const requestId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
-  const authHeader = req.header('authorization');
-  debugAuth('incoming request', {
+  const authHeader = req.header("authorization");
+  debugAuth("incoming request", {
     requestId,
     method: req.method,
     url: req.originalUrl,
     hasAuthorizationHeader: Boolean(authHeader),
-    authHeaderPrefix: authHeader ? authHeader.split(' ')[0] : null,
+    authHeaderPrefix: authHeader ? authHeader.split(" ")[0] : null,
   });
 
-  const token = readBearerToken(req.header('authorization'));
+  const token = readBearerToken(req.header("authorization"));
   if (!token) {
-    debugAuth('missing bearer token', { requestId });
+    debugAuth("missing bearer token", { requestId });
     return sendError(
       res,
       401,
-      'UNAUTHORIZED',
-      'Authorization bearer token is required'
+      "UNAUTHORIZED",
+      "Authorization bearer token is required",
     );
   }
 
   try {
-    debugAuth('querying session', { requestId, token: maskToken(token) });
-    const session = await prisma.session.findFirst({
-      where: {
-        token,
-        expiresAt: { gt: new Date() },
-      },
-      select: {
-        id: true,
-        userId: true,
-      },
-    });
-
-    let authUserId = session?.userId ?? null;
-    let resolvedSessionId = session?.id ?? null;
-
-    if (!session) {
-      debugAuth('session not found/expired, trying JWT fallback', {
-        requestId,
-        token: maskToken(token),
-      });
-      authUserId = await resolveAuthUserIdFromJwt(token, requestId);
-      resolvedSessionId = authUserId ? 'jwt' : null;
-    } else {
-      debugAuth('session found', {
-        requestId,
-        sessionId: session.id,
-        authUserId: session.userId,
-      });
-    }
+    debugAuth("verifying bearer JWT", { requestId, token: maskToken(token) });
+    const authUserId = await resolveAuthUserIdFromJwt(token, requestId);
+    const resolvedToken = authUserId ? "jwt" : null;
 
     if (!authUserId) {
-      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
+      return sendError(res, 401, "UNAUTHORIZED", "Invalid or expired token");
     }
 
     const authUser = await prisma.user.findUnique({
@@ -203,14 +183,15 @@ export async function requireSession(
     });
 
     if (!authUser) {
-      debugAuth('auth user missing', {
+      debugAuth("auth user missing", {
         requestId,
         authUserId,
       });
-      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
+      return sendError(res, 401, "UNAUTHORIZED", "Invalid or expired token");
     }
 
-    const publicUser = await prisma.user_profile.upsert({
+    // TODO Maybe redundant?
+    await prisma.user_profile.upsert({
       where: {
         id: authUserId,
       },
@@ -226,21 +207,19 @@ export async function requireSession(
     });
 
     asAuthedRequest(req).auth = {
-      sessionId: resolvedSessionId ?? 'unknown',
-      authUserId,
-      publicUserId: publicUser.id,
+      token: resolvedToken ?? "unknown",
+      userId: authUserId,
     };
 
-    debugAuth('request authorized', {
+    debugAuth("request authorized", {
       requestId,
-      sessionId: resolvedSessionId ?? 'unknown',
+      resolvedWith: resolvedToken ?? "unknown",
       authUserId,
-      publicUserId: publicUser.id,
     });
 
     return next();
   } catch (error) {
-    debugAuth('session validation threw', { requestId });
-    return sendInternalError(res, 'Session validation failed', error);
+    debugAuth("token validation threw", { requestId });
+    return sendInternalError(res, "Token validation failed", error);
   }
 }

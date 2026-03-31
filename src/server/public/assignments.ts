@@ -206,20 +206,20 @@ function toJsonInput(
 export function createPublicAssignmentsRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const classroomId = parseOptionalUuidQuery(req.query, 'classroomId');
+    const classroomId = parseOptionalUuidQuery(req.query, "classroomId");
     if (!classroomId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
+      return sendError(res, 400, "BAD_REQUEST", classroomId.message);
     }
 
     const where: Prisma.assignmentWhereInput = accessibleAssignmentWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.userId,
     );
     if (classroomId.value !== undefined) {
       where.classroom_id = classroomId.value;
@@ -232,7 +232,7 @@ export function createPublicAssignmentsRouter() {
         prisma.assignment.count({ where }),
         prisma.assignment.findMany({
           where,
-          orderBy: { created_at: 'desc' },
+          orderBy: { created_at: "desc" },
           skip,
           take,
           select: assignmentSelect,
@@ -246,15 +246,15 @@ export function createPublicAssignmentsRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list assignments', error);
+      return sendInternalError(res, "Failed to list assignments", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
@@ -262,7 +262,7 @@ export function createPublicAssignmentsRouter() {
         where: {
           AND: [
             { id: id.value },
-            accessibleAssignmentWhere(authedReq.auth.publicUserId),
+            accessibleAssignmentWhere(authedReq.auth.userId),
           ],
         },
         select: assignmentSelect,
@@ -270,44 +270,44 @@ export function createPublicAssignmentsRouter() {
 
       const item = mapAssignmentRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Assignment not found');
+        return sendError(res, 404, "NOT_FOUND", "Assignment not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch assignment', error);
+      return sendInternalError(res, "Failed to fetch assignment", error);
     }
   });
 
-  router.post('/:id/attempt', async (req, res) => {
+  router.post("/:id/attempt", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
       const assignment = await prisma.assignment.findFirst({
         where: {
           id: id.value,
-          classroom: studentClassroomWhere(authedReq.auth.publicUserId),
+          classroom: studentClassroomWhere(authedReq.auth.userId),
         },
         select: assignmentAttemptSessionSelect,
       });
 
       if (!assignment) {
-        return sendError(res, 404, 'NOT_FOUND', 'Assignment not found');
+        return sendError(res, 404, "NOT_FOUND", "Assignment not found");
       }
 
       const parsedScenario = ScenarioSchema.safeParse(
-        assignment.scenario_version.content
+        assignment.scenario_version.content,
       );
       if (!parsedScenario.success) {
         return sendError(
           res,
           500,
-          'INTERNAL_ERROR',
-          'Published scenario content is invalid for this assignment'
+          "INTERNAL_ERROR",
+          "Published scenario content is invalid for this assignment",
         );
       }
 
@@ -316,28 +316,28 @@ export function createPublicAssignmentsRouter() {
         return sendError(
           res,
           500,
-          'INTERNAL_ERROR',
-          'Published scenario is missing its start node'
+          "INTERNAL_ERROR",
+          "Published scenario is missing its start node",
         );
       }
 
       const now = new Date();
       if (assignment.open_at && assignment.open_at > now) {
-        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is not open yet');
+        return sendError(res, 400, "BAD_REQUEST", "Assignment is not open yet");
       }
 
       if (assignment.close_at && assignment.close_at <= now) {
-        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is closed');
+        return sendError(res, 400, "BAD_REQUEST", "Assignment is closed");
       }
 
       const session = await prisma.$transaction(async (tx) => {
         let attempt = await tx.attempt.findFirst({
           where: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
-            status: 'in_progress',
+            student_user_id: authedReq.auth.userId,
+            status: "in_progress",
           },
-          orderBy: { attempt_number: 'desc' },
+          orderBy: { attempt_number: "desc" },
           select: attemptSelect,
         });
 
@@ -356,7 +356,7 @@ export function createPublicAssignmentsRouter() {
 
           const responses = await tx.response.findMany({
             where: { attempt_id: attempt.id },
-            orderBy: { created_at: 'asc' },
+            orderBy: { created_at: "asc" },
             select: responseSelect,
           });
 
@@ -369,9 +369,9 @@ export function createPublicAssignmentsRouter() {
         const latestAttempt = await tx.attempt.findFirst({
           where: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
           },
-          orderBy: { attempt_number: 'desc' },
+          orderBy: { attempt_number: "desc" },
           select: {
             attempt_number: true,
           },
@@ -380,20 +380,20 @@ export function createPublicAssignmentsRouter() {
         const nextAttemptNumber = (latestAttempt?.attempt_number ?? 0) + 1;
         if (
           assignment.max_attempts !== null &&
-          typeof assignment.max_attempts === 'number' &&
+          typeof assignment.max_attempts === "number" &&
           nextAttemptNumber > assignment.max_attempts
         ) {
           throw new RouteError(
             400,
-            'BAD_REQUEST',
-            'You have reached the maximum number of attempts for this assignment'
+            "BAD_REQUEST",
+            "You have reached the maximum number of attempts for this assignment",
           );
         }
 
         attempt = await tx.attempt.create({
           data: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
             attempt_number: nextAttemptNumber,
             current_node_id: scenario.startNodeId,
             last_activity_at: now,
@@ -411,7 +411,9 @@ export function createPublicAssignmentsRouter() {
         item: {
           assignment: mapAssignmentRow(assignment),
           attempt: mapAttemptRow(session.attempt),
-          responses: session.responses.map((response) => mapResponseRow(response, true)),
+          responses: session.responses.map((response) =>
+            mapResponseRow(response, true),
+          ),
           scenario_content: assignment.scenario_version.content,
         },
       });
@@ -420,36 +422,40 @@ export function createPublicAssignmentsRouter() {
         return sendError(res, error.status, error.code, error.message);
       }
 
-      return sendInternalError(res, 'Failed to start assignment attempt', error);
+      return sendInternalError(
+        res,
+        "Failed to start assignment attempt",
+        error,
+      );
     }
   });
 
-  router.post('/', async (req, res) => {
+  router.post("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const parsed = createAssignmentBodySchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
-        error: 'BAD_REQUEST',
-        message: 'Invalid request body',
+        error: "BAD_REQUEST",
+        message: "Invalid request body",
         details: parsed.error.flatten(),
       });
     }
 
     const title = normalizeOptionalText(parsed.data.title);
     const instructions = normalizeOptionalText(parsed.data.instructions);
-    const openAt = parseOptionalDateTime(parsed.data.open_at, 'open_at');
+    const openAt = parseOptionalDateTime(parsed.data.open_at, "open_at");
     if (!openAt.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', openAt.message);
+      return sendError(res, 400, "BAD_REQUEST", openAt.message);
     }
 
-    const dueAt = parseOptionalDateTime(parsed.data.due_at, 'due_at');
+    const dueAt = parseOptionalDateTime(parsed.data.due_at, "due_at");
     if (!dueAt.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', dueAt.message);
+      return sendError(res, 400, "BAD_REQUEST", dueAt.message);
     }
 
-    const closeAt = parseOptionalDateTime(parsed.data.close_at, 'close_at');
+    const closeAt = parseOptionalDateTime(parsed.data.close_at, "close_at");
     if (!closeAt.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', closeAt.message);
+      return sendError(res, 400, "BAD_REQUEST", closeAt.message);
     }
 
     if (
@@ -457,7 +463,12 @@ export function createPublicAssignmentsRouter() {
       dueAt.value &&
       openAt.value.getTime() > dueAt.value.getTime()
     ) {
-      return sendError(res, 400, 'BAD_REQUEST', 'open_at must be before due_at');
+      return sendError(
+        res,
+        400,
+        "BAD_REQUEST",
+        "open_at must be before due_at",
+      );
     }
 
     if (
@@ -465,7 +476,12 @@ export function createPublicAssignmentsRouter() {
       closeAt.value &&
       closeAt.value.getTime() < dueAt.value.getTime()
     ) {
-      return sendError(res, 400, 'BAD_REQUEST', 'close_at must be after due_at');
+      return sendError(
+        res,
+        400,
+        "BAD_REQUEST",
+        "close_at must be after due_at",
+      );
     }
 
     if (
@@ -473,7 +489,12 @@ export function createPublicAssignmentsRouter() {
       closeAt.value &&
       openAt.value.getTime() > closeAt.value.getTime()
     ) {
-      return sendError(res, 400, 'BAD_REQUEST', 'open_at must be before close_at');
+      return sendError(
+        res,
+        400,
+        "BAD_REQUEST",
+        "open_at must be before close_at",
+      );
     }
 
     try {
@@ -481,21 +502,21 @@ export function createPublicAssignmentsRouter() {
         where: {
           AND: [
             { id: parsed.data.classroom_id },
-            accessibleClassroomWhere(authedReq.auth.publicUserId),
+            accessibleClassroomWhere(authedReq.auth.userId),
           ],
         },
         select: { id: true },
       });
 
       if (!accessibleClassroom) {
-        throw new RouteError(404, 'NOT_FOUND', 'Classroom not found');
+        throw new RouteError(404, "NOT_FOUND", "Classroom not found");
       }
 
       const instructorClassroom = await prisma.classroom.findFirst({
         where: {
           AND: [
             { id: parsed.data.classroom_id },
-            instructorClassroomWhere(authedReq.auth.publicUserId),
+            instructorClassroomWhere(authedReq.auth.userId),
           ],
         },
         select: { id: true },
@@ -504,8 +525,8 @@ export function createPublicAssignmentsRouter() {
       if (!instructorClassroom) {
         throw new RouteError(
           403,
-          'FORBIDDEN',
-          'You must be an instructor in this classroom to assign scenarios'
+          "FORBIDDEN",
+          "You must be an instructor in this classroom to assign scenarios",
         );
       }
 
@@ -517,7 +538,7 @@ export function createPublicAssignmentsRouter() {
           const version = await tx.scenario_version.findFirst({
             where: {
               id: parsed.data.scenario_version_id,
-              scenario: { owner_user_id: authedReq.auth.publicUserId },
+              scenario: { owner_user_id: authedReq.auth.userId },
             },
             select: {
               id: true,
@@ -530,7 +551,11 @@ export function createPublicAssignmentsRouter() {
           });
 
           if (!version) {
-            throw new RouteError(404, 'NOT_FOUND', 'Scenario version not found');
+            throw new RouteError(
+              404,
+              "NOT_FOUND",
+              "Scenario version not found",
+            );
           }
 
           scenarioVersionId = version.id;
@@ -539,7 +564,7 @@ export function createPublicAssignmentsRouter() {
           const scenario = await tx.scenario.findFirst({
             where: {
               id: parsed.data.scenario_id,
-              owner_user_id: authedReq.auth.publicUserId,
+              owner_user_id: authedReq.auth.userId,
             },
             select: {
               id: true,
@@ -550,20 +575,20 @@ export function createPublicAssignmentsRouter() {
           });
 
           if (!scenario) {
-            throw new RouteError(404, 'NOT_FOUND', 'Scenario not found');
+            throw new RouteError(404, "NOT_FOUND", "Scenario not found");
           }
 
           if (scenario.draft_content === null) {
             throw new RouteError(
               400,
-              'BAD_REQUEST',
-              'Scenario draft content is required before assigning'
+              "BAD_REQUEST",
+              "Scenario draft content is required before assigning",
             );
           }
 
           const jsonContent = toJsonInput(scenario.draft_content);
           if (!jsonContent.ok) {
-            throw new RouteError(400, 'BAD_REQUEST', jsonContent.message);
+            throw new RouteError(400, "BAD_REQUEST", jsonContent.message);
           }
 
           const now = new Date();
@@ -574,7 +599,7 @@ export function createPublicAssignmentsRouter() {
               version_number: nextVersionNumber,
               title: scenario.title,
               content: jsonContent.value,
-              published_by_user_id: authedReq.auth.publicUserId,
+              published_by_user_id: authedReq.auth.userId,
               published_at: now,
             },
             select: { id: true },
@@ -597,7 +622,7 @@ export function createPublicAssignmentsRouter() {
           data: {
             classroom_id: parsed.data.classroom_id,
             scenario_version_id: scenarioVersionId,
-            assigned_by_user_id: authedReq.auth.publicUserId,
+            assigned_by_user_id: authedReq.auth.userId,
             title: title ?? fallbackTitle,
             instructions,
             open_at: openAt.value,
@@ -613,8 +638,8 @@ export function createPublicAssignmentsRouter() {
       if (!item) {
         throw new RouteError(
           500,
-          'INTERNAL_ERROR',
-          'Assignment created but could not be loaded'
+          "INTERNAL_ERROR",
+          "Assignment created but could not be loaded",
         );
       }
 
@@ -624,7 +649,7 @@ export function createPublicAssignmentsRouter() {
         return sendError(res, error.status, error.code, error.message);
       }
 
-      return sendInternalError(res, 'Failed to create assignment', error);
+      return sendInternalError(res, "Failed to create assignment", error);
     }
   });
 

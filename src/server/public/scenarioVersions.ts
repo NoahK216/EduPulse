@@ -64,20 +64,20 @@ function mapScenarioVersionRow(
 export function createPublicScenarioVersionsRouter() {
   const router = express.Router();
 
-  router.get('/', async (req, res) => {
+  router.get("/", async (req, res) => {
     const authedReq = asAuthedRequest(req);
     const pagination = parsePagination(req.query);
     if (!pagination.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', pagination.message);
+      return sendError(res, 400, "BAD_REQUEST", pagination.message);
     }
 
-    const scenarioId = parseOptionalUuidQuery(req.query, 'scenarioId');
+    const scenarioId = parseOptionalUuidQuery(req.query, "scenarioId");
     if (!scenarioId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', scenarioId.message);
+      return sendError(res, 400, "BAD_REQUEST", scenarioId.message);
     }
 
     const where: Prisma.scenario_versionWhereInput = {
-      scenario: { owner_user_id: authedReq.auth.publicUserId },
+      scenario: { owner_user_id: authedReq.auth.userId },
     };
     if (scenarioId.value !== undefined) {
       where.scenario_id = scenarioId.value;
@@ -90,7 +90,7 @@ export function createPublicScenarioVersionsRouter() {
         prisma.scenario_version.count({ where }),
         prisma.scenario_version.findMany({
           where,
-          orderBy: [{ published_at: 'desc' }, { id: 'desc' }],
+          orderBy: [{ published_at: "desc" }, { id: "desc" }],
           skip,
           take,
           select: scenarioVersionSelect,
@@ -104,15 +104,15 @@ export function createPublicScenarioVersionsRouter() {
         total,
       });
     } catch (error) {
-      return sendInternalError(res, 'Failed to list scenario versions', error);
+      return sendInternalError(res, "Failed to list scenario versions", error);
     }
   });
 
-  router.get('/:id', async (req, res) => {
+  router.get("/:id", async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
+    const id = parseUuidParam("id", req.params.id);
     if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
+      return sendError(res, 400, "BAD_REQUEST", id.message);
     }
 
     try {
@@ -120,7 +120,7 @@ export function createPublicScenarioVersionsRouter() {
         where: {
           AND: [
             { id: id.value },
-            { scenario: { owner_user_id: authedReq.auth.publicUserId } },
+            { scenario: { owner_user_id: authedReq.auth.userId } },
           ],
         },
         select: scenarioVersionSelect,
@@ -128,12 +128,12 @@ export function createPublicScenarioVersionsRouter() {
 
       const item = mapScenarioVersionRow(row);
       if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Scenario version not found');
+        return sendError(res, 404, "NOT_FOUND", "Scenario version not found");
       }
 
       return res.json({ item });
     } catch (error) {
-      return sendInternalError(res, 'Failed to fetch scenario version', error);
+      return sendInternalError(res, "Failed to fetch scenario version", error);
     }
   });
 
