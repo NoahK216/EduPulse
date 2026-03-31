@@ -1,12 +1,12 @@
 import { useParams } from 'react-router-dom';
 
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 import { useClassroomViewer } from './hooks/useClassroomData';
-import InstructorClassroomView from './views/InstructorClassroomView';
-import StudentClassroomView from './views/StudentClassroomView';
+import InstructorClassroom from './views/InstructorClassroom';
+import StudentClassroom from './views/StudentClassroom';
 
-function ClassroomDetail() {
+function ClassroomPage() {
   const { classroomId } = useParams();
   const viewer = useClassroomViewer(classroomId);
 
@@ -17,7 +17,7 @@ function ClassroomDetail() {
     >
       <DataGuard state={viewer.guard}>
         {viewer.classroomId && viewer.classroom && viewer.role === 'instructor' ? (
-          <InstructorClassroomView
+          <InstructorClassroom
             classroomId={viewer.classroomId}
             currentAssignments={viewer.instructorView.currentAssignments}
             pastAssignments={viewer.instructorView.pastAssignments}
@@ -30,7 +30,7 @@ function ClassroomDetail() {
         ) : null}
 
         {viewer.classroomId && viewer.classroom && viewer.role === 'student' ? (
-          <StudentClassroomView
+          <StudentClassroom
             classroom={viewer.classroom}
             classroomId={viewer.classroomId}
             instructors={viewer.studentView.instructors}
@@ -43,4 +43,4 @@ function ClassroomDetail() {
   );
 }
 
-export default ClassroomDetail;
+export default ClassroomPage;

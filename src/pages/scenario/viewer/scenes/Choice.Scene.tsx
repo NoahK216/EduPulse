@@ -1,5 +1,5 @@
 import type { ChoiceNode } from "../../nodeSchemas";
-import type { NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewerTypes";
 
 export function ChoiceScene({ node, busy, errorMessage, dispatch }: NodeSceneProps<ChoiceNode>) {
   return (

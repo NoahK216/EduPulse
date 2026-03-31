@@ -5,14 +5,17 @@ import type {
   PublicClassroom,
   PublicClassroomMember,
 } from '../../../types/publicApi';
-import { DataGuard, type DataGuardState } from '../../ui/DataGuard';
+import {
+  DataGuard,
+  type DataGuardState,
+} from '../../../components/data/DataGuard';
 
 function formatDate(value: string | null) {
   if (!value) return 'No due date';
   return new Date(value).toLocaleString();
 }
 
-type StudentClassroomViewProps = {
+type StudentClassroomProps = {
   classroom: PublicClassroom;
   classroomId: string;
   instructors: PublicClassroomMember[];
@@ -20,13 +23,13 @@ type StudentClassroomViewProps = {
   assignmentsGuard: DataGuardState;
 };
 
-function StudentClassroomView({
+function StudentClassroom({
   classroom,
   classroomId,
   instructors,
   assignments,
   assignmentsGuard,
-}: StudentClassroomViewProps) {
+}: StudentClassroomProps) {
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950/40">
@@ -75,4 +78,4 @@ function StudentClassroomView({
   );
 }
 
-export default StudentClassroomView;
+export default StudentClassroom;

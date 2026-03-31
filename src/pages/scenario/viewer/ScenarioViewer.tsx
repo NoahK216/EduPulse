@@ -11,8 +11,7 @@ import {
 } from "../scenarioSchemas";
 import { SceneRenderer } from "./scenes/SceneRenderer";
 import { evaluateFreeResponse } from "./scenes/FreeResponseGrader";
-import "./Scenario.css";
-import type { ScenarioEvent } from "./viewer";
+import type { ScenarioEvent } from "./viewerTypes";
 
 type ScenarioViewerProps = {
   scenario?: Scenario;

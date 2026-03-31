@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import NavBar from "../ui/NavBar";
+import NavBar from "../../../components/layout/NavBar";
 
 function GuestHome() {
   return (

@@ -1,5 +1,5 @@
 import type { Scenario } from "../../scenarioSchemas";
-import { importScenarioFromFile } from "../import";
+import { importScenarioFromFile } from "../scenarioImport";
 
 export function ScenarioImportButton({ onLoaded }: { onLoaded: (v: Scenario) => void }) {
     return (

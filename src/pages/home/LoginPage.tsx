@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import NavBar from "../ui/NavBar";
+import NavBar from "../../components/layout/NavBar";
 
 import { authClient } from "../../lib/auth-client";
 
-function Login() {
+function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -127,4 +127,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default LoginPage;

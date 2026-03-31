@@ -19,23 +19,23 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        lazy: lazyComponent(() => import("./pages/home/home.tsx")),
+        lazy: lazyComponent(() => import("./pages/home/HomePage.tsx")),
       },
       {
         path: "login",
-        lazy: lazyComponent(() => import("./pages/home/login.tsx")),
+        lazy: lazyComponent(() => import("./pages/home/LoginPage.tsx")),
       },
       {
         path: "signup",
-        lazy: lazyComponent(() => import("./pages/home/signup.tsx")),
-      },
-      {
-        path: "classrooms",
-        lazy: lazyComponent(() => import("./pages/classroom/classroom.tsx")),
+        lazy: lazyComponent(() => import("./pages/home/SignupPage.tsx")),
       },
       {
         path: "settings",
-        lazy: lazyComponent(() => import("./pages/home/settings.tsx")),
+        lazy: lazyComponent(() => import("./pages/home/SettingsPage.tsx")),
+      },
+      {
+        path: "classrooms",
+        lazy: lazyComponent(() => import("./pages/classroom/ClassroomListPage.tsx")),
       },
       {
         path: "classrooms/:classroomId",
@@ -43,37 +43,31 @@ const router = createBrowserRouter([
           {
             index: true,
             lazy: lazyComponent(
-              () => import("./pages/classroom/classroomDetail.tsx"),
-            ),
-          },
-          {
-            path: "member/:userId",
-            lazy: lazyComponent(
-              () => import("./pages/classroom/classroomMemberDetail.tsx"),
+              () => import("./pages/classroom/ClassroomPage.tsx"),
             ),
           },
           {
             path: "assignment/:assignmentId",
             lazy: lazyComponent(
-              () => import("./pages/classroom/assignmentDetail.tsx"),
+              () => import("./pages/classroom/AssignmentPage.tsx"),
             ),
           },
           {
             path: "assignment/:assignmentId/attempt",
             lazy: lazyComponent(
-              () => import("./pages/classroom/assignmentRunner.tsx"),
+              () => import("./pages/classroom/AssignmentRunnerPage.tsx"),
             ),
           },
           {
             path: "assignment/:assignmentId/attempt/:attemptId",
             lazy: lazyComponent(
-              () => import("./pages/classroom/attemptDetail.tsx"),
+              () => import("./pages/classroom/AttemptPage.tsx"),
             ),
           },
           {
             path: "assignment/:assignmentId/attempt/:attemptId/response/:responseId",
             lazy: lazyComponent(
-              () => import("./pages/classroom/responseDetail.tsx"),
+              () => import("./pages/classroom/ResponsePage.tsx"),
             ),
           },
         ],
@@ -84,31 +78,31 @@ const router = createBrowserRouter([
           {
             index: true,
             lazy: lazyComponent(
-              () => import("./pages/scenario/scenarioLibrary.tsx"),
+              () => import("./pages/scenario/ScenarioLibraryPage.tsx"),
             ),
           },
           {
             path: "new",
             lazy: lazyComponent(
-              () => import("./pages/scenario/scenarioNew.tsx"),
+              () => import("./pages/scenario/ScenarioNewPage.tsx"),
             ),
           },
           {
             path: ":scenarioId/viewer",
             lazy: lazyComponent(
-              () => import("./pages/scenario/scenarioViewerPage.tsx"),
+              () => import("./pages/scenario/ScenarioTestRunPage.tsx"),
             ),
           },
           {
             path: ":scenarioId/editor",
             lazy: lazyComponent(
-              () => import("./pages/scenario/scenarioEditor.tsx"),
+              () => import("./pages/scenario/ScenarioEditorPage.tsx"),
             ),
           },
           {
             path: "library",
             lazy: lazyComponent(
-              () => import("./pages/scenario/scenarioLibrary.tsx"),
+              () => import("./pages/scenario/ScenarioLibraryPage.tsx"),
             ),
           },
         ],

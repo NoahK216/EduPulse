@@ -3,10 +3,10 @@ import { Link, useParams } from 'react-router-dom';
 import AttemptSummaryCard from './components/AttemptSummaryCard';
 import ResponseList from './components/ResponseList';
 import { useAttemptDetailData } from './hooks/useClassroomData';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
-function AttemptDetail() {
+function AttemptPage() {
   const { classroomId, assignmentId, attemptId } = useParams();
   const detail = useAttemptDetailData(attemptId);
 
@@ -51,4 +51,4 @@ function AttemptDetail() {
   );
 }
 
-export default AttemptDetail;
+export default AttemptPage;

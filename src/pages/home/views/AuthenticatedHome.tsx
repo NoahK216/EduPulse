@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 
 import {
   EmptyPanel,
-} from "../ui/DataStatePanels";
-import { DataGuard } from "../ui/DataGuard";
-import PageShell from "../ui/PageShell";
-import { useHomeDashboardData } from "./hooks/useHomeDashboardData";
-import AssignmentCard from "./dashboard/AssignmentCard";
-import ClassroomCard from "./dashboard/ClassroomCard";
-import ContinueAttemptCard from "./dashboard/ContinueAttemptCard";
+} from "../../../components/data/DataStatePanels";
+import { DataGuard } from "../../../components/data/DataGuard";
+import PageShell from "../../../components/layout/PageShell";
+import { useHomeDashboardData } from "../hooks/useHomeDashboardData";
+import AssignmentCard from "../dashboard/AssignmentCard";
+import ClassroomCard from "../dashboard/ClassroomCard";
+import ContinueAttemptCard from "../dashboard/ContinueAttemptCard";
 
 function Section({
   title,

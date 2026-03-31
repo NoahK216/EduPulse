@@ -1,5 +1,5 @@
 import type { TextNode } from "../../nodeSchemas";
-import type { NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewerTypes";
 
 export function TextScene({ node, busy, errorMessage, dispatch }: NodeSceneProps<TextNode>) {
   return (

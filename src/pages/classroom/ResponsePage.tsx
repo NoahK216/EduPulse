@@ -2,10 +2,10 @@ import { Link, useParams } from 'react-router-dom';
 
 import ResponseDetailCard from './components/ResponseDetailCard';
 import { useResponseDetailData } from './hooks/useClassroomData';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
-function ResponseDetail() {
+function ResponsePage() {
   const { classroomId, assignmentId, attemptId, responseId } = useParams();
   const detail = useResponseDetailData(classroomId, assignmentId, attemptId, responseId);
 
@@ -36,4 +36,4 @@ function ResponseDetail() {
   );
 }
 
-export default ResponseDetail;
+export default ResponsePage;

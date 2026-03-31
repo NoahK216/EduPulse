@@ -40,7 +40,7 @@ import NodeAddPanel from "./ui/NodeAddPanel";
 import CreatorTopBar from "./ui/CreatorTopBar";
 import NodeEditorPanel from "./ui/NodeEditorPanel";
 import { downloadJson } from "./DownloadJson";
-import { flowGraphFromScenario, loadScenario } from "./import";
+import { flowGraphFromScenario, loadScenario } from "./scenarioImport";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
 import { EditorDispatchProvider } from "./editor-store/EditorDispatchContext";
 import {
@@ -599,7 +599,7 @@ const ScenarioCreator = ({
 
   return (
     <EditorDispatchProvider dispatch={dispatch}>
-      <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+      <div className="scenario-editor flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
         <CreatorTopBar
           title={state.status === "loaded" ? state.doc.title : ""}
           titleDisabled={state.status !== "loaded"}

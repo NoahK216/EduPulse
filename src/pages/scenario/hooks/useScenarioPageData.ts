@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useScenario, useScenarios, useScenarioVersions } from '../../../lib/usePublicApiHooks';
 import { toUuidOrNull } from '../../../lib/uuid';
 import type { PublicScenario, PublicScenarioVersion } from '../../../types/publicApi';
-import type { DataGuardState } from '../../ui/DataGuard';
+import type { DataGuardState } from "../../../components/data/DataGuard";
 import type { Scenario } from '../scenarioSchemas';
 import { ScenarioSchema } from '../scenarioSchemas';
 import { buildStarterScenario } from '../creator/starterScenario';

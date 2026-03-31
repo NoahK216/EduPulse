@@ -8,12 +8,16 @@ import type {
   PublicAssignmentAttemptSession,
   PublicAttempt,
 } from "../../types/publicApi";
-import { ErrorPanel, LoadingPanel, UnauthorizedPanel } from "../ui/DataStatePanels";
-import PageShell from "../ui/PageShell";
+import {
+  ErrorPanel,
+  LoadingPanel,
+  UnauthorizedPanel,
+} from "../../components/data/DataStatePanels";
+import PageShell from "../../components/layout/PageShell";
 import { ScenarioSchema } from "../scenario/scenarioSchemas";
 import ScenarioViewer from "../scenario/viewer/ScenarioViewer";
 
-function AssignmentRunner() {
+function AssignmentRunnerPage() {
   const navigate = useNavigate();
   const { classroomId, assignmentId } = useParams();
   const classroomIdValue = isUuid(classroomId) ? classroomId : null;
@@ -194,4 +198,4 @@ function AssignmentRunner() {
   );
 }
 
-export default AssignmentRunner;
+export default AssignmentRunnerPage;

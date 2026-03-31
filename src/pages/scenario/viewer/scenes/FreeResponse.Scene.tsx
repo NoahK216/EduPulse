@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 
 import type { FreeResponseNode } from "../../nodeSchemas";
-import type { NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewerTypes";
 
 export function FreeResponseScene({
   node,

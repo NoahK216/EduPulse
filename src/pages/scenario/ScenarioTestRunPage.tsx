@@ -2,10 +2,10 @@ import { Link, useParams } from 'react-router-dom';
 
 import ScenarioViewer from './viewer/ScenarioViewer';
 import { useScenarioDraftData } from './hooks/useScenarioPageData';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
-function ScenarioViewerPage() {
+function ScenarioTestRunPage() {
   const { scenarioId } = useParams();
   const data = useScenarioDraftData(scenarioId);
 
@@ -55,4 +55,4 @@ function ScenarioViewerPage() {
   );
 }
 
-export default ScenarioViewerPage;
+export default ScenarioTestRunPage;

@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 
 import {
   EmptyPanel,
-} from "../ui/DataStatePanels";
+} from "../../components/data/DataStatePanels";
 import { useScenarioLibraryData } from "./hooks/useScenarioPageData";
-import { DataGuard } from "../ui/DataGuard";
-import PageShell from "../ui/PageShell";
+import { DataGuard } from "../../components/data/DataGuard";
+import PageShell from "../../components/layout/PageShell";
 import {
   ApiRequestError,
   publicApiDelete,
@@ -28,7 +28,7 @@ function pluralize(count: number, singular: string, plural: string) {
   return count === 1 ? singular : plural;
 }
 
-function ScenarioLibrary() {
+function ScenarioLibraryPage() {
   const library = useScenarioLibraryData();
   const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(
     null,
@@ -265,4 +265,4 @@ function ScenarioLibrary() {
   );
 }
 
-export default ScenarioLibrary;
+export default ScenarioLibraryPage;

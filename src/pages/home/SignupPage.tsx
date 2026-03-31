@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import NavBar from "../ui/NavBar";
+import NavBar from "../../components/layout/NavBar";
 import { authClient } from "../../lib/auth-client";
 
-function Signup() {
+function SignupPage() {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -131,4 +131,4 @@ function Signup() {
   );
 }
 
-export default Signup;
+export default SignupPage;

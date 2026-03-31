@@ -7,7 +7,11 @@ import type {
   ItemResponse,
   PublicAssignment,
 } from '../../../types/publicApi';
-import { EmptyPanel, ErrorPanel, LoadingPanel } from '../../ui/DataStatePanels';
+import {
+  EmptyPanel,
+  ErrorPanel,
+  LoadingPanel,
+} from '../../../components/data/DataStatePanels';
 
 type AssignScenarioModalProps = {
   classroomId: string;

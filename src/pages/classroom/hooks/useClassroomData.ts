@@ -9,7 +9,6 @@ import {
   useClassroom,
   useClassrooms,
   useClassroomAssignments,
-  useClassroomMember,
   useClassroomMembers,
   useCurrentUser,
   useResponse,
@@ -23,7 +22,7 @@ import type {
   PublicResponse,
   PublicUser,
 } from '../../../types/publicApi';
-import type { DataGuardState } from '../../ui/DataGuard';
+import type { DataGuardState } from "../../../components/data/DataGuard";
 
 type ClassroomViewerRole = 'instructor' | 'student' | null;
 type AssignmentViewerRole = 'instructor' | 'student' | null;
@@ -610,45 +609,6 @@ export function useResponseDetailData(
     attemptId: validAttemptId,
     responseId: validResponseId,
     response: response.item,
-    guard,
-  };
-}
-
-export function useClassroomMemberDetailData(
-  classroomId: string | null | undefined,
-  userId: string | null | undefined,
-): ClassroomMemberDetailData {
-  const validClassroomId = toUuidOrNull(classroomId);
-  const validUserId = toUuidOrNull(userId);
-  const member = useClassroomMember(validClassroomId, validUserId);
-
-  let guard: DataGuardState = CONTENT_GUARD;
-
-  if (!validClassroomId || !validUserId) {
-    guard = {
-      kind: 'invalid',
-      message: 'Invalid classrooms/user identifiers.',
-    };
-  } else if (member.unauthorized) {
-    guard = { kind: 'unauthorized' };
-  } else if (member.loading) {
-    guard = { kind: 'loading' };
-  } else if (member.error) {
-    guard = {
-      kind: 'error',
-      message: member.error,
-      onRetry: member.refetch,
-    };
-  } else if (!member.data) {
-    guard = {
-      kind: 'empty',
-      message: 'Classroom member not found.',
-    };
-  }
-
-  return {
-    userId: validUserId,
-    member: member.item,
     guard,
   };
 }

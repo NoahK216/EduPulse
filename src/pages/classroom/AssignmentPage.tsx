@@ -4,10 +4,10 @@ import AttemptList from './components/AttemptList';
 import AssignmentSummaryCard from './components/AssignmentSummaryCard';
 import StudentProgressCard from './components/StudentProgressCard';
 import { useAssignmentDetailData } from './hooks/useClassroomData';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
-function AssignmentDetail() {
+function AssignmentPage() {
   const { classroomId, assignmentId } = useParams();
   const detail = useAssignmentDetailData(classroomId, assignmentId);
 
@@ -66,4 +66,4 @@ function AssignmentDetail() {
   );
 }
 
-export default AssignmentDetail;
+export default AssignmentPage;

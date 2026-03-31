@@ -1,10 +1,10 @@
 import { authClient } from "../../lib/auth-client";
-import { LoadingPanel } from "../ui/DataStatePanels";
-import PageShell from "../ui/PageShell";
-import AuthenticatedHome from "./AuthenticatedHome";
-import GuestHome from "./GuestHome";
+import { LoadingPanel } from "../../components/data/DataStatePanels";
+import PageShell from "../../components/layout/PageShell";
+import AuthenticatedHome from "./views/AuthenticatedHome";
+import GuestHome from "./views/GuestHome";
 
-function Home() {
+function HomePage() {
   const { data: session, isPending } = authClient.useSession();
 
   if (isPending) {
@@ -22,4 +22,4 @@ function Home() {
   return <GuestHome />;
 }
 
-export default Home;
+export default HomePage;

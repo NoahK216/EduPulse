@@ -5,7 +5,7 @@ import {
   resolvePublicApiToken,
 } from "../../../../../lib/public-api-client";
 import type { PublicScenarioTemplate } from "../../../../../types/publicApi";
-import { importScenarioFromFile, loadScenario } from "../../import";
+import { importScenarioFromFile, loadScenario } from "../../scenarioImport";
 import MenuDropdown, { type MenuDropdownItem } from "./MenuDropdown";
 import TemplateImportModal from "./TemplateImportModal";
 import type { CreatorFileActions } from "./menuTypes";

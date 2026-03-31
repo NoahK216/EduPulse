@@ -1,4 +1,4 @@
-import type { NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewerTypes";
 import type { VideoNode } from "../../nodeSchemas";
 import { useEffect, useRef } from "react";
 

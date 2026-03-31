@@ -2,9 +2,9 @@ import { Link, useParams } from 'react-router-dom';
 
 import ScenarioCreator from './creator/ScenarioCreator';
 import { useScenarioDraftData } from './hooks/useScenarioPageData';
-import '../scenario/creator/Creator.css';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import './creator/Creator.css';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
 function ScenarioEditorPage() {
   const { scenarioId } = useParams();
@@ -29,12 +29,10 @@ function ScenarioEditorPage() {
   }
 
   return (
-    <div className="creator-demo">
-      <ScenarioCreator
-        initialScenario={data.scenarioDocument}
-        initialScenarioId={data.scenarioItem.id}
-      />
-    </div>
+    <ScenarioCreator
+      initialScenario={data.scenarioDocument}
+      initialScenarioId={data.scenarioItem.id}
+    />
   );
 }
 

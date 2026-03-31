@@ -1,9 +1,9 @@
 import ClassroomListCards from './components/ClassroomListCards';
 import { useClassroomListData } from './hooks/useClassroomData';
-import { DataGuard } from '../ui/DataGuard';
-import PageShell from '../ui/PageShell';
+import { DataGuard } from '../../components/data/DataGuard';
+import PageShell from '../../components/layout/PageShell';
 
-function ClassroomList() {
+function ClassroomListPage() {
   const data = useClassroomListData();
 
   return (
@@ -18,4 +18,4 @@ function ClassroomList() {
   );
 }
 
-export default ClassroomList;
+export default ClassroomListPage;

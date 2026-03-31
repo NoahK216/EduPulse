@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { StartNode } from "../../nodeSchemas";
-import type { NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewerTypes";
 
 export function StartScene({ node, dispatch }: NodeSceneProps<StartNode>) {
   const dispatchedAdvanceRef = useRef<boolean | null>(null);

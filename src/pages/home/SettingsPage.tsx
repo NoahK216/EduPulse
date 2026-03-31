@@ -1,7 +1,7 @@
-import NavBar from "../ui/NavBar";
 import { useState } from "react";
+import NavBar from "../../components/layout/NavBar";
 
-function Settings() {
+function SettingsPage() {
   const [isDark, setIsDark] = useState(
     () => localStorage.getItem("theme") === "dark",
   );
@@ -33,4 +33,4 @@ function Settings() {
   );
 }
 
-export default Settings;
+export default SettingsPage;

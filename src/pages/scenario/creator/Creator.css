@@ -1,4 +1,4 @@
-.creator-demo {
+.scenario-editor {
     color: #0f172a;
     background-color: #f8fafc;
     width: 100%;
@@ -6,12 +6,12 @@
     overflow: hidden;
 }
 
-.dark .creator-demo {
+.dark .scenario-editor {
     color: #e2e8f0;
     background-color: #020617;
 }
 
-.creator-demo .react-flow__controls {
+.scenario-editor .react-flow__controls {
     overflow: hidden;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 10px;
@@ -19,7 +19,7 @@
     box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
 }
 
-.creator-demo .react-flow__controls-button {
+.scenario-editor .react-flow__controls-button {
     width: 30px;
     height: 30px;
     border: 0;
@@ -32,31 +32,31 @@
     transition: background 120ms ease-in-out, border-color 120ms ease-in-out;
 }
 
-.creator-demo .react-flow__controls-button:last-child {
+.scenario-editor .react-flow__controls-button:last-child {
     border-bottom: 0;
 }
 
-.creator-demo .react-flow__controls-button:hover {
+.scenario-editor .react-flow__controls-button:hover {
     border-color: rgba(125, 211, 252, 0.5);
     background: #1e293b;
 }
 
-.creator-demo .react-flow__controls-button svg {
+.scenario-editor .react-flow__controls-button svg {
     fill: currentColor;
 }
 
-.creator-demo .react-flow__minimap {
+.scenario-editor .react-flow__minimap {
     overflow: hidden;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 10px;
     background: rgba(173, 174, 176, 0.95);
 }
 
-.dark .creator-demo .react-flow__minimap {
+.dark .scenario-editor .react-flow__minimap {
     background: rgba(15, 23, 42, 0.88);
 }
 
-.creator-demo .react-flow__nodesselection-rect {
+.scenario-editor .react-flow__nodesselection-rect {
     pointer-events: none;
 }
 

@@ -4,9 +4,12 @@ import type {
   PublicAssignment,
   PublicClassroomMember,
 } from '../../../types/publicApi';
-import { DataGuard, type DataGuardState } from '../../ui/DataGuard';
-import AssignScenarioModal from './AssignScenarioModal';
-import InstructorAssignmentCard from './InstructorAssignmentCard';
+import {
+  DataGuard,
+  type DataGuardState,
+} from '../../../components/data/DataGuard';
+import InstructorAssignmentCard from '../components/InstructorAssignmentCard';
+import AssignScenarioModal from '../components/AssignScenarioModal';
 
 type InstructorTab = 'assignments' | 'students';
 
@@ -18,7 +21,7 @@ function formatJoinDate(value: string) {
   });
 }
 
-type InstructorClassroomViewProps = {
+type InstructorClassroomProps = {
   classroomId: string;
   currentAssignments: Array<{
     assignment: PublicAssignment;
@@ -35,7 +38,7 @@ type InstructorClassroomViewProps = {
   onAssignmentsChanged: () => void;
 };
 
-function InstructorClassroomView({
+function InstructorClassroom({
   classroomId,
   currentAssignments,
   pastAssignments,
@@ -44,7 +47,7 @@ function InstructorClassroomView({
   summaryText,
   assignmentsGuard,
   onAssignmentsChanged,
-}: InstructorClassroomViewProps) {
+}: InstructorClassroomProps) {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<InstructorTab>('assignments');
 
@@ -186,4 +189,4 @@ function InstructorClassroomView({
   );
 }
 
-export default InstructorClassroomView;
+export default InstructorClassroom;

@@ -13,7 +13,7 @@ import type {
   PublicAttempt,
   PublicClassroom,
 } from '../../../types/publicApi';
-import type { DataGuardState } from '../../ui/DataGuard';
+import type { DataGuardState } from "../../../components/data/DataGuard";
 
 type HomeDashboardData = {
   displayName: string;
