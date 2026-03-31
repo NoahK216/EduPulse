@@ -1,6 +1,6 @@
 import {z} from 'zod';
 
-import { GenericNodeSchema, type GenericNode } from "./nodeSchemas";
+import { GenericNodeSchema, type GenericNode } from "./nodeSchemas.js";
 
 export const NodeEdgeSchema = z.object({
   id: z.string(), 
