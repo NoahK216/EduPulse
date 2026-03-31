@@ -2,13 +2,10 @@ import { useMemo, useState } from 'react';
 import { FaMagnifyingGlass } from 'react-icons/fa6';
 
 import { publicApiPost, resolvePublicApiToken } from '../../../lib/public-api-client';
-import { useApiData } from '../../../lib/useApiData';
+import { useScenarioVersions, useScenarios } from '../../../lib/usePublicApiHooks';
 import type {
   ItemResponse,
-  PagedResponse,
   PublicAssignment,
-  PublicScenario,
-  PublicScenarioVersion,
 } from '../../../types/publicApi';
 import { EmptyPanel, ErrorPanel, LoadingPanel } from '../../ui/DataStatePanels';
 
@@ -83,15 +80,11 @@ function AssignScenarioModal({
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const scenarios = useApiData<PagedResponse<PublicScenario>>(
-    '/api/public/scenarios?pageSize=100',
-  );
-  const versions = useApiData<PagedResponse<PublicScenarioVersion>>(
-    '/api/public/scenario-versions?pageSize=100',
-  );
+  const scenarios = useScenarios();
+  const versions = useScenarioVersions();
 
   const allOptions = useMemo(() => {
-    const draftOptions: ScenarioOption[] = (scenarios.data?.items ?? []).map((scenario) => ({
+    const draftOptions: ScenarioOption[] = scenarios.items.map((scenario) => ({
       id: `scenario:${scenario.id}`,
       label: scenario.title,
       meta: `Draft scenario | ${scenario.version_count} published versions`,
@@ -102,7 +95,7 @@ function AssignScenarioModal({
       publishHint: 'A new published scenario version will be created when this assignment is sent.',
     }));
 
-    const versionOptions: ScenarioOption[] = (versions.data?.items ?? []).map((version) => ({
+    const versionOptions: ScenarioOption[] = versions.items.map((version) => ({
       id: `version:${version.id}`,
       label: version.scenario_title,
       meta: `${version.title} | Published version v${version.version_number}`,
@@ -116,7 +109,7 @@ function AssignScenarioModal({
     return [...draftOptions, ...versionOptions].sort((left, right) =>
       left.label.localeCompare(right.label),
     );
-  }, [scenarios.data, versions.data]);
+  }, [scenarios.items, versions.items]);
 
   const search = query.trim().toLowerCase();
   const filteredOptions = allOptions.filter((option) => {

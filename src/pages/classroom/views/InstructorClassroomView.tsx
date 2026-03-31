@@ -1,55 +1,14 @@
 import { useState } from 'react';
 
-import { useApiData } from '../../../lib/useApiData';
 import type {
-  PagedResponse,
   PublicAssignment,
-  PublicAttempt,
   PublicClassroomMember,
 } from '../../../types/publicApi';
-import { ErrorPanel, LoadingPanel } from '../../ui/DataStatePanels';
+import { DataGuard, type DataGuardState } from '../../ui/DataGuard';
 import AssignScenarioModal from './AssignScenarioModal';
 import InstructorAssignmentCard from './InstructorAssignmentCard';
 
 type InstructorTab = 'assignments' | 'students';
-
-function isPastAssignment(assignment: PublicAssignment, now: number) {
-  if (assignment.close_at) {
-    return new Date(assignment.close_at).getTime() < now;
-  }
-
-  if (assignment.due_at) {
-    return new Date(assignment.due_at).getTime() < now;
-  }
-
-  return false;
-}
-
-function compareAssignments(a: PublicAssignment, b: PublicAssignment) {
-  const left = a.due_at ? new Date(a.due_at).getTime() : Number.MAX_SAFE_INTEGER;
-  const right = b.due_at ? new Date(b.due_at).getTime() : Number.MAX_SAFE_INTEGER;
-
-  if (left === right) {
-    return a.title.localeCompare(b.title);
-  }
-
-  return left - right;
-}
-
-function getAssignmentProgress(assignmentId: string, attempts: PublicAttempt[]) {
-  const submittedStudentIds = new Set<string>();
-
-  attempts.forEach((attempt) => {
-    if (attempt.assignment_id !== assignmentId) return;
-    if (attempt.status === 'submitted') {
-      submittedStudentIds.add(attempt.student_user_id);
-    }
-  });
-
-  return {
-    completedCount: submittedStudentIds.size,
-  };
-}
 
 function formatJoinDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -61,39 +20,33 @@ function formatJoinDate(value: string) {
 
 type InstructorClassroomViewProps = {
   classroomId: string;
-  members: PublicClassroomMember[];
+  currentAssignments: Array<{
+    assignment: PublicAssignment;
+    completedCount: number;
+  }>;
+  pastAssignments: Array<{
+    assignment: PublicAssignment;
+    completedCount: number;
+  }>;
+  studentMembers: PublicClassroomMember[];
+  studentCount: number;
+  summaryText: string;
+  assignmentsGuard: DataGuardState;
+  onAssignmentsChanged: () => void;
 };
 
 function InstructorClassroomView({
   classroomId,
-  members,
+  currentAssignments,
+  pastAssignments,
+  studentMembers,
+  studentCount,
+  summaryText,
+  assignmentsGuard,
+  onAssignmentsChanged,
 }: InstructorClassroomViewProps) {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<InstructorTab>('assignments');
-  const assignments = useApiData<PagedResponse<PublicAssignment>>(
-    `/api/public/assignments?classroomId=${classroomId}&pageSize=100`,
-  );
-  const attempts = useApiData<PagedResponse<PublicAttempt>>('/api/public/attempts?pageSize=100');
-
-  const studentMembers = members
-    .filter((member) => member.role === 'student')
-    .sort((left, right) => left.user_name.localeCompare(right.user_name));
-  const studentCount = studentMembers.length;
-  const classroomAttempts = (attempts.data?.items ?? []).filter(
-    (attempt) => attempt.classroom_id === classroomId,
-  );
-  const [pageLoadedAt] = useState(() => Date.now());
-  const currentAssignments = (assignments.data?.items ?? [])
-    .filter((assignment) => !isPastAssignment(assignment, pageLoadedAt))
-    .sort(compareAssignments);
-  const pastAssignments = (assignments.data?.items ?? [])
-    .filter((assignment) => isPastAssignment(assignment, pageLoadedAt))
-    .sort(compareAssignments);
-  const summaryText = assignments.loading
-    ? `${studentCount} students | loading assignments`
-    : `${studentCount} students | ${currentAssignments.length} active assignments`;
-  const hasAssignmentLoadError = Boolean(assignments.error || attempts.error);
-  const isAssignmentDataLoading = assignments.loading || attempts.loading;
 
   return (
     <>
@@ -146,61 +99,43 @@ function InstructorClassroomView({
       </section>
 
       {activeTab === 'assignments' ? (
-        <>
-          {isAssignmentDataLoading ? <LoadingPanel /> : null}
-          {!assignments.loading && assignments.error ? (
-            <ErrorPanel message={assignments.error} onRetry={assignments.refetch} />
-          ) : null}
-          {!attempts.loading && attempts.error ? (
-            <ErrorPanel message={attempts.error} onRetry={attempts.refetch} />
-          ) : null}
-
-          {!isAssignmentDataLoading &&
-          !hasAssignmentLoadError &&
-          currentAssignments.length > 0 ? (
-            <section className="mt-6">
-              <h3 className="text-lg font-semibold">Current Assignments</h3>
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                {currentAssignments.map((assignment) => {
-                  const progress = getAssignmentProgress(assignment.id, classroomAttempts);
-
-                  return (
+        <DataGuard state={assignmentsGuard}>
+          <>
+            {currentAssignments.length > 0 ? (
+              <section className="mt-6">
+                <h3 className="text-lg font-semibold">Current Assignments</h3>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  {currentAssignments.map(({ assignment, completedCount }) => (
                     <InstructorAssignmentCard
                       key={assignment.id}
                       assignment={assignment}
                       classroomId={classroomId}
-                      completedCount={progress.completedCount}
+                      completedCount={completedCount}
                       studentCount={studentCount}
                     />
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
-          {!isAssignmentDataLoading &&
-          !hasAssignmentLoadError &&
-          pastAssignments.length > 0 ? (
-            <section className="mt-8">
-              <h3 className="text-lg font-semibold">Past Assignments</h3>
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                {pastAssignments.map((assignment) => {
-                  const progress = getAssignmentProgress(assignment.id, classroomAttempts);
-
-                  return (
+            {pastAssignments.length > 0 ? (
+              <section className="mt-8">
+                <h3 className="text-lg font-semibold">Past Assignments</h3>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  {pastAssignments.map(({ assignment, completedCount }) => (
                     <InstructorAssignmentCard
                       key={assignment.id}
                       assignment={assignment}
                       classroomId={classroomId}
-                      completedCount={progress.completedCount}
+                      completedCount={completedCount}
                       studentCount={studentCount}
                     />
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
-        </>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </>
+        </DataGuard>
       ) : null}
 
       {activeTab === 'students' ? (
@@ -243,9 +178,7 @@ function InstructorClassroomView({
       {assignModalOpen ? (
         <AssignScenarioModal
           classroomId={classroomId}
-          onAssigned={() => {
-            assignments.refetch();
-          }}
+          onAssigned={onAssignmentsChanged}
           onClose={() => setAssignModalOpen(false)}
         />
       ) : null}

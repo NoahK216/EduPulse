@@ -1,17 +1,12 @@
 import { nodeRegistry } from "../../nodes";
 import { useEditorDispatch } from "../editor-store/EditorDispatchContext";
 
-export type NodeAddPanelProps = {
-  onAddNode?: () => void;
-};
-
 // TODO GENERATION SHOULD NOT BE DONE ON THE CLIENT
-const NodeAddPanel = ({ onAddNode }: NodeAddPanelProps) => {
+const NodeAddPanel = () => {
   const dispatch = useEditorDispatch();
 
   const onNodeClick = (nodeEntry) => {
     dispatch({ type: "addNode", node: nodeEntry.factory() });
-    onAddNode?.();
   };
 
   return (

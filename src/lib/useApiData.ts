@@ -36,7 +36,7 @@ export function useApiData<T>(path: string | null): ApiState<T> {
     if (!path) {
       debugUseApiData('missing path', { requestId });
       setData(null);
-      setError('Missing request path');
+      setError(null);
       setUnauthorized(false);
       setLoading(false);
       return () => {

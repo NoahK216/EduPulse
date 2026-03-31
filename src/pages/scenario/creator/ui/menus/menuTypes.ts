@@ -22,7 +22,6 @@ export type CreatorViewActions = {
 };
 
 export type CreatorHelpActions = {
-  onShowTutorial: () => void;
   onOpenTutorial: () => void;
   onShowKeyboardShortcuts?: () => void;
 };

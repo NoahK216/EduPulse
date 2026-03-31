@@ -77,8 +77,6 @@ type ScenarioCreatorProps = {
   initialScenarioId?: string | null;
 };
 
-const TUTORIAL_TOP_OFFSET = 84;
-
 const ScenarioCreator = ({
   scenarioUrl,
   initialScenario,
@@ -103,9 +101,6 @@ const ScenarioCreator = ({
   const rfNodesRef = useRef<Node[]>([]);
   const inspectedNodeId =
     state.status === "loaded" ? state.ui.inspectedNodeId : null;
-  const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
-  const [tipOpen, setTipOpen] = useState(false);
-  const [tipClosed, setTipClosed] = useState(true);
   const [syncedScenarioId, setSyncedScenarioId] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string>("");
@@ -160,12 +155,6 @@ const ScenarioCreator = ({
     },
     [isDirty],
   );
-
-  const reopenTutorial = useCallback(() => {
-    setTipClosed(false);
-    setTipNum(1);
-    setTipOpen(true);
-  }, []);
 
   const openTutorialScenario = useCallback(() => {
     const tutorialUrl = new URL(
@@ -422,25 +411,6 @@ const ScenarioCreator = ({
       if (node.type === "start") return;
 
       inspectNode(node.id);
-
-      if (node.type === "free_response") {
-        setTimeout(() => {
-          setTipNum(3);
-          setTipOpen(true);
-        });
-        return;
-      }
-
-      if (node.type === "choice") {
-        setTipNum(4);
-        setTipOpen(true);
-        return;
-      }
-
-      if (node.type === "video") {
-        setTipNum(5);
-        setTipOpen(true);
-      }
     },
     [inspectNode],
   );
@@ -661,96 +631,14 @@ const ScenarioCreator = ({
             disabled: !reactFlowInstance,
           }}
           helpActions={{
-            onShowTutorial: reopenTutorial,
             onOpenTutorial: openTutorialScenario,
             onShowKeyboardShortcuts: undefined,
           }}
           statusMessage={topBarStatus.message}
           statusTone={topBarStatus.tone}
         />
-        {!tipClosed && tipOpen && tipNum !== 0 && (
-          <div
-            className="fixed z-50 max-w-sm rounded-lg border border-[#0b1f3a] bg-[#081426] p-4 text-blue-100 shadow-lg"
-            style={{
-              top:
-                (tipNum === 1
-                  ? 100
-                  : tipNum === 2
-                    ? 140
-                    : tipNum === 3
-                      ? 300
-                      : tipNum === 4
-                        ? 350
-                        : 250) + TUTORIAL_TOP_OFFSET,
-              left:
-                tipNum === 1
-                  ? 215
-                  : tipNum === 2
-                    ? 250
-                    : tipNum === 5
-                      ? 735
-                      : 700,
-            }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold">
-                  {tipNum === 1 && "Add nodes"}
-                  {tipNum === 2 && "Edit nodes"}
-                  {tipNum === 3 && "Free Response"}
-                  {tipNum === 4 && "Multiple Choice"}
-                  {tipNum === 5 && "Video node"}
-                </div>
-
-                <div className="mt-1 text-sm text-neutral-300">
-                  {tipNum === 1 &&
-                    "Click a node in the left panel to add it to the scenario."}
-
-                  {tipNum === 2 &&
-                    "Click any node on the canvas to edit its content on the right."}
-                  {tipNum === 3 && (
-                    <div className="space-y-2">
-                      <div>
-                        <b>Prompt</b>: The question
-                      </div>
-                      <div>
-                        <b>Rubric Context</b>: Context for the AI grader to use
-                      </div>
-                      <div>
-                        <b>Answer Buckets</b>: How the responses should be
-                        scored
-                      </div>
-                    </div>
-                  )}
-                  {tipNum === 4 &&
-                    "Input prompt and add as many choices as necessary."}
-                  {tipNum === 5 &&
-                    "Edit title, video, and captions if available."}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="ml-2 rounded-md !bg-blue-950 px-2 py-1 !text-blue-200 transition hover:!bg-blue-900"
-                onClick={() => {
-                  setTipClosed(true);
-                  setTipOpen(false);
-                }}
-              >
-                X
-              </button>
-            </div>
-          </div>
-        )}
         <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
-          <NodeAddPanel
-            onAddNode={() => {
-              if (tipNum === 1) {
-                setTipNum(2);
-                setTipOpen(true);
-              }
-            }}
-          />
+          <NodeAddPanel />
           <NodeInspectorProvider
             inspectedNodeId={inspectedNodeId}
             inspectNode={inspectNode}

@@ -1,46 +1,32 @@
 import { Link } from 'react-router-dom';
 
-import { useApiData } from '../../../lib/useApiData';
 import type {
-  PagedResponse,
   PublicAssignment,
   PublicClassroom,
   PublicClassroomMember,
 } from '../../../types/publicApi';
-import { EmptyPanel, ErrorPanel, LoadingPanel } from '../../ui/DataStatePanels';
+import { DataGuard, type DataGuardState } from '../../ui/DataGuard';
 
 function formatDate(value: string | null) {
   if (!value) return 'No due date';
   return new Date(value).toLocaleString();
 }
 
-function compareAssignments(a: PublicAssignment, b: PublicAssignment) {
-  const left = a.due_at ? new Date(a.due_at).getTime() : Number.MAX_SAFE_INTEGER;
-  const right = b.due_at ? new Date(b.due_at).getTime() : Number.MAX_SAFE_INTEGER;
-
-  if (left === right) {
-    return a.title.localeCompare(b.title);
-  }
-
-  return left - right;
-}
-
 type StudentClassroomViewProps = {
   classroom: PublicClassroom;
   classroomId: string;
-  members: PublicClassroomMember[];
+  instructors: PublicClassroomMember[];
+  assignments: PublicAssignment[];
+  assignmentsGuard: DataGuardState;
 };
 
 function StudentClassroomView({
   classroom,
   classroomId,
-  members,
+  instructors,
+  assignments,
+  assignmentsGuard,
 }: StudentClassroomViewProps) {
-  const assignments = useApiData<PagedResponse<PublicAssignment>>(
-    `/api/public/assignments?classroomId=${classroomId}&pageSize=100`,
-  );
-  const instructors = members.filter((member) => member.role === 'instructor');
-
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-950/40">
@@ -60,22 +46,9 @@ function StudentClassroomView({
 
       <section>
         <h3 className="text-lg font-semibold">Assignments</h3>
-        {assignments.loading ? <LoadingPanel /> : null}
-        {!assignments.loading && assignments.error ? (
-          <ErrorPanel message={assignments.error} onRetry={assignments.refetch} />
-        ) : null}
-        {!assignments.loading &&
-        !assignments.error &&
-        assignments.data &&
-        assignments.data.items.length === 0 ? (
-          <EmptyPanel message="No assignments found for this classroom." />
-        ) : null}
-        {!assignments.loading &&
-        !assignments.error &&
-        assignments.data &&
-        assignments.data.items.length > 0 ? (
+        <DataGuard state={assignmentsGuard}>
           <div className="mt-4 space-y-3">
-            {[...assignments.data.items].sort(compareAssignments).map((assignment) => (
+            {assignments.map((assignment) => (
               <Link
                 key={assignment.id}
                 to={`/classrooms/${classroomId}/assignment/${assignment.id}`}
@@ -96,7 +69,7 @@ function StudentClassroomView({
               </Link>
             ))}
           </div>
-        ) : null}
+        </DataGuard>
       </section>
     </div>
   );

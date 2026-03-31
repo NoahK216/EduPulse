@@ -1,13 +1,11 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useApiData } from "../../lib/useApiData";
 import {
   EmptyPanel,
-  ErrorPanel,
-  LoadingPanel,
-  UnauthorizedPanel,
 } from "../ui/DataStatePanels";
+import { useScenarioLibraryData } from "./hooks/useScenarioPageData";
+import { DataGuard } from "../ui/DataGuard";
 import PageShell from "../ui/PageShell";
 import {
   ApiRequestError,
@@ -15,9 +13,7 @@ import {
   resolvePublicApiToken,
 } from "../../lib/public-api-client";
 import type {
-  PagedResponse,
   PublicScenario,
-  PublicScenarioVersion,
 } from "../../types/publicApi";
 
 function formatDate(value: string) {
@@ -33,23 +29,14 @@ function pluralize(count: number, singular: string, plural: string) {
 }
 
 function ScenarioLibrary() {
-  const scenarios = useApiData<PagedResponse<PublicScenario>>(
-    "/api/public/scenarios?pageSize=100",
-  );
-  const versions = useApiData<PagedResponse<PublicScenarioVersion>>(
-    "/api/public/scenario-versions?pageSize=100",
-  );
+  const library = useScenarioLibraryData();
   const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(
     null,
   );
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-
-  const unauthorized = scenarios.unauthorized || versions.unauthorized;
-  const isLoading = scenarios.loading || versions.loading;
-  const hasError = scenarios.error || versions.error;
-  const scenarioItems = scenarios.data?.items ?? [];
-  const versionItems = versions.data?.items ?? [];
+  const scenarioItems = library.scenarios;
+  const versionItems = library.versions;
 
   const handleDeleteScenario = useCallback(
     async (scenario: PublicScenario) => {
@@ -86,8 +73,7 @@ function ScenarioLibrary() {
           token,
         );
         setActionMessage(`Deleted "${scenarioTitle}".`);
-        scenarios.refetch();
-        versions.refetch();
+        library.refetch();
       } catch (error) {
         if (error instanceof ApiRequestError) {
           setActionError(error.message);
@@ -104,7 +90,7 @@ function ScenarioLibrary() {
         setDeletingScenarioId(null);
       }
     },
-    [scenarios, versions],
+    [library],
   );
 
   return (
@@ -112,19 +98,7 @@ function ScenarioLibrary() {
       title="Scenario Library"
       subtitle="Create, edit, and manage your scenario drafts and published versions."
     >
-      {unauthorized ? <UnauthorizedPanel /> : null}
-      {!unauthorized && isLoading ? <LoadingPanel /> : null}
-      {!unauthorized && !isLoading && hasError ? (
-        <ErrorPanel
-          message={hasError}
-          onRetry={() => {
-            scenarios.refetch();
-            versions.refetch();
-          }}
-        />
-      ) : null}
-
-      {!unauthorized && !isLoading && !hasError ? (
+      <DataGuard state={library.guard}>
         <div className="space-y-6">
           <section
             className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br 
@@ -286,7 +260,7 @@ function ScenarioLibrary() {
             </section>
           </div>
         </div>
-      ) : null}
+      </DataGuard>
     </PageShell>
   );
 }

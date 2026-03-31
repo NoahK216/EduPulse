@@ -4,3 +4,7 @@ const UUID_PATTERN =
 export function isUuid(value: string | null | undefined): value is string {
   return typeof value === 'string' && UUID_PATTERN.test(value);
 }
+
+export function toUuidOrNull(value: string | null | undefined): string | null {
+  return isUuid(value) ? value : null;
+}
