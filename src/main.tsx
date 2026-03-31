@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { PublicApiQueryProvider } from "./lib/query-client";
+import { initializeTheme } from "./lib/theme";
 import "./index.css";
 
 type LazyRouteModule = { default: ComponentType };
@@ -112,9 +113,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-if (localStorage.getItem("theme") === "dark") {
-  document.documentElement.classList.add("dark");
-}
+initializeTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
