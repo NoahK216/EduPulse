@@ -55,3 +55,8 @@ Alice        Completed     2h ago            [View]
 Bob          In Progress   10m ago           [View]
 Charlie      Not Started   —                 —
 
+
+
+
+## TODO
+Instructors should be able to delete assignments

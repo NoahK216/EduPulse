@@ -1,5 +1,6 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
+import { useCurrentUser } from '../../lib/useCurrentUser';
 import { isUuid } from '../../lib/uuid';
 import { useApiData } from '../../lib/useApiData';
 import {
@@ -14,7 +15,6 @@ import type {
   PagedResponse,
   PublicClassroom,
   PublicClassroomMember,
-  PublicUser,
 } from '../../types/publicApi';
 import InstructorClassroomView from './views/InstructorClassroomView';
 import StudentClassroomView from './views/StudentClassroomView';
@@ -29,7 +29,7 @@ function ClassroomDetail() {
     ? `/api/public/classroom-members?classroomId=${classroomIdValue}&pageSize=100`
     : null;
 
-  const currentUser = useApiData<PagedResponse<PublicUser>>('/api/public/users?pageSize=1');
+  const currentUser = useCurrentUser();
   const classroom = useApiData<ItemResponse<PublicClassroom>>(classroomPath);
   const members = useApiData<PagedResponse<PublicClassroomMember>>(membersPath);
 
@@ -46,7 +46,7 @@ function ClassroomDetail() {
   const isLoading = currentUser.loading || classroom.loading || members.loading;
   const pageError = currentUser.error || classroom.error || members.error;
   const classroomItem = classroom.data?.item;
-  const publicUser = currentUser.data?.items[0] ?? null;
+  const publicUser = currentUser.user;
   const memberItems = members.data?.items ?? [];
   const currentMembership =
     publicUser === null

@@ -115,3 +115,17 @@ export type PublicResponse = PublicResponseBase & {
   has_response_payload: boolean;
   response_payload?: PublicResponseBase['response_payload'];
 };
+
+export type PublicAssignmentAttemptSession = {
+  assignment: PublicAssignment;
+  attempt: PublicAttempt;
+  responses: PublicResponse[];
+  scenario_content: unknown;
+};
+
+export type PublicAttemptProgressResult = {
+  attempt: PublicAttempt;
+  response: PublicResponse | null;
+  next_node_id: string | null;
+  completed: boolean;
+};

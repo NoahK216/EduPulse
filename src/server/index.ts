@@ -14,7 +14,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ! Use /api prefix for calls to backend
 app.use('/api/grade', createGraderRouter(openai));
-app.use('/api/public', createPublicRouter());
+app.use('/api/public', createPublicRouter(openai));
 
 const clientDist = path.resolve(process.cwd(), 'dist');
 

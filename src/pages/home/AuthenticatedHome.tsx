@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { authClient } from "../../lib/auth-client";
+import { useCurrentUser } from "../../lib/useCurrentUser";
 import { useApiData } from "../../lib/useApiData";
 import type {
   PagedResponse,
@@ -9,7 +10,6 @@ import type {
   PublicAttempt,
   PublicClassroom,
   PublicClassroomMember,
-  PublicUser,
 } from "../../types/publicApi";
 import {
   EmptyPanel,
@@ -63,10 +63,9 @@ function Section({
 }
 
 function AuthenticatedHome() {
+  const [pageLoadedAt] = useState(() => Date.now());
   const { data: session } = authClient.useSession();
-  const currentUser = useApiData<PagedResponse<PublicUser>>(
-    "/api/public/users?pageSize=1",
-  );
+  const currentUser = useCurrentUser();
   const classroomMembers = useApiData<PagedResponse<PublicClassroomMember>>(
     "/api/public/classroom-members?pageSize=100",
   );
@@ -87,7 +86,7 @@ function AuthenticatedHome() {
     attempts.unauthorized ||
     classrooms.unauthorized;
 
-  const publicUser = currentUser.data?.items[0] ?? null;
+  const publicUser = currentUser.user;
   const displayName = getGreetingName(
     publicUser?.name ?? session?.user?.name ?? session?.user?.email,
   );
@@ -146,12 +145,11 @@ function AuthenticatedHome() {
       .map((member) => member.classroom_id),
   );
 
-  const now = Date.now();
   const upcomingAssignments = (assignments.data?.items ?? [])
     .filter((assignment) => {
       if (!studentClassroomIds.has(assignment.classroom_id)) return false;
       if (!assignment.due_at) return true;
-      return new Date(assignment.due_at).getTime() >= now;
+      return new Date(assignment.due_at).getTime() >= pageLoadedAt;
     })
     .sort(compareByDueDate);
 
@@ -192,7 +190,7 @@ function AuthenticatedHome() {
                 Started {formatDate(inProgressAttempt.started_at)}
               </p>
               <Link
-                to={`/classrooms/${inProgressAttempt.classroom_id}/assignment/${inProgressAttempt.assignment_id}/attempt/${inProgressAttempt.id}`}
+                to={`/classrooms/${inProgressAttempt.classroom_id}/assignment/${inProgressAttempt.assignment_id}/attempt`}
                 className="mt-4 inline-flex rounded-md border border-neutral-300 bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700 dark:border-neutral-700"
               >
                 Continue Assignment

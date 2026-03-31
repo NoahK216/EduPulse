@@ -59,6 +59,12 @@ const router = createBrowserRouter([
             ),
           },
           {
+            path: "assignment/:assignmentId/attempt",
+            lazy: lazyComponent(
+              () => import("./pages/classroom/assignmentRunner.tsx"),
+            ),
+          },
+          {
             path: "assignment/:assignmentId/attempt/:attemptId",
             lazy: lazyComponent(
               () => import("./pages/classroom/attemptDetail.tsx"),

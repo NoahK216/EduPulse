@@ -1,7 +1,7 @@
 import type { ChoiceNode } from "../../nodeSchemas";
-import { nextNodeId, type NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewer";
 
-export function ChoiceScene({ node, edges, dispatch }: NodeSceneProps<ChoiceNode>) {
+export function ChoiceScene({ node, busy, errorMessage, dispatch }: NodeSceneProps<ChoiceNode>) {
   return (
     <section>
       <h2>{node.title}</h2>
@@ -12,12 +12,15 @@ export function ChoiceScene({ node, edges, dispatch }: NodeSceneProps<ChoiceNode
           <button
             key={choice.id}
             onClick={() => {
-              dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges, choice.id) });
-            }}>
+              dispatch({ type: "SELECT_CHOICE", choiceId: choice.id });
+            }}
+            disabled={busy}>
             {String.fromCharCode(65 + index)}. {choice.label}
           </button>
         ))}
       </div>
+
+      {errorMessage ? <p>{errorMessage}</p> : null}
     </section>
   );
 }

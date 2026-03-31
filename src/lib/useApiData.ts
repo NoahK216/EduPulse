@@ -14,7 +14,7 @@ function debugUseApiData(message: string, details?: Record<string, unknown>) {
   console.debug(`[useApiData] ${message}`);
 }
 
-type ApiState<T> = {
+export type ApiState<T> = {
   data: T | null;
   loading: boolean;
   error: string | null;

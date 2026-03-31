@@ -1,26 +1,15 @@
-import type { GenericNode } from "../nodes";
+import type { GenericNode } from "../nodeSchemas";
 import type { NodeEdge } from "../scenarioSchemas";
 
 export type ScenarioEvent =
-  | { type: 'NEXT_NODE'; nextId?: string; }
+  | { type: 'ADVANCE' }
+  | { type: 'SELECT_CHOICE'; choiceId: string }
+  | { type: 'SUBMIT_FREE_RESPONSE'; answerText: string };
 
 export type NodeSceneProps<N extends GenericNode = GenericNode> = {
   node: N;
   edges: NodeEdge[];
-  dispatch: (event: ScenarioEvent) => void;
+  busy: boolean;
+  errorMessage: string | null;
+  dispatch: (event: ScenarioEvent) => Promise<void>;
 };
-
-export function nextNodeId(
-    node: GenericNode, edges: NodeEdge[], port?: string) {
-  const edge = edges.find((edge) => {
-    const nodeMatch = edge.from.nodeId === node.id;
-    if (nodeMatch && port) {
-      return nodeMatch && (edge.from.port === port)
-    }
-    return nodeMatch;
-  });
-
-  console.log(edge)
-
-  return edge?.to?.nodeId
-}

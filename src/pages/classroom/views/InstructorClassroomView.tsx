@@ -82,12 +82,12 @@ function InstructorClassroomView({
   const classroomAttempts = (attempts.data?.items ?? []).filter(
     (attempt) => attempt.classroom_id === classroomId,
   );
-  const now = Date.now();
+  const [pageLoadedAt] = useState(() => Date.now());
   const currentAssignments = (assignments.data?.items ?? [])
-    .filter((assignment) => !isPastAssignment(assignment, now))
+    .filter((assignment) => !isPastAssignment(assignment, pageLoadedAt))
     .sort(compareAssignments);
   const pastAssignments = (assignments.data?.items ?? [])
-    .filter((assignment) => isPastAssignment(assignment, now))
+    .filter((assignment) => isPastAssignment(assignment, pageLoadedAt))
     .sort(compareAssignments);
   const summaryText = assignments.loading
     ? `${studentCount} students | loading assignments`

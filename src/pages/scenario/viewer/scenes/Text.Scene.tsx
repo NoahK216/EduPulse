@@ -1,7 +1,7 @@
 import type { TextNode } from "../../nodeSchemas";
-import { nextNodeId, type NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewer";
 
-export function TextScene({ node, edges, dispatch }: NodeSceneProps<TextNode>) {
+export function TextScene({ node, busy, errorMessage, dispatch }: NodeSceneProps<TextNode>) {
   return (
     <section>
       <h2>{node.title}</h2>
@@ -10,11 +10,13 @@ export function TextScene({ node, edges, dispatch }: NodeSceneProps<TextNode>) {
       <button
         key={"next"}
         onClick={() => {
-          dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges) });
-        }}>
+          void dispatch({ type: "ADVANCE" });
+        }}
+        disabled={busy}>
         Continue
       </button>
 
+      {errorMessage ? <p>{errorMessage}</p> : null}
     </section>
   );
 }

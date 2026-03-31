@@ -12,7 +12,7 @@ import {
 } from './common.js';
 import { accessibleResponseWhere } from './scopes.js';
 
-const responseSelect = {
+export const responseSelect = {
   id: true,
   attempt_id: true,
   node_id: true,
@@ -44,7 +44,7 @@ const responseSelect = {
   },
 } as const;
 
-function mapResponseRow(
+export function mapResponseRow(
   row: Awaited<
     ReturnType<
       typeof prisma.response.findFirst<{

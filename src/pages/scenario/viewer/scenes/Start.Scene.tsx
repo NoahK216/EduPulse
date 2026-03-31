@@ -1,11 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { StartNode } from "../../nodeSchemas";
-import { nextNodeId, type NodeSceneProps } from "../viewer";
+import type { NodeSceneProps } from "../viewer";
 
-export function StartScene({ node, edges, dispatch }: NodeSceneProps<StartNode>) {
+export function StartScene({ node, dispatch }: NodeSceneProps<StartNode>) {
+  const dispatchedAdvanceRef = useRef<boolean | null>(null);
+
   useEffect(() => {
-    dispatch({ type: "NEXT_NODE", nextId: nextNodeId(node, edges) });
-  }, [dispatch, node, edges]);
+    if (!dispatchedAdvanceRef.current) {
+      dispatchedAdvanceRef.current = true;
+      void dispatch({ type: "ADVANCE" });
+    }
+
+  }, [dispatch, node.id]);
 
   return null;
 }

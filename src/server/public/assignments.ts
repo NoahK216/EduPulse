@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import type { Prisma } from '../../../prisma/generated/client.js';
 
+import { ScenarioSchema } from '../../pages/scenario/scenarioSchemas.js';
 import { prisma } from '../prisma.js';
 import {
   type ApiErrorCode,
@@ -12,10 +13,13 @@ import {
   sendError,
   sendInternalError,
 } from './common.js';
+import { attemptSelect, mapAttemptRow } from './attempts.js';
+import { mapResponseRow, responseSelect } from './responses.js';
 import {
   accessibleAssignmentWhere,
   accessibleClassroomWhere,
   instructorClassroomWhere,
+  studentClassroomWhere,
 } from './scopes.js';
 
 const createAssignmentBodySchema = z
@@ -69,6 +73,40 @@ const assignmentSelect = {
   updated_at: true,
   classroom: { select: { name: true } },
   scenario_version: { select: { title: true, version_number: true } },
+  assigned_by: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
+  _count: { select: { attempts: true } },
+} as const;
+
+const assignmentAttemptSessionSelect = {
+  id: true,
+  classroom_id: true,
+  scenario_version_id: true,
+  assigned_by_user_id: true,
+  title: true,
+  instructions: true,
+  open_at: true,
+  due_at: true,
+  close_at: true,
+  max_attempts: true,
+  created_at: true,
+  updated_at: true,
+  classroom: { select: { name: true } },
+  scenario_version: {
+    select: {
+      title: true,
+      version_number: true,
+      content: true,
+    },
+  },
   assigned_by: {
     select: {
       auth_user: {
@@ -238,6 +276,151 @@ export function createPublicAssignmentsRouter() {
       return res.json({ item });
     } catch (error) {
       return sendInternalError(res, 'Failed to fetch assignment', error);
+    }
+  });
+
+  router.post('/:id/attempt', async (req, res) => {
+    const authedReq = asAuthedRequest(req);
+    const id = parseUuidParam('id', req.params.id);
+    if (!id.ok) {
+      return sendError(res, 400, 'BAD_REQUEST', id.message);
+    }
+
+    try {
+      const assignment = await prisma.assignment.findFirst({
+        where: {
+          id: id.value,
+          classroom: studentClassroomWhere(authedReq.auth.publicUserId),
+        },
+        select: assignmentAttemptSessionSelect,
+      });
+
+      if (!assignment) {
+        return sendError(res, 404, 'NOT_FOUND', 'Assignment not found');
+      }
+
+      const parsedScenario = ScenarioSchema.safeParse(
+        assignment.scenario_version.content
+      );
+      if (!parsedScenario.success) {
+        return sendError(
+          res,
+          500,
+          'INTERNAL_ERROR',
+          'Published scenario content is invalid for this assignment'
+        );
+      }
+
+      const scenario = parsedScenario.data;
+      if (!(scenario.startNodeId in scenario.nodes)) {
+        return sendError(
+          res,
+          500,
+          'INTERNAL_ERROR',
+          'Published scenario is missing its start node'
+        );
+      }
+
+      const now = new Date();
+      if (assignment.open_at && assignment.open_at > now) {
+        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is not open yet');
+      }
+
+      if (assignment.close_at && assignment.close_at <= now) {
+        return sendError(res, 400, 'BAD_REQUEST', 'Assignment is closed');
+      }
+
+      const session = await prisma.$transaction(async (tx) => {
+        let attempt = await tx.attempt.findFirst({
+          where: {
+            assignment_id: assignment.id,
+            student_user_id: authedReq.auth.publicUserId,
+            status: 'in_progress',
+          },
+          orderBy: { attempt_number: 'desc' },
+          select: attemptSelect,
+        });
+
+        if (attempt) {
+          if (!attempt.current_node_id) {
+            attempt =
+              (await tx.attempt.update({
+                where: { id: attempt.id },
+                data: {
+                  current_node_id: scenario.startNodeId,
+                  last_activity_at: now,
+                },
+                select: attemptSelect,
+              })) ?? attempt;
+          }
+
+          const responses = await tx.response.findMany({
+            where: { attempt_id: attempt.id },
+            orderBy: { created_at: 'asc' },
+            select: responseSelect,
+          });
+
+          return {
+            attempt,
+            responses,
+          };
+        }
+
+        const latestAttempt = await tx.attempt.findFirst({
+          where: {
+            assignment_id: assignment.id,
+            student_user_id: authedReq.auth.publicUserId,
+          },
+          orderBy: { attempt_number: 'desc' },
+          select: {
+            attempt_number: true,
+          },
+        });
+
+        const nextAttemptNumber = (latestAttempt?.attempt_number ?? 0) + 1;
+        if (
+          assignment.max_attempts !== null &&
+          typeof assignment.max_attempts === 'number' &&
+          nextAttemptNumber > assignment.max_attempts
+        ) {
+          throw new RouteError(
+            400,
+            'BAD_REQUEST',
+            'You have reached the maximum number of attempts for this assignment'
+          );
+        }
+
+        attempt = await tx.attempt.create({
+          data: {
+            assignment_id: assignment.id,
+            student_user_id: authedReq.auth.publicUserId,
+            attempt_number: nextAttemptNumber,
+            current_node_id: scenario.startNodeId,
+            last_activity_at: now,
+          },
+          select: attemptSelect,
+        });
+
+        return {
+          attempt,
+          responses: [],
+        };
+      });
+
+      return res.json({
+        item: {
+          assignment: mapAssignmentRow(assignment),
+          attempt: mapAttemptRow(session.attempt),
+          responses: session.responses.map((response) => mapResponseRow(response, true)),
+          scenario_content: assignment.scenario_version.content,
+        },
+      });
+    } catch (error) {
+      if (error instanceof RouteError) {
+        return sendError(res, error.status, error.code, error.message);
+      }
+
+      return sendInternalError(res, 'Failed to start assignment attempt', error);
     }
   });
 
