@@ -104,7 +104,7 @@ export type PublicAttempt = PublicAttemptBase & {
   response_count: number;
 };
 
-export type PublicResponse = PublicResponseBase & {
+export type PublicResponse = Omit<PublicResponseBase, "response_payload"> & {
   attempt_number: number;
   assignment_id: string;
   assignment_title: string;
@@ -113,7 +113,7 @@ export type PublicResponse = PublicResponseBase & {
   student_name: string;
   student_email: string;
   has_response_payload: boolean;
-  response_payload?: PublicResponseBase['response_payload'];
+  response_payload?: PublicResponseBase["response_payload"];
 };
 
 export type PublicAssignmentAttemptSession = {

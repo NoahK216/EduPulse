@@ -145,31 +145,7 @@ function isPastAssignment(assignment: PublicAssignment, now: number) {
   return false;
 }
 
-function getClassroomRole(
-  publicUser: PublicUser | null,
-  classroom: PublicClassroom | null,
-  members: PublicClassroomMember[],
-): ClassroomViewerRole {
-  if (!publicUser) {
-    return null;
-  }
-
-  const currentMembership =
-    members.find((member) => member.user_id === publicUser.id) ?? null;
-  const membershipRole = normalizeRole(currentMembership?.role);
-
-  if (membershipRole) {
-    return membershipRole;
-  }
-
-  if (classroom?.created_by_id === publicUser.id) {
-    return 'instructor';
-  }
-
-  return null;
-}
-
-function getAssignmentRole(
+function getMemberClassroomRole(
   publicUser: PublicUser | null,
   members: PublicClassroomMember[],
 ): AssignmentViewerRole {
@@ -254,7 +230,7 @@ export function useClassroomViewer(
   const classroomItem = classroom.item;
   const publicUser = currentUser.user;
   const memberItems = members.items;
-  const role = getClassroomRole(publicUser, classroomItem, memberItems);
+  const role = getMemberClassroomRole(publicUser, members.items);
   const attempts = useAttempts(role === 'instructor' ? { pageSize: 100 } : null);
   const studentMembers = memberItems
     .filter((member) => normalizeRole(member.role) === 'student')
@@ -400,7 +376,7 @@ export function useAssignmentDetailData(
   const attempts = useAssignmentAttempts(hasValidIds ? validAssignmentId : null);
   const assignmentItem = assignment.item;
   const publicUser = currentUser.user;
-  const role = getAssignmentRole(publicUser, members.items);
+  const role = getMemberClassroomRole(publicUser, members.items);
   const attemptItems = [...attempts.items].sort(compareAttempts);
   const latestAttempt = attemptItems[0] ?? null;
   const inProgressAttempt =

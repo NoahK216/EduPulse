@@ -1,24 +1,18 @@
 import type { Prisma } from '../../../prisma/generated/client.js';
 
 export function accessibleClassroomWhere(
-  publicUserId: string
+  publicUserId: string,
 ): Prisma.classroomWhereInput {
   return {
-    OR: [
-      { created_by_id: publicUserId },
-      { members: { some: { user_id: publicUserId } } },
-    ],
+    OR: [{ members: { some: { user_id: publicUserId } } }],
   };
 }
 
 export function instructorClassroomWhere(
-  publicUserId: string
+  publicUserId: string,
 ): Prisma.classroomWhereInput {
   return {
-    OR: [
-      { created_by_id: publicUserId },
-      { members: { some: { user_id: publicUserId, role: 'instructor' } } },
-    ],
+    OR: [{ members: { some: { user_id: publicUserId, role: "instructor" } } }],
   };
 }
 

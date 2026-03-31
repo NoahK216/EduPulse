@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import type { PublicAttempt } from '../../../types/publicApi';
+import { stringFromDateOrText } from '../../../lib/format-dates';
 
 type AttemptListProps = {
   attempts: PublicAttempt[];
@@ -9,14 +10,6 @@ type AttemptListProps = {
   role: 'instructor' | 'student';
   latestAttemptId?: string | null;
 };
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return 'N/A';
-  }
-
-  return new Date(value).toLocaleString();
-}
 
 function AttemptList({
   attempts,
@@ -38,7 +31,7 @@ function AttemptList({
             {role === 'instructor' ? ` - ${attempt.student_name}` : ''}
           </p>
           <p className="text-xs text-neutral-400">
-            Status: {attempt.status} | Last saved: {formatDate(attempt.last_activity_at)}
+            Status: {attempt.status} | Last saved: {stringFromDateOrText(attempt.last_activity_at, "N/A")}
           </p>
           {role === 'student' && latestAttemptId === attempt.id ? (
             <p className="mt-1 text-xs text-neutral-500">Latest attempt</p>

@@ -72,7 +72,7 @@ const NodeEditorPanel = ({ editorState }: NodeEditorPanelProps) => {
     editorState && editorState.status === "loaded" ? editorState.doc : null;
   const ui =
     editorState && editorState.status === "loaded" ? editorState.ui : null;
-  const node = doc?.nodes[ui?.inspectedNodeId!];
+  const node = ui ? doc?.nodes[ui.inspectedNodeId!] : null;
   const onCloseEditor = () => dispatch({ type: "inspectNode", id: null });
 
   if (!node) return null;

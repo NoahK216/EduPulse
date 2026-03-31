@@ -1,12 +1,5 @@
+import { stringFromDateOrText } from '../../../lib/format-dates';
 import type { PublicAssignment } from '../../../types/publicApi';
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return 'N/A';
-  }
-
-  return new Date(value).toLocaleString();
-}
 
 type AssignmentSummaryCardProps = {
   assignment: PublicAssignment;
@@ -24,13 +17,13 @@ function AssignmentSummaryCard({ assignment }: AssignmentSummaryCardProps) {
         Assigned by: {assignment.assigned_by_name}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
-        Opens: {formatDate(assignment.open_at)}
+        Opens: {stringFromDateOrText(assignment.open_at, "N/A")}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
-        Due: {formatDate(assignment.due_at)}
+        Due: {stringFromDateOrText(assignment.due_at, "N/A")}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
-        Closes: {formatDate(assignment.close_at)}
+        Closes: {stringFromDateOrText(assignment.close_at, "N/A")}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
         Max attempts: {assignment.max_attempts === null ? 'Unlimited' : assignment.max_attempts}

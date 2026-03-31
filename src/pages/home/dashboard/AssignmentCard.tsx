@@ -1,11 +1,7 @@
 import { Link } from "react-router-dom";
 
 import type { PublicAssignment } from "../../../types/publicApi";
-
-function formatDate(value: string | null) {
-  if (!value) return "No due date";
-  return new Date(value).toLocaleString();
-}
+import { stringFromDateOrText } from "../../../lib/format-dates";
 
 type AssignmentCardProps = {
   assignment: PublicAssignment;
@@ -26,7 +22,7 @@ function AssignmentCard({ assignment }: AssignmentCardProps) {
 
       <div className="text-sm text-neutral-500 dark:text-neutral-400">
         <p className="uppercase tracking-wide">Due</p>
-        <p className="mt-1 line-clamp-3">{formatDate(assignment.due_at)}</p>
+        <p className="mt-1 line-clamp-3">{stringFromDateOrText(assignment.due_at, "No due date")}</p>
       </div>
     </Link>
   );

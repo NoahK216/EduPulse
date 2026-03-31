@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { stringFromDateOrText } from '../../../lib/format-dates';
 
 type StudentProgressCardProps = {
   attemptsUsed: number;
@@ -12,14 +13,6 @@ type StudentProgressCardProps = {
   canStartNewAttempt: boolean;
   runnerLink: string | null;
 };
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return 'N/A';
-  }
-
-  return new Date(value).toLocaleString();
-}
 
 function StudentProgressCard({
   attemptsUsed,
@@ -44,12 +37,12 @@ function StudentProgressCard({
           </p>
           {!isOpen && openAt ? (
             <p className="mt-2 text-sm text-neutral-400">
-              This assignment opens on {formatDate(openAt)}.
+              This assignment opens on {stringFromDateOrText(openAt, "N/A")}.
             </p>
           ) : null}
           {isClosed ? (
             <p className="mt-2 text-sm text-neutral-400">
-              This assignment closed on {formatDate(closeAt)}.
+              This assignment closed on {stringFromDateOrText(closeAt, "N/A")}.
             </p>
           ) : null}
           {isOpen && !isClosed && hasRunnableAttempt ? (

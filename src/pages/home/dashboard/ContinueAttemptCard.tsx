@@ -1,15 +1,11 @@
 import { Link } from 'react-router-dom';
 
 import type { PublicAttempt } from '../../../types/publicApi';
+import { stringFromDateOrText } from '../../../lib/format-dates';
 
 type ContinueAttemptCardProps = {
   attempt: PublicAttempt;
 };
-
-function formatDate(value: string | null) {
-  if (!value) return 'No due date';
-  return new Date(value).toLocaleString();
-}
 
 function ContinueAttemptCard({ attempt }: ContinueAttemptCardProps) {
   return (
@@ -19,7 +15,7 @@ function ContinueAttemptCard({ attempt }: ContinueAttemptCardProps) {
         {attempt.classroom_name}
       </p>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-        Started {formatDate(attempt.started_at)}
+        Started {stringFromDateOrText(attempt.started_at, "No due date")}
       </p>
       <Link
         to={`/classrooms/${attempt.classroom_id}/assignment/${attempt.assignment_id}/attempt`}

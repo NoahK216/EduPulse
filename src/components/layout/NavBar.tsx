@@ -1,18 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
 
 function NavBar() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
-  const loc = useLocation();
-  const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
   const userName = session?.user?.name || session?.user?.email;
-
-  useEffect(() => {
-    setOpen(false);
-  }, [loc.pathname]);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -55,17 +49,28 @@ function NavBar() {
                 <p className="block !text-white px-3 py-2 text-sm">
                   {userName}
                 </p>
-                <a
-                  href="#"
-                  onClick={async (e) => {
-                    e.preventDefault();
+                  <Link
+                    to="/"
+                    onClick={async () => {
                     await authClient.signOut();
-                    navigate("/");
                   }}
-                  className="block !text-white px-3 py-2 text-sm hover:bg-gray-700"
+                    className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
                 >
                   Logout
-                </a>
+                  </Link>
+                  <Link
+                    to="/classrooms"
+                    className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
+                  >
+                    Classroom
+                  </Link>
+                  <div className="h-px bg-neutral-500 dark:bg-gray-700" />
+                  <Link
+                    to="/settings"
+                    className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
+                  >
+                    Settings
+                  </Link>
               </>
             ) : (
               // not logged in
@@ -84,19 +89,6 @@ function NavBar() {
                 </Link>
               </>
             )}
-            <Link
-              to="/classrooms"
-              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
-            >
-              Classroom
-            </Link>
-            <div className="h-px bg-neutral-500 dark:bg-gray-700" />
-            <Link
-              to="/settings"
-              className="block px-3 py-2 text-sm text-neutral-900 hover:bg-neutral-200 dark:text-white dark:hover:bg-gray-700"
-            >
-              Settings
-            </Link>
           </div>
         )}
       </div>

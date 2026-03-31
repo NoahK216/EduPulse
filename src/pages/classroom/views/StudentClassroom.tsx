@@ -9,11 +9,7 @@ import {
   DataGuard,
   type DataGuardState,
 } from '../../../components/data/DataGuard';
-
-function formatDate(value: string | null) {
-  if (!value) return 'No due date';
-  return new Date(value).toLocaleString();
-}
+import { stringFromDateOrText } from '../../../lib/format-dates';
 
 type StudentClassroomProps = {
   classroom: PublicClassroom;
@@ -66,7 +62,7 @@ function StudentClassroom({
                   </div>
                   <div className="text-right text-sm text-neutral-500 dark:text-neutral-400">
                     Due
-                    <p className="mt-1">{formatDate(assignment.due_at)}</p>
+                    <p className="mt-1">{stringFromDateOrText(assignment.due_at, "No due date")}</p>
                   </div>
                 </div>
               </Link>

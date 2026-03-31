@@ -1,16 +1,10 @@
+import { stringFromDateOrText } from '../../../lib/format-dates';
 import type { PublicAttempt } from '../../../types/publicApi';
 
 type AttemptSummaryCardProps = {
   attempt: PublicAttempt;
 };
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return 'N/A';
-  }
-
-  return new Date(value).toLocaleString();
-}
 
 function AttemptSummaryCard({ attempt }: AttemptSummaryCardProps) {
   return (
@@ -22,10 +16,10 @@ function AttemptSummaryCard({ attempt }: AttemptSummaryCardProps) {
         Status: {attempt.status}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
-        Started: {formatDate(attempt.started_at)}
+        Started: {stringFromDateOrText(attempt.started_at, "N/A")}
       </p>
       <p className="mt-1 text-sm text-neutral-300">
-        Submitted: {formatDate(attempt.submitted_at)}
+        Submitted: {stringFromDateOrText(attempt.submitted_at, "N/A")}
       </p>
     </section>
   );
