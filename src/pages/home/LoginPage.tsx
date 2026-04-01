@@ -48,9 +48,11 @@ function LoginPage() {
         await authClient.getSession();
         navigate("/");
       }
-    } catch (e: any) {
-      console.error("login error", e);
-      setError(e.message || "An unexpected error occurred");
+    } catch (error) {
+      console.error("login error", error);
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -58,7 +60,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen pt-10 w-screen dark:bg-neutral-900 dark:text-neutral-150">
-      <NavBar />
+      <NavBar showMenu={false} />
       <main className="mx-auto max-w-md px-8 py-20">
         <h1 className="text-3xl text-neutral dark:text-neutral-50 font-semibold">
           Log in

@@ -6,7 +6,6 @@ import {
   asAuthedRequest,
   parseOptionalUuidQuery,
   parsePagination,
-  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
@@ -100,40 +99,6 @@ export function createPublicClassroomMembersRouter() {
       });
     } catch (error) {
       return sendInternalError(res, 'Failed to list classroom members', error);
-    }
-  });
-
-  router.get('/:classroomId/:userId', async (req, res) => {
-    const authedReq = asAuthedRequest(req);
-    const classroomId = parseUuidParam('classroomId', req.params.classroomId);
-    if (!classroomId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
-    }
-
-    const userId = parseUuidParam('userId', req.params.userId);
-    if (!userId.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', userId.message);
-    }
-
-    try {
-      const row = await prisma.classroom_member.findFirst({
-        where: {
-          AND: [
-            { classroom_id: classroomId.value, user_id: userId.value },
-            { classroom: accessibleClassroomWhere(authedReq.auth.publicUserId) },
-          ],
-        },
-        select: classroomMemberSelect,
-      });
-
-      const item = mapClassroomMemberRow(row);
-      if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Classroom member not found');
-      }
-
-      return res.json({ item });
-    } catch (error) {
-      return sendInternalError(res, 'Failed to fetch classroom member', error);
     }
   });
 

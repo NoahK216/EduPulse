@@ -56,12 +56,6 @@ export type ScenariosState = CollectionState<PublicScenario>;
 export type ScenarioVersionsState = CollectionState<PublicScenarioVersion>;
 export type AttemptsState = CollectionState<PublicAttempt>;
 
-export type ClassroomMemberState = ApiState<
-  ItemResponse<PublicClassroomMember>
-> & {
-  item: PublicClassroomMember | null;
-};
-
 type AttemptsQuery = {
   assignmentId?: string;
   classroomId?: string;
@@ -195,25 +189,6 @@ export function useClassroomMemberships(
       pageSize,
     }),
   );
-}
-
-export function useClassroomMember(
-  classroomId: string | null | undefined,
-  userId: string | null | undefined,
-): ClassroomMemberState {
-  const validatedUserId = resolveValidatedId(userId);
-  const validatedClassroomId = resolveValidatedId(classroomId);
-
-  const path =
-    validatedUserId.hasValidId && validatedClassroomId.hasValidId
-      ? `/api/public/classroom-members/${validatedClassroomId.id}/${validatedUserId.id}`
-      : null;
-  const state = useApiData<ItemResponse<PublicClassroomMember>>(path);
-
-  return {
-    ...state,
-    item: state.data?.item ?? null,
-  };
 }
 
 export function useClassroomAssignments(

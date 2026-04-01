@@ -1,97 +1,491 @@
-import { useState } from 'react';
+import { useState } from "react";
 
-import { authClient } from '../../../lib/auth-client';
+import { authClient } from "../../../lib/auth-client";
 import {
   useAssignments,
   useAttempts,
   useClassroomMemberships,
   useClassrooms,
   useCurrentUser,
-} from '../../../lib/usePublicApiHooks';
+  useScenarios,
+} from "../../../lib/usePublicApiHooks";
+
 import type {
   PublicAssignment,
   PublicAttempt,
   PublicClassroom,
-} from '../../../types/publicApi';
+  PublicClassroomMember,
+  PublicScenario,
+  PublicUser,
+} from "../../../types/publicApi";
+
+import type {
+  DashboardAction,
+  DashboardClassroomListItem,
+  DashboardContinueWork,
+  DashboardRole,
+  HomeDashboardData,
+} from "./homeDashboardData.types";
 import type { DataGuardState } from "../../../components/data/DataGuard";
 
-type HomeDashboardData = {
-  displayName: string;
-  guard: DataGuardState;
-  membershipsGuard: DataGuardState;
-  attemptsGuard: DataGuardState;
-  assignmentsGuard: DataGuardState;
-  classroomsGuard: DataGuardState;
-  inProgressAttempt: PublicAttempt | null;
-  upcomingAssignments: PublicAssignment[];
-  instructorClassrooms: PublicClassroom[];
-  showStudentAssignments: boolean;
-  showInstructorClassrooms: boolean;
-  showEmptyState: boolean;
-};
+export type {
+  DashboardAction,
+  DashboardClassroomListItem,
+  DashboardContinueWork,
+  DashboardRole,
+  DashboardTone,
+  HomeDashboardData,
+} from "./homeDashboardData.types";
 
-const CONTENT_GUARD: DataGuardState = { kind: 'content' };
+const CONTENT_GUARD: DataGuardState = { kind: "content" };
 
-function formatDisplayName(value: string | null | undefined) {
-  if (!value) return 'there';
-
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return 'there';
-
-  if (trimmed.includes('@')) {
-    return trimmed.split('@')[0];
-  }
-
-  return trimmed.split(/\s+/)[0];
-}
-
-function compareByDueDate(left: PublicAssignment, right: PublicAssignment) {
-  if (!left.due_at && !right.due_at) return left.title.localeCompare(right.title);
-  if (!left.due_at) return 1;
-  if (!right.due_at) return -1;
-
-  return new Date(left.due_at).getTime() - new Date(right.due_at).getTime();
-}
-
-function createGuard({
-  unauthorized,
-  loading,
-  error,
-  onRetry,
-  itemCount,
-  emptyMessage,
-}: {
+type GuardSource = {
   unauthorized: boolean;
   loading: boolean;
   error: string | null;
-  onRetry: () => void;
-  itemCount?: number;
-  emptyMessage?: string;
-}): DataGuardState {
-  if (unauthorized) {
-    return { kind: 'unauthorized' };
+  refetch: () => void;
+};
+
+type MembershipSummary = {
+  activeRoles: DashboardRole[];
+  hasStudentRole: boolean;
+  hasInstructorRole: boolean;
+  relevantClassroomIds: Set<string>;
+  instructorClassroomIds: Set<string>;
+};
+
+type RecentWork = {
+  latestScenario: PublicScenario | null;
+  latestInProgressAttempt: PublicAttempt | null;
+  latestKind: "draft" | "attempt" | null;
+};
+
+type BuildHomeDashboardDataArgs = {
+  displayName: string;
+  guard: DataGuardState;
+  publicUser: PublicUser | null;
+  memberships: PublicClassroomMember[];
+  assignments: PublicAssignment[];
+  attempts: PublicAttempt[];
+  classrooms: PublicClassroom[];
+  scenarios: PublicScenario[];
+  pageLoadedAt: number;
+};
+
+function formatDisplayName(value: string | null | undefined) {
+  if (!value) {
+    return "there";
   }
 
-  if (loading) {
-    return { kind: 'loading' };
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return "there";
   }
 
+  if (trimmed.includes("@")) {
+    return trimmed.split("@")[0]!;
+  }
+
+  return trimmed.split(/\s+/)[0]!;
+}
+
+function createDashboardGuard(sources: GuardSource[]): DataGuardState {
+  if (sources.some((source) => source.unauthorized)) {
+    return { kind: "unauthorized" };
+  }
+
+  if (sources.some((source) => source.loading)) {
+    return { kind: "loading" };
+  }
+
+  const error = sources.find((source) => source.error)?.error ?? null;
   if (error) {
     return {
-      kind: 'error',
+      kind: "error",
       message: error,
-      onRetry,
-    };
-  }
-
-  if (typeof itemCount === 'number' && emptyMessage && itemCount === 0) {
-    return {
-      kind: 'empty',
-      message: emptyMessage,
+      onRetry: () => {
+        sources.forEach((source) => {
+          source.refetch();
+        });
+      },
     };
   }
 
   return CONTENT_GUARD;
+}
+
+function buildHomeDashboardData({
+  displayName,
+  guard,
+  publicUser,
+  memberships,
+  assignments,
+  attempts,
+  classrooms,
+  scenarios,
+  pageLoadedAt,
+}: BuildHomeDashboardDataArgs): HomeDashboardData {
+  if (guard.kind === "content" && !publicUser) {
+    return createProfileEmptyState(displayName);
+  }
+
+  const membershipSummary = getMembershipSummary(publicUser, memberships);
+  const ownAttempts = getOwnAttempts(publicUser, attempts);
+  const activeAssignmentCountByClassroom =
+    buildActiveAssignmentCountByClassroom(
+      assignments,
+      membershipSummary.relevantClassroomIds,
+      pageLoadedAt,
+    );
+  const classroomList = buildClassroomList(
+    classrooms,
+    membershipSummary.relevantClassroomIds,
+    membershipSummary.instructorClassroomIds,
+    activeAssignmentCountByClassroom,
+  );
+  const recentWork = getRecentWork(scenarios, ownAttempts);
+  const continueWork = buildContinueWork(
+    recentWork,
+    membershipSummary.hasInstructorRole,
+  );
+
+  return {
+    displayName,
+    activeRoles: membershipSummary.activeRoles,
+    guard,
+    actionBarActions: buildActionBarActions({
+      hasStudentRole: membershipSummary.hasStudentRole,
+      hasInstructorRole: membershipSummary.hasInstructorRole,
+      recentWork,
+    }),
+    classroomList,
+    continueWork,
+    showEmptyState:
+      guard.kind === "content" &&
+      classroomList.length === 0 &&
+      continueWork === null,
+    hasStudentRole: membershipSummary.hasStudentRole,
+    hasInstructorRole: membershipSummary.hasInstructorRole,
+  };
+}
+
+function createProfileEmptyState(displayName: string): HomeDashboardData {
+  return {
+    displayName,
+    activeRoles: [],
+    guard: {
+      kind: "empty",
+      message: "No profile data is available for this account yet.",
+    },
+    actionBarActions: [],
+    classroomList: [],
+    continueWork: null,
+    showEmptyState: true,
+    hasStudentRole: false,
+    hasInstructorRole: false,
+  };
+}
+
+function getMembershipSummary(
+  publicUser: PublicUser | null,
+  memberships: PublicClassroomMember[],
+): MembershipSummary {
+  const ownMemberships = publicUser
+    ? memberships.filter((member) => member.user_id === publicUser.id)
+    : [];
+  const studentClassroomIds = new Set(
+    ownMemberships
+      .filter((member) => member.role === "student")
+      .map((member) => member.classroom_id),
+  );
+  const instructorClassroomIds = new Set(
+    ownMemberships
+      .filter((member) => member.role === "instructor")
+      .map((member) => member.classroom_id),
+  );
+  const hasStudentRole = studentClassroomIds.size > 0;
+  const hasInstructorRole = instructorClassroomIds.size > 0;
+
+  return {
+    activeRoles: [
+      ...(hasStudentRole ? (["student"] as const) : []),
+      ...(hasInstructorRole ? (["instructor"] as const) : []),
+    ],
+    hasStudentRole,
+    hasInstructorRole,
+    relevantClassroomIds: new Set([
+      ...studentClassroomIds,
+      ...instructorClassroomIds,
+    ]),
+    instructorClassroomIds,
+  };
+}
+
+function getOwnAttempts(
+  publicUser: PublicUser | null,
+  attempts: PublicAttempt[],
+): PublicAttempt[] {
+  if (!publicUser) {
+    return [];
+  }
+
+  return attempts.filter(
+    (attempt) => attempt.student_user_id === publicUser.id,
+  );
+}
+
+function buildActiveAssignmentCountByClassroom(
+  assignments: PublicAssignment[],
+  relevantClassroomIds: Set<string>,
+  now: number,
+) {
+  const counts = new Map<string, number>();
+
+  assignments
+    .filter((assignment) => relevantClassroomIds.has(assignment.classroom_id))
+    .forEach((assignment) => {
+      if (isAssignmentClosed(assignment, now)) {
+        return;
+      }
+
+      counts.set(
+        assignment.classroom_id,
+        (counts.get(assignment.classroom_id) ?? 0) + 1,
+      );
+    });
+
+  return counts;
+}
+
+function buildClassroomList(
+  classrooms: PublicClassroom[],
+  relevantClassroomIds: Set<string>,
+  instructorClassroomIds: Set<string>,
+  activeAssignmentCountByClassroom: Map<string, number>,
+): DashboardClassroomListItem[] {
+  return classrooms
+    .filter((classroom) => relevantClassroomIds.has(classroom.id))
+    .map(
+      (classroom): DashboardClassroomListItem => ({
+        classroom,
+        role: instructorClassroomIds.has(classroom.id)
+          ? "instructor"
+          : "student",
+        activeAssignmentCount:
+          activeAssignmentCountByClassroom.get(classroom.id) ?? 0,
+        actionLink: `/classrooms/${classroom.id}`,
+      }),
+    )
+    .sort(compareClassroomListItems);
+}
+
+function getRecentWork(
+  scenarios: PublicScenario[],
+  ownAttempts: PublicAttempt[],
+): RecentWork {
+  const latestScenario = [...scenarios].sort(compareByUpdatedAt)[0] ?? null;
+  const latestInProgressAttempt =
+    [...ownAttempts]
+      .filter((attempt) => attempt.status === "in_progress")
+      .sort(compareAttemptsByLastActivity)[0] ?? null;
+
+  if (!latestScenario && !latestInProgressAttempt) {
+    return {
+      latestScenario: null,
+      latestInProgressAttempt: null,
+      latestKind: null,
+    };
+  }
+
+  if (!latestScenario) {
+    return {
+      latestScenario,
+      latestInProgressAttempt,
+      latestKind: "attempt",
+    };
+  }
+
+  if (!latestInProgressAttempt) {
+    return {
+      latestScenario,
+      latestInProgressAttempt,
+      latestKind: "draft",
+    };
+  }
+
+  return {
+    latestScenario,
+    latestInProgressAttempt,
+    latestKind:
+      new Date(latestInProgressAttempt.last_activity_at).getTime() >
+      new Date(latestScenario.updated_at).getTime()
+        ? "attempt"
+        : "draft",
+  };
+}
+
+function buildActionBarActions({
+  hasStudentRole,
+  hasInstructorRole,
+  recentWork,
+}: {
+  hasStudentRole: boolean;
+  hasInstructorRole: boolean;
+  recentWork: RecentWork;
+}): DashboardAction[] {
+  const actions: DashboardAction[] = [
+    {
+      label: "+ Create Scenario",
+      to: "/scenario/new",
+      style: "primary",
+    },
+  ];
+
+  if (hasStudentRole || hasInstructorRole) {
+    actions.push({
+      label: "View Classrooms",
+      to: "/classrooms",
+      style: "primary",
+    });
+  } else {
+    actions.push({
+      label: "Join Classroom",
+      to: "/classrooms/join",
+      style: "primary",
+    });
+  }
+
+  const secondaryAction = buildSecondaryAction(recentWork);
+  if (secondaryAction) {
+    actions.push(secondaryAction);
+  }
+
+  return actions;
+}
+
+function buildSecondaryAction(recentWork: RecentWork): DashboardAction | null {
+  if (
+    recentWork.latestKind === "attempt" &&
+    recentWork.latestInProgressAttempt
+  ) {
+    return {
+      label: "Continue Assignment",
+      to: buildAttemptLink(recentWork.latestInProgressAttempt),
+      style: "secondary",
+    };
+  }
+
+  if (recentWork.latestKind === "draft" && recentWork.latestScenario) {
+    return {
+      label: "Edit Latest Draft",
+      to: `/scenario/${recentWork.latestScenario.id}/editor`,
+      style: "secondary",
+    };
+  }
+
+  return null;
+}
+
+function buildContinueWork(
+  recentWork: RecentWork,
+  hasInstructorRole: boolean,
+): DashboardContinueWork | null {
+  if (
+    recentWork.latestKind === "attempt" &&
+    recentWork.latestInProgressAttempt
+  ) {
+    return {
+      kind: "attempt",
+      title: recentWork.latestInProgressAttempt.assignment_title,
+      subtitle: recentWork.latestInProgressAttempt.classroom_name,
+      updatedAt: recentWork.latestInProgressAttempt.last_activity_at,
+      actionLabel: "Resume Assignment",
+      actionLink: buildAttemptLink(recentWork.latestInProgressAttempt),
+      tone: "cyan",
+    };
+  }
+
+  if (hasInstructorRole && recentWork.latestScenario) {
+    return {
+      kind: "draft",
+      title: recentWork.latestScenario.title,
+      subtitle: "Draft scenario",
+      updatedAt: recentWork.latestScenario.updated_at,
+      actionLabel: "Resume Editing",
+      actionLink: `/scenario/${recentWork.latestScenario.id}/editor`,
+      tone: "indigo",
+    };
+  }
+
+  if (recentWork.latestInProgressAttempt) {
+    return {
+      kind: "attempt",
+      title: recentWork.latestInProgressAttempt.assignment_title,
+      subtitle: recentWork.latestInProgressAttempt.classroom_name,
+      updatedAt: recentWork.latestInProgressAttempt.last_activity_at,
+      actionLabel: "Resume Assignment",
+      actionLink: buildAttemptLink(recentWork.latestInProgressAttempt),
+      tone: "cyan",
+    };
+  }
+
+  return null;
+}
+
+function rolePriority(role: DashboardRole) {
+  return role === "instructor" ? 0 : 1;
+}
+
+function compareByUpdatedAt<
+  T extends { updated_at: string; title?: string; name?: string },
+>(left: T, right: T) {
+  const timeDifference =
+    new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime();
+
+  if (timeDifference !== 0) {
+    return timeDifference;
+  }
+
+  return (left.title ?? left.name ?? "").localeCompare(
+    right.title ?? right.name ?? "",
+  );
+}
+
+function compareAttemptsByLastActivity(
+  left: PublicAttempt,
+  right: PublicAttempt,
+) {
+  return (
+    new Date(right.last_activity_at).getTime() -
+    new Date(left.last_activity_at).getTime()
+  );
+}
+
+function compareClassroomListItems(
+  left: DashboardClassroomListItem,
+  right: DashboardClassroomListItem,
+) {
+  if (left.activeAssignmentCount !== right.activeAssignmentCount) {
+    return right.activeAssignmentCount - left.activeAssignmentCount;
+  }
+
+  const roleDifference = rolePriority(left.role) - rolePriority(right.role);
+  if (roleDifference !== 0) {
+    return roleDifference;
+  }
+
+  return left.classroom.name.localeCompare(right.classroom.name);
+}
+
+function isAssignmentClosed(assignment: PublicAssignment, now: number) {
+  return (
+    Boolean(assignment.close_at) &&
+    new Date(assignment.close_at!).getTime() <= now
+  );
+}
+
+function buildAttemptLink(attempt: PublicAttempt) {
+  return `/classrooms/${attempt.classroom_id}/assignment/${attempt.assignment_id}/attempt`;
 }
 
 export function useHomeDashboardData(): HomeDashboardData {
@@ -102,115 +496,29 @@ export function useHomeDashboardData(): HomeDashboardData {
   const assignments = useAssignments({ pageSize: 100 });
   const attempts = useAttempts({ pageSize: 100 });
   const classrooms = useClassrooms(100);
+  const scenarios = useScenarios(100);
   const publicUser = currentUser.user;
   const displayName = formatDisplayName(
     publicUser?.name ?? session?.user?.name ?? session?.user?.email,
   );
 
-  let guard: DataGuardState = CONTENT_GUARD;
+  const guard = createDashboardGuard([
+    currentUser,
+    classroomMembers,
+    assignments,
+    attempts,
+    classrooms,
+  ]);
 
-  if (
-    currentUser.unauthorized ||
-    classroomMembers.unauthorized ||
-    assignments.unauthorized ||
-    attempts.unauthorized ||
-    classrooms.unauthorized
-  ) {
-    guard = { kind: 'unauthorized' };
-  } else if (currentUser.loading) {
-    guard = { kind: 'loading' };
-  } else if (currentUser.error) {
-    guard = {
-      kind: 'error',
-      message: currentUser.error,
-      onRetry: currentUser.refetch,
-    };
-  } else if (!publicUser) {
-    guard = {
-      kind: 'empty',
-      message: 'No profile data is available for this account yet.',
-    };
-  }
-
-  const memberships = publicUser
-    ? classroomMembers.items.filter((member) => member.user_id === publicUser.id)
-    : [];
-  const studentClassroomIds = new Set(
-    memberships
-      .filter((member) => member.role === 'student')
-      .map((member) => member.classroom_id),
-  );
-  const instructorClassroomIds = new Set(
-    memberships
-      .filter((member) => member.role === 'instructor')
-      .map((member) => member.classroom_id),
-  );
-
-  const upcomingAssignments = assignments.items
-    .filter((assignment) => {
-      if (!studentClassroomIds.has(assignment.classroom_id)) return false;
-      if (!assignment.due_at) return true;
-      return new Date(assignment.due_at).getTime() >= pageLoadedAt;
-    })
-    .sort(compareByDueDate);
-
-  const inProgressAttempt =
-    attempts.items.find(
-      (attempt) =>
-        attempt.student_user_id === publicUser?.id && attempt.status === 'in_progress',
-    ) ?? null;
-
-  const instructorClassrooms = classrooms.items.filter((classroom) =>
-    instructorClassroomIds.has(classroom.id),
-  );
-
-  const showStudentAssignments = studentClassroomIds.size > 0;
-  const showInstructorClassrooms = instructorClassroomIds.size > 0;
-  const hasVisibleDashboardSections =
-    Boolean(inProgressAttempt) || showStudentAssignments || showInstructorClassrooms;
-
-  return {
+  return buildHomeDashboardData({
     displayName,
     guard,
-    membershipsGuard: createGuard({
-      unauthorized: classroomMembers.unauthorized,
-      loading: classroomMembers.loading,
-      error: classroomMembers.error,
-      onRetry: classroomMembers.refetch,
-    }),
-    attemptsGuard: createGuard({
-      unauthorized: attempts.unauthorized,
-      loading: attempts.loading,
-      error: attempts.error,
-      onRetry: attempts.refetch,
-    }),
-    assignmentsGuard: createGuard({
-      unauthorized: assignments.unauthorized,
-      loading: assignments.loading,
-      error: assignments.error,
-      onRetry: assignments.refetch,
-      itemCount: upcomingAssignments.length,
-      emptyMessage: 'You have no upcoming assignments right now.',
-    }),
-    classroomsGuard: createGuard({
-      unauthorized: classrooms.unauthorized,
-      loading: classrooms.loading,
-      error: classrooms.error,
-      onRetry: classrooms.refetch,
-      itemCount: instructorClassrooms.length,
-      emptyMessage: 'You are not instructing any classrooms yet.',
-    }),
-    inProgressAttempt,
-    upcomingAssignments,
-    instructorClassrooms,
-    showStudentAssignments,
-    showInstructorClassrooms,
-    showEmptyState:
-      guard.kind === 'content' &&
-      !classroomMembers.loading &&
-      !classroomMembers.error &&
-      !attempts.loading &&
-      !attempts.error &&
-      !hasVisibleDashboardSections,
-  };
+    publicUser,
+    memberships: classroomMembers.items,
+    assignments: assignments.items,
+    attempts: attempts.items,
+    classrooms: classrooms.items,
+    scenarios: scenarios.items,
+    pageLoadedAt,
+  });
 }

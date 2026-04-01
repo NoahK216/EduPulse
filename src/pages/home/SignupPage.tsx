@@ -37,9 +37,11 @@ function SignupPage() {
       } else {
         navigate("/login");
       }
-    } catch (e: any) {
-      console.error("signup error", e);
-      setError(e?.message || "An unexpected error occurred");
+    } catch (error) {
+      console.error("signup error", error);
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +49,7 @@ function SignupPage() {
 
   return (
     <div className="min-h-screen w-screen bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-150 pt-10">
-      <NavBar />
+      <NavBar showMenu={false} />
       <main className="mx-auto max-w-md px-8 py-15">
         <h1 className="text-3xl dark:text-white font-semibold">
           Create Account

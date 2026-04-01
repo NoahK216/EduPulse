@@ -357,7 +357,7 @@ export function useClassroomListData(): ClassroomListData {
       error: classrooms.error,
       onRetry: classrooms.refetch,
       itemCount: classrooms.items.length,
-      emptyMessage: 'No classrooms are available yet.',
+      emptyMessage: "No classrooms yet.",
     }),
   };
 }

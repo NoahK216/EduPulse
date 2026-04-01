@@ -6,7 +6,6 @@ import {
   asAuthedRequest,
   parseOptionalUuidQuery,
   parsePagination,
-  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
@@ -105,35 +104,6 @@ export function createPublicScenarioVersionsRouter() {
       });
     } catch (error) {
       return sendInternalError(res, 'Failed to list scenario versions', error);
-    }
-  });
-
-  router.get('/:id', async (req, res) => {
-    const authedReq = asAuthedRequest(req);
-    const id = parseUuidParam('id', req.params.id);
-    if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
-    }
-
-    try {
-      const row = await prisma.scenario_version.findFirst({
-        where: {
-          AND: [
-            { id: id.value },
-            { scenario: { owner_user_id: authedReq.auth.publicUserId } },
-          ],
-        },
-        select: scenarioVersionSelect,
-      });
-
-      const item = mapScenarioVersionRow(row);
-      if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Scenario version not found');
-      }
-
-      return res.json({ item });
-    } catch (error) {
-      return sendInternalError(res, 'Failed to fetch scenario version', error);
     }
   });
 

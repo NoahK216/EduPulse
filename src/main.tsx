@@ -6,6 +6,8 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { PublicApiQueryProvider } from "./lib/query-client";
 import { initializeTheme } from "./lib/theme";
 import "./index.css";
+import { LoadingPanel } from "./components/data/DataStatePanels.tsx";
+import PageShell from "./components/layout/PageShell.tsx";
 
 type LazyRouteModule = { default: ComponentType };
 const lazyComponent = (importer: () => Promise<LazyRouteModule>) => {
@@ -18,6 +20,11 @@ const lazyComponent = (importer: () => Promise<LazyRouteModule>) => {
 const router = createBrowserRouter([
   {
     path: "/",
+    hydrateFallbackElement: (
+      <PageShell title="" subtitle="">
+        <LoadingPanel />
+      </PageShell>
+    ),
     children: [
       {
         index: true,
@@ -38,6 +45,18 @@ const router = createBrowserRouter([
       {
         path: "classrooms",
         lazy: lazyComponent(() => import("./pages/classroom/ClassroomListPage.tsx")),
+      },
+      {
+        path: "classrooms/create",
+        lazy: lazyComponent(
+          () => import("./pages/classroom/ClassroomCreatePage.tsx"),
+        ),
+      },
+      {
+        path: "classrooms/join",
+        lazy: lazyComponent(
+          () => import("./pages/classroom/ClassroomJoinPage.tsx"),
+        ),
       },
       {
         path: "classrooms/:classroomId",
