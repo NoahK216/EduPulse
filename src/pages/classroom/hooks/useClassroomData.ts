@@ -18,14 +18,15 @@ import type {
   PublicAssignment,
   PublicAttempt,
   PublicClassroom,
+  PublicClassroomRole,
   PublicClassroomMember,
   PublicResponse,
   PublicUser,
 } from '../../../types/publicApi';
 import type { DataGuardState } from "../../../components/data/DataGuard";
 
-type ClassroomViewerRole = 'instructor' | 'student' | null;
-type AssignmentViewerRole = 'instructor' | 'student' | null;
+type ClassroomViewerRole = PublicClassroomRole | null;
+type AssignmentViewerRole = PublicClassroomRole | null;
 
 export type ClassroomViewerData = {
   classroomId: string | null;
@@ -230,7 +231,7 @@ export function useClassroomViewer(
   const classroomItem = classroom.item;
   const publicUser = currentUser.user;
   const memberItems = members.items;
-  const role = getMemberClassroomRole(publicUser, members.items);
+  const role = classroomItem?.viewer_role ?? getMemberClassroomRole(publicUser, memberItems);
   const attempts = useAttempts(role === 'instructor' ? { pageSize: 100 } : null);
   const studentMembers = memberItems
     .filter((member) => normalizeRole(member.role) === 'student')
@@ -347,7 +348,7 @@ export function useClassroomViewer(
 }
 
 export function useClassroomListData(): ClassroomListData {
-  const classrooms = useClassrooms();
+  const classrooms = useClassrooms(100);
 
   return {
     classrooms: classrooms.items,

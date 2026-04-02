@@ -1,16 +1,32 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import NavBar from "../../components/layout/NavBar";
 
 import { authClient } from "../../lib/auth-client";
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("verificationRequired") === "1") {
+      setMessage("Check your email to verify your account before logging in.");
+      return;
+    }
+
+    else if (searchParams.get("verificationSuccess") === "1") {
+      setMessage("Email verified! Please log in.");
+      return;
+    }
+
+    setMessage(null);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

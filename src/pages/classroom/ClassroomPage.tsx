@@ -18,6 +18,7 @@ function ClassroomPage() {
       <DataGuard state={viewer.guard}>
         {viewer.classroomId && viewer.classroom && viewer.role === 'instructor' ? (
           <InstructorClassroom
+            classroom={viewer.classroom}
             classroomId={viewer.classroomId}
             currentAssignments={viewer.instructorView.currentAssignments}
             pastAssignments={viewer.instructorView.pastAssignments}

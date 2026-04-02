@@ -1,3 +1,4 @@
+import type { classroom_role } from "../../prisma/generated/enums.js";
 import type {
   assignmentModel,
   attemptModel,
@@ -52,11 +53,15 @@ export type PublicApiError = {
   message: string;
 };
 
+export type PublicClassroomRole = classroom_role;
+
 export type PublicClassroom = PublicClassroomBase & {
   created_by_name: string;
   created_by_email: string;
   member_count: number;
   assignment_count: number;
+  viewer_role: PublicClassroomRole;
+  active_assignment_count: number;
 };
 
 export type PublicClassroomMember = PublicClassroomMemberBase & {

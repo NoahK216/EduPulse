@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 
-import ClassroomListCards from './components/ClassroomListCards';
 import { useClassroomListData } from './hooks/useClassroomData';
 import { DataGuard } from '../../components/data/DataGuard';
 import PageShell from '../../components/layout/PageShell';
-import { SectionHeader, SurfaceCard } from "../../components/ui/Surfaces";
+import { EmptyStateCard, SectionHeader, SurfaceCard } from "../../components/ui/Surfaces";
+import ClassroomRow from "./components/ClassroomRow";
 
 function ClassroomListPage() {
   const data = useClassroomListData();
@@ -43,7 +43,20 @@ function ClassroomListPage() {
       <section className="space-y-4">
         <SectionHeader title="Your Classrooms" />
         <DataGuard state={data.guard}>
-          <ClassroomListCards classrooms={data.classrooms} />
+          {data.classrooms.length > 0 ? (
+            <SurfaceCard className="overflow-hidden p-0">
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {data.classrooms.map((classroom) => (
+                  <ClassroomRow key={classroom.id} classroom={classroom} />
+                ))}
+              </div>
+            </SurfaceCard>
+          ) : (
+            <EmptyStateCard
+              title="No classrooms yet"
+              description="Classrooms will appear here once you join one as a student or instructor."
+            />
+          )}
         </DataGuard>
       </section>
     </PageShell>

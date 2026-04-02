@@ -1,6 +1,3 @@
-import {
-  FiArrowRight,
-} from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { DataGuard } from "../../../components/data/DataGuard";
@@ -16,9 +13,9 @@ import { shortDateFromDateOrText } from "../../../lib/format-dates";
 import {
   useHomeDashboardData,
   type DashboardAction,
-  type DashboardClassroomListItem,
   type DashboardContinueWork,
 } from "../hooks/useHomeDashboardData";
+import ClassroomRow from "../../classroom/components/ClassroomRow";
 
 function ActionButton({ action }: { action: DashboardAction }) {
   return (
@@ -32,31 +29,6 @@ function ActionButton({ action }: { action: DashboardAction }) {
       )}
     >
       {action.label}
-    </Link>
-  );
-}
-
-function ClassroomRow({ item }: { item: DashboardClassroomListItem }) {
-  return (
-    <Link
-      to={item.actionLink}
-      className="flex items-center justify-between gap-4 px-5 py-4 transition hover:bg-neutral-50 dark:hover:bg-neutral-900/70"
-    >
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate text-base font-semibold text-neutral-950 dark:text-neutral-50">
-            {item.classroom.name}
-          </p>
-          <StatusBadge tone={item.role === "instructor" ? "indigo" : "cyan"}>
-            {item.role}
-          </StatusBadge>
-        </div>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
-          {item.activeAssignmentCount} assignments
-        </p>
-      </div>
-
-      <FiArrowRight className="text-neutral-400" />
     </Link>
   );
 }
@@ -148,8 +120,8 @@ function AuthenticatedHome() {
             {dashboard.classroomList.length > 0 ? (
               <SurfaceCard className="overflow-hidden p-0">
                 <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                  {dashboard.classroomList.map((item) => (
-                    <ClassroomRow key={item.classroom.id} item={item} />
+                  {dashboard.classroomList.map((classroom) => (
+                    <ClassroomRow key={classroom.id} classroom={classroom} />
                   ))}
                 </div>
               </SurfaceCard>

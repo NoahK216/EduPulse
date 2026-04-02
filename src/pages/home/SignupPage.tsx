@@ -27,15 +27,19 @@ function SignupPage() {
     setIsSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
+      const callbackUrl = new URL("/login?verificationSuccess=1", window.location.origin);
+      callbackUrl.searchParams.set("next", "/");
+
       const { error } = await authClient.signUp.email({
         email,
         password,
         name: fullName,
+        callbackURL: callbackUrl.toString(),
       });
       if (error) {
         setError(error.message || "Failed to sign up");
       } else {
-        navigate("/login");
+        navigate("/login?verificationRequired=1");
       }
     } catch (error) {
       console.error("signup error", error);

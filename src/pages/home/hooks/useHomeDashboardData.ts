@@ -1,38 +1,29 @@
-import { useState } from "react";
-
 import { authClient } from "../../../lib/auth-client";
 import {
-  useAssignments,
   useAttempts,
-  useClassroomMemberships,
   useClassrooms,
   useCurrentUser,
   useScenarios,
 } from "../../../lib/usePublicApiHooks";
 
 import type {
-  PublicAssignment,
   PublicAttempt,
   PublicClassroom,
-  PublicClassroomMember,
+  PublicClassroomRole,
   PublicScenario,
   PublicUser,
 } from "../../../types/publicApi";
 
 import type {
   DashboardAction,
-  DashboardClassroomListItem,
   DashboardContinueWork,
-  DashboardRole,
   HomeDashboardData,
 } from "./homeDashboardData.types";
 import type { DataGuardState } from "../../../components/data/DataGuard";
 
 export type {
   DashboardAction,
-  DashboardClassroomListItem,
   DashboardContinueWork,
-  DashboardRole,
   DashboardTone,
   HomeDashboardData,
 } from "./homeDashboardData.types";
@@ -46,12 +37,10 @@ type GuardSource = {
   refetch: () => void;
 };
 
-type MembershipSummary = {
-  activeRoles: DashboardRole[];
+type ClassroomRoleSummary = {
+  activeRoles: PublicClassroomRole[];
   hasStudentRole: boolean;
   hasInstructorRole: boolean;
-  relevantClassroomIds: Set<string>;
-  instructorClassroomIds: Set<string>;
 };
 
 type RecentWork = {
@@ -64,12 +53,9 @@ type BuildHomeDashboardDataArgs = {
   displayName: string;
   guard: DataGuardState;
   publicUser: PublicUser | null;
-  memberships: PublicClassroomMember[];
-  assignments: PublicAssignment[];
-  attempts: PublicAttempt[];
   classrooms: PublicClassroom[];
+  attempts: PublicAttempt[];
   scenarios: PublicScenario[];
-  pageLoadedAt: number;
 };
 
 function formatDisplayName(value: string | null | undefined) {
@@ -118,54 +104,36 @@ function buildHomeDashboardData({
   displayName,
   guard,
   publicUser,
-  memberships,
-  assignments,
-  attempts,
   classrooms,
+  attempts,
   scenarios,
-  pageLoadedAt,
 }: BuildHomeDashboardDataArgs): HomeDashboardData {
   if (guard.kind === "content" && !publicUser) {
     return createProfileEmptyState(displayName);
   }
 
-  const membershipSummary = getMembershipSummary(publicUser, memberships);
+  const classroomRoleSummary = getClassroomRoleSummary(classrooms);
   const ownAttempts = getOwnAttempts(publicUser, attempts);
-  const activeAssignmentCountByClassroom =
-    buildActiveAssignmentCountByClassroom(
-      assignments,
-      membershipSummary.relevantClassroomIds,
-      pageLoadedAt,
-    );
-  const classroomList = buildClassroomList(
-    classrooms,
-    membershipSummary.relevantClassroomIds,
-    membershipSummary.instructorClassroomIds,
-    activeAssignmentCountByClassroom,
-  );
   const recentWork = getRecentWork(scenarios, ownAttempts);
-  const continueWork = buildContinueWork(
-    recentWork,
-    membershipSummary.hasInstructorRole,
-  );
+  const continueWork = buildContinueWork(recentWork);
 
   return {
     displayName,
-    activeRoles: membershipSummary.activeRoles,
+    activeRoles: classroomRoleSummary.activeRoles,
     guard,
     actionBarActions: buildActionBarActions({
-      hasStudentRole: membershipSummary.hasStudentRole,
-      hasInstructorRole: membershipSummary.hasInstructorRole,
+      hasStudentRole: classroomRoleSummary.hasStudentRole,
+      hasInstructorRole: classroomRoleSummary.hasInstructorRole,
       recentWork,
     }),
-    classroomList,
+    classroomList: classrooms,
     continueWork,
     showEmptyState:
       guard.kind === "content" &&
-      classroomList.length === 0 &&
+      classrooms.length === 0 &&
       continueWork === null,
-    hasStudentRole: membershipSummary.hasStudentRole,
-    hasInstructorRole: membershipSummary.hasInstructorRole,
+    hasStudentRole: classroomRoleSummary.hasStudentRole,
+    hasInstructorRole: classroomRoleSummary.hasInstructorRole,
   };
 }
 
@@ -186,38 +154,29 @@ function createProfileEmptyState(displayName: string): HomeDashboardData {
   };
 }
 
-function getMembershipSummary(
-  publicUser: PublicUser | null,
-  memberships: PublicClassroomMember[],
-): MembershipSummary {
-  const ownMemberships = publicUser
-    ? memberships.filter((member) => member.user_id === publicUser.id)
-    : [];
-  const studentClassroomIds = new Set(
-    ownMemberships
-      .filter((member) => member.role === "student")
-      .map((member) => member.classroom_id),
+function getClassroomRoleSummary(
+  classrooms: PublicClassroom[],
+): ClassroomRoleSummary {
+  const hasStudentRole = classrooms.some(
+    (classroom) => classroom.viewer_role === "student",
   );
-  const instructorClassroomIds = new Set(
-    ownMemberships
-      .filter((member) => member.role === "instructor")
-      .map((member) => member.classroom_id),
+  const hasInstructorRole = classrooms.some(
+    (classroom) => classroom.viewer_role === "instructor",
   );
-  const hasStudentRole = studentClassroomIds.size > 0;
-  const hasInstructorRole = instructorClassroomIds.size > 0;
+  const activeRoles: PublicClassroomRole[] = [];
+
+  if (hasStudentRole) {
+    activeRoles.push("student");
+  }
+
+  if (hasInstructorRole) {
+    activeRoles.push("instructor");
+  }
 
   return {
-    activeRoles: [
-      ...(hasStudentRole ? (["student"] as const) : []),
-      ...(hasInstructorRole ? (["instructor"] as const) : []),
-    ],
+    activeRoles,
     hasStudentRole,
     hasInstructorRole,
-    relevantClassroomIds: new Set([
-      ...studentClassroomIds,
-      ...instructorClassroomIds,
-    ]),
-    instructorClassroomIds,
   };
 }
 
@@ -232,51 +191,6 @@ function getOwnAttempts(
   return attempts.filter(
     (attempt) => attempt.student_user_id === publicUser.id,
   );
-}
-
-function buildActiveAssignmentCountByClassroom(
-  assignments: PublicAssignment[],
-  relevantClassroomIds: Set<string>,
-  now: number,
-) {
-  const counts = new Map<string, number>();
-
-  assignments
-    .filter((assignment) => relevantClassroomIds.has(assignment.classroom_id))
-    .forEach((assignment) => {
-      if (isAssignmentClosed(assignment, now)) {
-        return;
-      }
-
-      counts.set(
-        assignment.classroom_id,
-        (counts.get(assignment.classroom_id) ?? 0) + 1,
-      );
-    });
-
-  return counts;
-}
-
-function buildClassroomList(
-  classrooms: PublicClassroom[],
-  relevantClassroomIds: Set<string>,
-  instructorClassroomIds: Set<string>,
-  activeAssignmentCountByClassroom: Map<string, number>,
-): DashboardClassroomListItem[] {
-  return classrooms
-    .filter((classroom) => relevantClassroomIds.has(classroom.id))
-    .map(
-      (classroom): DashboardClassroomListItem => ({
-        classroom,
-        role: instructorClassroomIds.has(classroom.id)
-          ? "instructor"
-          : "student",
-        activeAssignmentCount:
-          activeAssignmentCountByClassroom.get(classroom.id) ?? 0,
-        actionLink: `/classrooms/${classroom.id}`,
-      }),
-    )
-    .sort(compareClassroomListItems);
 }
 
 function getRecentWork(
@@ -388,11 +302,11 @@ function buildSecondaryAction(recentWork: RecentWork): DashboardAction | null {
 
 function buildContinueWork(
   recentWork: RecentWork,
-  hasInstructorRole: boolean,
 ): DashboardContinueWork | null {
   if (
     recentWork.latestKind === "attempt" &&
-    recentWork.latestInProgressAttempt
+    recentWork.latestInProgressAttempt &&
+    !recentWork.latestScenario
   ) {
     return {
       kind: "attempt",
@@ -405,7 +319,7 @@ function buildContinueWork(
     };
   }
 
-  if (hasInstructorRole && recentWork.latestScenario) {
+  if (recentWork.latestScenario) {
     return {
       kind: "draft",
       title: recentWork.latestScenario.title,
@@ -417,23 +331,7 @@ function buildContinueWork(
     };
   }
 
-  if (recentWork.latestInProgressAttempt) {
-    return {
-      kind: "attempt",
-      title: recentWork.latestInProgressAttempt.assignment_title,
-      subtitle: recentWork.latestInProgressAttempt.classroom_name,
-      updatedAt: recentWork.latestInProgressAttempt.last_activity_at,
-      actionLabel: "Resume Assignment",
-      actionLink: buildAttemptLink(recentWork.latestInProgressAttempt),
-      tone: "cyan",
-    };
-  }
-
   return null;
-}
-
-function rolePriority(role: DashboardRole) {
-  return role === "instructor" ? 0 : 1;
 }
 
 function compareByUpdatedAt<
@@ -461,39 +359,13 @@ function compareAttemptsByLastActivity(
   );
 }
 
-function compareClassroomListItems(
-  left: DashboardClassroomListItem,
-  right: DashboardClassroomListItem,
-) {
-  if (left.activeAssignmentCount !== right.activeAssignmentCount) {
-    return right.activeAssignmentCount - left.activeAssignmentCount;
-  }
-
-  const roleDifference = rolePriority(left.role) - rolePriority(right.role);
-  if (roleDifference !== 0) {
-    return roleDifference;
-  }
-
-  return left.classroom.name.localeCompare(right.classroom.name);
-}
-
-function isAssignmentClosed(assignment: PublicAssignment, now: number) {
-  return (
-    Boolean(assignment.close_at) &&
-    new Date(assignment.close_at!).getTime() <= now
-  );
-}
-
 function buildAttemptLink(attempt: PublicAttempt) {
   return `/classrooms/${attempt.classroom_id}/assignment/${attempt.assignment_id}/attempt`;
 }
 
 export function useHomeDashboardData(): HomeDashboardData {
-  const [pageLoadedAt] = useState(() => Date.now());
   const { data: session } = authClient.useSession();
   const currentUser = useCurrentUser();
-  const classroomMembers = useClassroomMemberships();
-  const assignments = useAssignments({ pageSize: 100 });
   const attempts = useAttempts({ pageSize: 100 });
   const classrooms = useClassrooms(100);
   const scenarios = useScenarios(100);
@@ -502,23 +374,14 @@ export function useHomeDashboardData(): HomeDashboardData {
     publicUser?.name ?? session?.user?.name ?? session?.user?.email,
   );
 
-  const guard = createDashboardGuard([
-    currentUser,
-    classroomMembers,
-    assignments,
-    attempts,
-    classrooms,
-  ]);
+  const guard = createDashboardGuard([currentUser, attempts, classrooms]);
 
   return buildHomeDashboardData({
     displayName,
     guard,
     publicUser,
-    memberships: classroomMembers.items,
-    assignments: assignments.items,
-    attempts: attempts.items,
     classrooms: classrooms.items,
+    attempts: attempts.items,
     scenarios: scenarios.items,
-    pageLoadedAt,
   });
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import type {
   PublicAssignment,
+  PublicClassroom,
   PublicClassroomMember,
 } from '../../../types/publicApi';
 import {
@@ -22,6 +23,7 @@ function formatJoinDate(value: string) {
 }
 
 type InstructorClassroomProps = {
+  classroom: PublicClassroom;
   classroomId: string;
   currentAssignments: Array<{
     assignment: PublicAssignment;
@@ -39,6 +41,7 @@ type InstructorClassroomProps = {
 };
 
 function InstructorClassroom({
+  classroom,
   classroomId,
   currentAssignments,
   pastAssignments,
@@ -58,6 +61,9 @@ function InstructorClassroom({
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
               Instructor Dashboard
+            </p>
+            <p className="mt-2 text-sm text-neutral-700 dark:text-neutral-300">
+              Join code: {classroom.code ?? 'N/A'}
             </p>
             <p className="mt-2 text-lg text-neutral-700 dark:text-neutral-300">
               {summaryText}
