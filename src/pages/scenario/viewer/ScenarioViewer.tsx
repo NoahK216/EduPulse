@@ -15,6 +15,7 @@ import type { ScenarioEvent } from "./viewerTypes";
 
 type ScenarioViewerProps = {
   scenario?: Scenario;
+  scenarioUrl?: string;
   initialNodeId?: string | null;
   attemptId?: string | null;
   onAttemptUpdate?: (attempt: PublicAttempt) => void;
@@ -57,13 +58,14 @@ function getAttemptProgressBody(event: ScenarioEvent) {
 
 function ScenarioViewer({
   scenario,
+  scenarioUrl: scenarioUrlProp,
   initialNodeId,
   attemptId = null,
   onAttemptUpdate,
   onFinished: onFinished,
 }: ScenarioViewerProps) {
   const [searchParams] = useSearchParams();
-  const scenarioUrl = searchParams.get("url");
+  const scenarioUrl = scenarioUrlProp ?? searchParams.get("url");
   const [loadedScenario, setLoadedScenario] = useState<Scenario | undefined>(scenario);
   const [currentNodeId, setCurrentNodeId] = useState<string | null>(null);
   const [scenarioState, setScenarioState] = useState<
