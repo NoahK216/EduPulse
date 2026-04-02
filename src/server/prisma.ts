@@ -7,8 +7,6 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is not set.');
 }
 
-const adapter = new PrismaNeon({
-  connectionString: databaseUrl,
-});
+const adapter = new PrismaNeon({ connectionString: databaseUrl });
 
 export const prisma = new PrismaClient({ adapter });

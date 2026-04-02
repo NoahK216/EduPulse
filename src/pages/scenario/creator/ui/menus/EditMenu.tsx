@@ -21,14 +21,6 @@ const EditMenu = ({ actions }: EditMenuProps) => {
       disabled: true,
       onSelect: actions.onRedo,
     },
-    { type: "separator", id: "layout-sep" },
-    {
-      type: "item",
-      id: "auto-layout",
-      label: "Auto Layout Nodes",
-      disabled: actions.autoLayoutDisabled,
-      onSelect: actions.onAutoLayout,
-    },
   ];
 
   return <MenuDropdown label="Edit" items={items} />;

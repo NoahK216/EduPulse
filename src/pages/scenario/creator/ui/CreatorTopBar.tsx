@@ -144,6 +144,12 @@ const CreatorTopBar = ({
         />
         <div className="mx-1 h-4 w-px bg-slate-400 dark:bg-slate-700/90" />
         <ToolbarButton
+          label="Auto Layout"
+          disabled={editActions.autoLayoutDisabled}
+          onClick={editActions.onAutoLayout}
+        />
+        <div className="mx-1 h-4 w-px bg-slate-400 dark:bg-slate-700/90" />
+        <ToolbarButton
           icon={<FaMagnifyingGlassMinus />}
           disabled={viewActions.disabled}
           onClick={viewActions.onZoomOut}

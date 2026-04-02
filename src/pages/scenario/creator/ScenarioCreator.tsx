@@ -115,6 +115,7 @@ const ScenarioCreator = ({
   // Sync description when the prop loads (data arrives after initial render)
   useEffect(() => {
     setDescription(initialDescription ?? "");
+    setBaselineDescription(initialDescription ?? "");
   }, [initialDescription]);
 
   const preserveReactFlowSelection = useCallback(
@@ -150,10 +151,14 @@ const ScenarioCreator = ({
 
   const currentSerializedDoc =
     state.status === "loaded" ? JSON.stringify(state.doc) : null;
+  const [baselineDescription, setBaselineDescription] = useState<string>(initialDescription ?? "");
+
+  // Keep baseline description in sync when saved
   const isDirty =
     state.status === "loaded" &&
     baselineSerializedDoc !== null &&
-    currentSerializedDoc !== baselineSerializedDoc;
+    (currentSerializedDoc !== baselineSerializedDoc ||
+      description !== baselineDescription);
 
   const confirmDiscardUnsavedChanges = useCallback(
     (actionLabel: string) => {
@@ -429,6 +434,7 @@ const ScenarioCreator = ({
 
     const scenarioSnapshot = state.doc;
     const serializedSnapshot = JSON.stringify(scenarioSnapshot);
+    const descriptionSnapshot = description;
     const wasUnsyncedScenario = syncedScenarioId === null;
 
     setSyncStatus("syncing");
@@ -457,6 +463,7 @@ const ScenarioCreator = ({
         `Synced scenario ${response.item.id} at ${new Date().toLocaleTimeString()}`,
       );
       setBaselineSerializedDoc(serializedSnapshot);
+      setBaselineDescription(descriptionSnapshot);
 
       if (wasUnsyncedScenario) {
         navigate(`/scenario/${response.item.id}/editor`, { replace: true });

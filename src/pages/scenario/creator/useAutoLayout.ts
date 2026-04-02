@@ -3,7 +3,7 @@
  *
  * Returns a `runLayout` function that:
  *  1. Reads the current React Flow nodes & edges (including their measured sizes).
- *  2. Runs them through Dagre in top-to-bottom order.
+ *  2. Runs them through Dagre left-to-right (rankdir: "LR").
  *  3. Dispatches `setNodePositions` so the Scenario doc stays in sync.
  *  4. Calls `fitView` so the result is immediately visible.
  */
