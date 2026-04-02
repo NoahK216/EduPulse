@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Prisma } from '../../../prisma/generated/client.js';
 
 import { ScenarioSchema } from '../../pages/scenario/scenarioSchemas.js';
+import type { PublicAssignment } from '../../types/publicApi.js';
 import { prisma } from '../prisma.js';
 import {
   type ApiErrorCode,
@@ -58,6 +59,21 @@ class RouteError extends Error {
   }
 }
 
+function buildViewerClassroomSelect(publicUserId: string) {
+  return {
+    name: true,
+    members: {
+      where: {
+        user_id: publicUserId,
+      },
+      select: {
+        role: true,
+      },
+      take: 1,
+    },
+  } satisfies Prisma.classroomSelect;
+}
+
 function buildAssignmentSelect(publicUserId: string) {
   return {
     id: true,
@@ -73,14 +89,7 @@ function buildAssignmentSelect(publicUserId: string) {
     created_at: true,
     updated_at: true,
     classroom: {
-      select: {
-        name: true,
-        members: {
-          where: { user_id: publicUserId },
-          select: { role: true },
-          take: 1,
-        },
-      },
+      select: buildViewerClassroomSelect(publicUserId),
     },
     scenario_version: { select: { title: true, version_number: true } },
     assigned_by: {
@@ -112,14 +121,7 @@ function buildAssignmentAttemptSessionSelect(publicUserId: string) {
     created_at: true,
     updated_at: true,
     classroom: {
-      select: {
-        name: true,
-        members: {
-          where: { user_id: publicUserId },
-          select: { role: true },
-          take: 1,
-        },
-      },
+      select: buildViewerClassroomSelect(publicUserId),
     },
     scenario_version: {
       select: {
@@ -151,7 +153,7 @@ type AssignmentAttemptSessionRow = Prisma.assignmentGetPayload<{
 
 function mapAssignmentRow(
   row: AssignmentRow | AssignmentAttemptSessionRow | null,
-) {
+): PublicAssignment | null {
   if (!row) {
     return null;
   }
@@ -163,12 +165,12 @@ function mapAssignmentRow(
     assigned_by_user_id: row.assigned_by_user_id,
     title: row.title,
     instructions: row.instructions,
-    open_at: row.open_at,
-    due_at: row.due_at,
-    close_at: row.close_at,
+    open_at: row.open_at?.toISOString() ?? null,
+    due_at: row.due_at?.toISOString() ?? null,
+    close_at: row.close_at?.toISOString() ?? null,
     max_attempts: row.max_attempts,
-    created_at: row.created_at,
-    updated_at: row.updated_at,
+    created_at: row.created_at.toISOString(),
+    updated_at: row.updated_at.toISOString(),
     classroom_name: row.classroom.name,
     viewer_role: row.classroom.members[0]!.role,
     scenario_version_title: row.scenario_version.title,
@@ -295,7 +297,7 @@ export function createPublicAssignmentsRouter() {
       });
 
       const item = mapAssignmentRow(row);
-      if (!item) {
+      if (!item && !row) {
         return sendError(res, 404, 'NOT_FOUND', 'Assignment not found');
       }
 
