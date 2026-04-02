@@ -40,6 +40,7 @@ import NodeAddPanel from "./ui/NodeAddPanel";
 import CreatorTopBar from "./ui/CreatorTopBar";
 import NodeEditorPanel from "./ui/NodeEditorPanel";
 import { downloadJson } from "./DownloadJson";
+import { applyAutoLayout } from "./autoLayout";
 import { flowGraphFromScenario, loadScenario } from "./scenarioImport";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
 import { EditorDispatchProvider } from "./editor-store/EditorDispatchContext";
@@ -99,6 +100,7 @@ const ScenarioCreator = ({
   } | null>(null);
   const snapTargetNodeIdRef = useRef<string | null>(null);
   const rfNodesRef = useRef<Node[]>([]);
+  const skipNextFlowRebuildRef = useRef(false);
   const inspectedNodeId =
     state.status === "loaded" ? state.ui.inspectedNodeId : null;
   const [syncedScenarioId, setSyncedScenarioId] = useState<string | null>(null);
@@ -183,6 +185,10 @@ const ScenarioCreator = ({
   // Drives ReactFlow state by the SSoT: editorReducer
   useEffect(() => {
     if (state.status !== "loaded") return;
+    if (skipNextFlowRebuildRef.current) {
+      skipNextFlowRebuildRef.current = false;
+      return;
+    }
 
     const { nodes, edges } = flowGraphFromScenario(state.doc);
     setRfNodes((nodesSnapshot) => {
@@ -530,6 +536,29 @@ const ScenarioCreator = ({
     reactFlowInstance?.fitView(fitViewOptions);
   }, [reactFlowInstance]);
 
+  const handleAutoLayout = useCallback(() => {
+    if (!reactFlowInstance) return;
+    const measuredNodes = reactFlowInstance.getNodes();
+    const currentEdges = reactFlowInstance.getEdges();
+
+    const laidOutNodes = applyAutoLayout(measuredNodes, currentEdges);
+
+    // Prevent the state-driven useEffect from overwriting our new positions
+    skipNextFlowRebuildRef.current = true;
+
+    // Directly update rfNodes so ReactFlow reflects positions immediately
+    setRfNodes(laidOutNodes);
+
+    // Persist positions into the scenario doc
+    const positions: Record<string, { x: number; y: number }> = {};
+    for (const n of laidOutNodes) {
+      positions[n.id] = n.position;
+    }
+    dispatch({ type: 'setNodePositions', positions });
+
+    requestAnimationFrame(() => reactFlowInstance?.fitView(fitViewOptions));
+  }, [reactFlowInstance, dispatch, setRfNodes]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
@@ -628,6 +657,7 @@ const ScenarioCreator = ({
             onZoomOut: handleZoomOut,
             onResetZoom: handleResetZoom,
             onFitView: handleFitView,
+            onAutoLayout: handleAutoLayout,
             disabled: !reactFlowInstance,
           }}
           helpActions={{

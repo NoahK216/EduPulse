@@ -126,6 +126,11 @@ const CreatorTopBar = ({
           disabled={fileActions.downloadDisabled}
           onClick={fileActions.onDownloadJson}
         />
+        <ToolbarButton
+          label="Auto Layout"
+          disabled={viewActions.disabled}
+          onClick={viewActions.onAutoLayout}
+        />
         <div className="mx-1 h-4 w-px bg-slate-400 dark:bg-slate-700/90" />
         <ToolbarButton
           icon={<FaMagnifyingGlassMinus />}
