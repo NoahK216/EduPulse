@@ -112,6 +112,11 @@ const ScenarioCreator = ({
   >(null);
   const [description, setDescription] = useState<string>(initialDescription ?? "");
 
+  // Sync description when the prop loads (data arrives after initial render)
+  useEffect(() => {
+    setDescription(initialDescription ?? "");
+  }, [initialDescription]);
+
   const preserveReactFlowSelection = useCallback(
     (nextNodes: Node[], prevNodes: Node[]) => {
       const selectedIds = new Set(
@@ -471,7 +476,7 @@ const ScenarioCreator = ({
       setSyncMessage("Failed to sync scenario");
       return null;
     }
-  }, [navigate, state, syncedScenarioId]);
+  }, [navigate, state, syncedScenarioId, description]);
 
   const handleLogoClick = useCallback(() => {
     if (!confirmDiscardUnsavedChanges("open the homepage")) return;
@@ -634,13 +639,14 @@ const ScenarioCreator = ({
           editActions={{
             onUndo: undefined,
             onRedo: undefined,
+            onAutoLayout: handleAutoLayout,
+            autoLayoutDisabled: !reactFlowInstance,
           }}
           viewActions={{
             onZoomIn: handleZoomIn,
             onZoomOut: handleZoomOut,
             onResetZoom: handleResetZoom,
             onFitView: handleFitView,
-            onAutoLayout: handleAutoLayout,
             disabled: !reactFlowInstance,
           }}
           helpActions={{

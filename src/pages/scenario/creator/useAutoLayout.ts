@@ -18,8 +18,8 @@ const DEFAULT_NODE_WIDTH = 280;
 const DEFAULT_NODE_HEIGHT = 120;
 
 // Dagre graph-level spacing options.
-const DAGRE_RANKSEP = 80;   // vertical gap between ranks
-const DAGRE_NODESEP = 48;   // horizontal gap between nodes in the same rank
+const DAGRE_RANKSEP = 80;   // horizontal gap between ranks (columns) in LR mode
+const DAGRE_NODESEP = 48;   // vertical gap between nodes in the same rank
 const DAGRE_EDGESEP = 20;
 
 export function useAutoLayout(
@@ -38,7 +38,7 @@ export function useAutoLayout(
     const g = new dagre.graphlib.Graph();
     g.setDefaultEdgeLabel(() => ({}));
     g.setGraph({
-      rankdir: "TB",          // top → bottom
+      rankdir: "LR",          // left → right
       ranksep: DAGRE_RANKSEP,
       nodesep: DAGRE_NODESEP,
       edgesep: DAGRE_EDGESEP,

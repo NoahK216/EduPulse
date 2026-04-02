@@ -18,7 +18,6 @@ export type CreatorViewActions = {
   onZoomOut: () => void;
   onResetZoom: () => void;
   onFitView: () => void;
-  onAutoLayout: () => void;
   disabled: boolean;
 };
 
@@ -30,6 +29,8 @@ export type CreatorHelpActions = {
 export type CreatorEditActions = {
   onUndo?: () => void;
   onRedo?: () => void;
+  onAutoLayout: () => void;
+  autoLayoutDisabled: boolean;
 };
 
 export type CreatorStatusTone = "neutral" | "success" | "warning" | "error";

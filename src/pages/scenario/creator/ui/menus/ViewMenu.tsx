@@ -35,14 +35,6 @@ const ViewMenu = ({ actions }: ViewMenuProps) => {
       disabled: actions.disabled,
       onSelect: actions.onFitView,
     },
-    { type: "separator", id: "layout-sep" },
-    {
-      type: "item",
-      id: "auto-layout",
-      label: "Auto Layout Nodes",
-      disabled: actions.disabled,
-      onSelect: actions.onAutoLayout,
-    },
   ];
 
   return <MenuDropdown label="View" items={items} />;

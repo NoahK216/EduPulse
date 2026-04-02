@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiBookOpen, FiChevronDown, FiHome, FiLayers, FiSettings, FiUsers } from "react-icons/fi";
+import { FiChevronDown, FiHome, FiLayers, FiSettings, FiUsers } from "react-icons/fi";
 
 import { authClient } from "../../lib/auth-client";
 import { cn } from "../../lib/cn";
@@ -61,19 +61,6 @@ function NavBar({ showMenu }: NavBarProps) {
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {/* Tutorial — always visible */}
-            <Link
-              to="/tutorial"
-              className={cn(
-                "rounded-full px-3 py-2 text-sm font-medium transition",
-                isActivePath(location.pathname, "/tutorial")
-                  ? "bg-cyan-50 text-cyan-800 dark:bg-cyan-500/12 dark:text-cyan-100"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white",
-              )}
-            >
-              Tutorial
-            </Link>
-
             {isAuthed
               ? appLinks.map((link) => {
                   const active = isActivePath(location.pathname, link.to);
@@ -93,6 +80,19 @@ function NavBar({ showMenu }: NavBarProps) {
                   );
                 })
               : null}
+
+            {/* Tutorial — always visible, after Scenarios */}
+            <Link
+              to="/tutorial"
+              className={cn(
+                "rounded-full px-3 py-2 text-sm font-medium transition",
+                isActivePath(location.pathname, "/tutorial")
+                  ? "bg-cyan-50 text-cyan-800 dark:bg-cyan-500/12 dark:text-cyan-100"
+                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-white",
+              )}
+            >
+              Tutorial
+            </Link>
           </nav>
         </div>
 
@@ -125,15 +125,6 @@ function NavBar({ showMenu }: NavBarProps) {
                   </div>
 
                   <div className="mt-2 space-y-1">
-                    <Link
-                      to="/tutorial"
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900 dark:hover:text-white"
-                    >
-                      <FiBookOpen className="text-base" />
-                      <span>Tutorial</span>
-                    </Link>
-
                     {appLinks.map((link) => {
                       const Icon = link.icon;
                       return (
@@ -175,14 +166,6 @@ function NavBar({ showMenu }: NavBarProps) {
                 </>
               ) : (
                 <div className="space-y-1">
-                  <Link
-                    to="/tutorial"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100 hover:text-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900 dark:hover:text-white"
-                  >
-                    <FiBookOpen className="text-base" />
-                    <span>Tutorial</span>
-                  </Link>
                   <Link
                     to="/login"
                     onClick={() => setOpen(false)}
