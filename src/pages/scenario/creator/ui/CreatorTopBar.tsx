@@ -17,6 +17,9 @@ type CreatorTopBarProps = {
   titleDisabled: boolean;
   onLogoClick: () => void;
   onTitleChange: (title: string) => void;
+  description: string;
+  descriptionDisabled: boolean;
+  onDescriptionChange: (description: string) => void;
   fileActions: CreatorFileActions;
   editActions: CreatorEditActions;
   viewActions: CreatorViewActions;
@@ -66,6 +69,9 @@ const CreatorTopBar = ({
   titleDisabled,
   onLogoClick,
   onTitleChange,
+  description,
+  descriptionDisabled,
+  onDescriptionChange,
   fileActions,
   editActions,
   viewActions,
@@ -87,6 +93,16 @@ const CreatorTopBar = ({
               placeholder="Untitled Scenario"
               disabled={titleDisabled}
               className="w-96 max-w-full rounded-md px-2 text-xl text-slate-800 dark:text-slate-100  outline-none transition focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+          </div>
+          <div className="flex pt-1 pb-1 items-center">
+            <input
+              type="text"
+              value={description}
+              onChange={(event) => onDescriptionChange(event.target.value)}
+              placeholder="Add a short description…"
+              disabled={descriptionDisabled}
+              className="w-[28rem] max-w-full rounded-md px-2 py-0.5 text-xs text-slate-500 dark:text-slate-400 placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none transition focus:text-slate-800 dark:focus:text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 

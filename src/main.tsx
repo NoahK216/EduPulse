@@ -31,6 +31,10 @@ const router = createBrowserRouter([
         lazy: lazyComponent(() => import("./pages/home/HomePage.tsx")),
       },
       {
+        path: "tutorial",
+        lazy: lazyComponent(() => import("./pages/tutorial/TutorialPage.tsx")),
+      },
+      {
         path: "login",
         lazy: lazyComponent(() => import("./pages/home/LoginPage.tsx")),
       },

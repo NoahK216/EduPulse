@@ -60,6 +60,7 @@ import {
 } from "./ScenarioCreatorCallbacks";
 import { buildStarterScenario } from "./starterScenario";
 import type { CreatorStatusTone } from "./ui/menus/menuTypes";
+import { useAutoLayout } from "./useAutoLayout";
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -75,12 +76,14 @@ type ScenarioCreatorProps = {
   scenarioUrl?: string;
   initialScenario?: Scenario;
   initialScenarioId?: string | null;
+  initialDescription?: string | null;
 };
 
 const ScenarioCreator = ({
   scenarioUrl,
   initialScenario,
   initialScenarioId,
+  initialDescription,
 }: ScenarioCreatorProps) => {
   const navigate = useNavigate();
   const [state, dispatch] = useReducer(editorReducer, { status: "idle" });
@@ -107,6 +110,7 @@ const ScenarioCreator = ({
   const [baselineSerializedDoc, setBaselineSerializedDoc] = useState<
     string | null
   >(null);
+  const [description, setDescription] = useState<string>(initialDescription ?? "");
 
   const preserveReactFlowSelection = useCallback(
     (nextNodes: Node[], prevNodes: Node[]) => {
@@ -437,7 +441,7 @@ const ScenarioCreator = ({
         {
           scenario_id: syncedScenarioId ?? undefined,
           title: scenarioSnapshot.title,
-          description: null,
+          description: description.trim().length > 0 ? description.trim() : null,
           draft_content: scenarioSnapshot,
         },
       );
@@ -530,6 +534,11 @@ const ScenarioCreator = ({
     reactFlowInstance?.fitView(fitViewOptions);
   }, [reactFlowInstance]);
 
+  const { runLayout } = useAutoLayout(reactFlowInstance, dispatch);
+  const handleAutoLayout = useCallback(() => {
+    runLayout();
+  }, [runLayout]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
@@ -607,6 +616,9 @@ const ScenarioCreator = ({
           onTitleChange={(title) =>
             dispatch({ type: "setScenarioTitle", title })
           }
+          description={description}
+          descriptionDisabled={state.status !== "loaded"}
+          onDescriptionChange={setDescription}
           fileActions={{
             onNewScenario: handleCreateNewScenario,
             onOpenLibrary: handleOpenScenarioLibrary,
@@ -628,6 +640,7 @@ const ScenarioCreator = ({
             onZoomOut: handleZoomOut,
             onResetZoom: handleResetZoom,
             onFitView: handleFitView,
+            onAutoLayout: handleAutoLayout,
             disabled: !reactFlowInstance,
           }}
           helpActions={{

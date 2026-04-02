@@ -18,6 +18,7 @@ export type CreatorViewActions = {
   onZoomOut: () => void;
   onResetZoom: () => void;
   onFitView: () => void;
+  onAutoLayout: () => void;
   disabled: boolean;
 };
 
