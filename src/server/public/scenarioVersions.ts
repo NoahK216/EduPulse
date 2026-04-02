@@ -15,20 +15,9 @@ const scenarioVersionSelect = {
   scenario_id: true,
   version_number: true,
   title: true,
-  content: true,
   published_by_user_id: true,
   published_at: true,
   scenario: { select: { title: true } },
-  published_by: {
-    select: {
-      auth_user: {
-        select: {
-          name: true,
-          email: true,
-        },
-      },
-    },
-  },
   _count: { select: { assignments: true } },
 } as const;
 
@@ -54,7 +43,6 @@ function mapScenarioVersionRow(
     published_at: row.published_at,
     scenario_title: row.scenario.title,
     assignment_count: row._count.assignments,
-    has_content: row.content !== null,
   };
 }
 

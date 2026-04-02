@@ -26,7 +26,7 @@ model classroom {
   id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   created_by_id String             @db.Uuid
   name          String             @db.VarChar(255)
-  code          String?            @db.VarChar(64)
+  code          String?            @unique @db.VarChar(64)
   created_at    DateTime           @default(now()) @db.Timestamptz(6)
   updated_at    DateTime           @default(now()) @db.Timestamptz(6)
   assignments   assignment[]

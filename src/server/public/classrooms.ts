@@ -4,10 +4,7 @@ import { z } from "zod";
 import type { Prisma } from "../../../prisma/generated/client.js";
 
 import { prisma } from "../prisma.js";
-import type {
-  PublicClassroom,
-  PublicClassroomRole,
-} from "../../types/publicApi.js";
+import type { PublicClassroom } from "../../types/publicApi.js";
 import {
   asAuthedRequest,
   type Pagination,
@@ -30,7 +27,16 @@ const CLASSROOM_CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 const CLASSROOM_CODE_LENGTH = 6;
 const CLASSROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
-function buildClassroomSelect(publicUserId: string) {
+function buildActiveAssignmentWhere(now: Date): Prisma.assignmentWhereInput {
+  return {
+    OR: [{ close_at: null }, { close_at: { gt: now } }],
+  };
+}
+
+function buildClassroomSelect(
+  publicUserId: string,
+  activeAssignmentWhere: Prisma.assignmentWhereInput,
+) {
   return {
     id: true,
     created_by_id: true,
@@ -38,16 +44,6 @@ function buildClassroomSelect(publicUserId: string) {
     code: true,
     created_at: true,
     updated_at: true,
-    created_by: {
-      select: {
-        auth_user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-    },
     members: {
       where: {
         user_id: publicUserId,
@@ -57,6 +53,12 @@ function buildClassroomSelect(publicUserId: string) {
       },
       take: 1,
     },
+    assignments: {
+      where: activeAssignmentWhere,
+      select: {
+        id: true,
+      },
+    },
     _count: { select: { members: true, assignments: true } },
   } satisfies Prisma.classroomSelect;
 }
@@ -64,9 +66,17 @@ function buildClassroomSelect(publicUserId: string) {
 type ClassroomSelect = ReturnType<typeof buildClassroomSelect>;
 type ClassroomRow = Prisma.classroomGetPayload<{ select: ClassroomSelect }>;
 
+function getViewerRole(row: ClassroomRow) {
+  const viewerRole = row.members[0]?.role;
+  if (!viewerRole) {
+    throw new Error(`Missing viewer role for classroom ${row.id}`);
+  }
+
+  return viewerRole;
+}
+
 function mapClassroomRow(
   row: ClassroomRow | null,
-  activeAssignmentCountByClassroom: Map<string, number>,
 ): PublicClassroom | null {
   if (!row) {
     return null;
@@ -81,74 +91,31 @@ function mapClassroomRow(
     updated_at: row.updated_at.toISOString(),
     member_count: row._count.members,
     assignment_count: row._count.assignments,
-    viewer_role: row.members[0]?.role,
-    active_assignment_count: activeAssignmentCountByClassroom.get(row.id) ?? 0,
+    viewer_role: getViewerRole(row),
+    active_assignment_count: row.assignments.length,
   };
-}
-
-function rolePriority(role: PublicClassroomRole) {
-  return role === "instructor" ? 0 : 1;
-}
-
-function compareClassrooms(left: PublicClassroom, right: PublicClassroom) {
-  if (left.active_assignment_count !== right.active_assignment_count) {
-    return right.active_assignment_count - left.active_assignment_count;
-  }
-
-  const roleDifference =
-    rolePriority(left.viewer_role) - rolePriority(right.viewer_role);
-  if (roleDifference !== 0) {
-    return roleDifference;
-  }
-
-  return left.name.localeCompare(right.name);
-}
-
-function isDefined<T>(value: T | null): value is T {
-  return value !== null;
-}
-
-async function getActiveAssignmentCountByClassroom(
-  classroomIds: string[],
-): Promise<Map<string, number>> {
-  if (classroomIds.length === 0) {
-    return new Map();
-  }
-
-  const rows = await prisma.assignment.groupBy({
-    by: ["classroom_id"],
-    where: {
-      classroom_id: {
-        in: classroomIds,
-      },
-      OR: [{ close_at: null }, { close_at: { gt: new Date() } }],
-    },
-    _count: {
-      _all: true,
-    },
-  });
-
-  return new Map(rows.map((row) => [row.classroom_id, row._count._all]));
 }
 
 async function listPublicClassrooms(
   publicUserId: string,
   pagination: Pagination,
 ) {
-  const rows = await prisma.classroom.findMany({
-    where: accessibleClassroomWhere(publicUserId),
-    select: buildClassroomSelect(publicUserId),
-  });
-  const activeAssignmentCountByClassroom =
-    await getActiveAssignmentCountByClassroom(rows.map((row) => row.id));
-  const items = rows
-    .map((row) => mapClassroomRow(row, activeAssignmentCountByClassroom))
-    .filter(isDefined)
-    .sort(compareClassrooms);
+  const where = accessibleClassroomWhere(publicUserId);
+  const activeAssignmentWhere = buildActiveAssignmentWhere(new Date());
+  const [total, rows] = await Promise.all([
+    prisma.classroom.count({ where }),
+    prisma.classroom.findMany({
+      where,
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      skip: pagination.skip,
+      take: pagination.take,
+      select: buildClassroomSelect(publicUserId, activeAssignmentWhere),
+    }),
+  ]);
 
   return {
-    items: items.slice(pagination.skip, pagination.skip + pagination.take),
-    total: items.length,
+    items: rows.map((row) => mapClassroomRow(row)),
+    total,
   };
 }
 
@@ -160,12 +127,13 @@ async function getPublicClassroomById(
     where: {
       AND: [{ id: classroomId }, accessibleClassroomWhere(publicUserId)],
     },
-    select: buildClassroomSelect(publicUserId),
+    select: buildClassroomSelect(
+      publicUserId,
+      buildActiveAssignmentWhere(new Date()),
+    ),
   });
-  const activeAssignmentCountByClassroom =
-    await getActiveAssignmentCountByClassroom(row ? [row.id] : []);
 
-  return mapClassroomRow(row, activeAssignmentCountByClassroom);
+  return mapClassroomRow(row);
 }
 
 function normalizeClassroomCode(value: string | null | undefined) {
@@ -196,7 +164,7 @@ function createRandomClassroomCode() {
 async function generateAvailableClassroomCode(tx: Prisma.TransactionClient) {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const code = createRandomClassroomCode();
-    const existing = await tx.classroom.findFirst({
+    const existing = await tx.classroom.findUnique({
       where: { code },
       select: { id: true },
     });
@@ -340,27 +308,16 @@ export function createPublicClassroomsRouter() {
     }
 
     try {
-      const matchedClassrooms = await prisma.classroom.findMany({
+      const matchedClassroom = await prisma.classroom.findUnique({
         where: { code },
-        orderBy: { created_at: "desc" },
-        take: 2,
         select: { id: true },
       });
 
-      if (matchedClassrooms.length === 0) {
+      if (!matchedClassroom) {
         return sendError(res, 404, "NOT_FOUND", "Classroom not found");
       }
 
-      if (matchedClassrooms.length > 1) {
-        return sendError(
-          res,
-          500,
-          "INTERNAL_ERROR",
-          "This classroom code is ambiguous. Ask the instructor for a new code.",
-        );
-      }
-
-      const classroomId = matchedClassrooms[0]!.id;
+      const classroomId = matchedClassroom.id;
       await prisma.$transaction(async (tx) => {
         const existingMembership = await tx.classroom_member.findFirst({
           where: {

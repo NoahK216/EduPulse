@@ -188,29 +188,38 @@ export function createPublicScenariosRouter() {
     }
 
     try {
-      const existing = await prisma.scenario.findFirst({
-        where: {
-          id: id.value,
-          owner_user_id: authedReq.auth.publicUserId,
-        },
-        select: {
-          id: true,
-          versions: {
-            select: {
-              _count: { select: { assignments: true } },
+      const where = {
+        id: id.value,
+        owner_user_id: authedReq.auth.publicUserId,
+      } satisfies Prisma.scenarioWhereInput;
+      const [existing, assignedVersion] = await Promise.all([
+        prisma.scenario.findFirst({
+          where,
+          select: {
+            id: true,
+          },
+        }),
+        prisma.scenario_version.findFirst({
+          where: {
+            scenario_id: id.value,
+            scenario: {
+              owner_user_id: authedReq.auth.publicUserId,
+            },
+            assignments: {
+              some: {},
             },
           },
-        },
-      });
+          select: {
+            id: true,
+          },
+        }),
+      ]);
 
       if (!existing) {
         return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
       }
 
-      const hasAssignedVersions = existing.versions.some(
-        (version) => version._count.assignments > 0
-      );
-      if (hasAssignedVersions) {
+      if (assignedVersion) {
         return sendError(
           res,
           400,

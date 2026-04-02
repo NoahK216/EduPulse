@@ -166,11 +166,23 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
       return sendError(res, 400, 'BAD_REQUEST', assignmentId.message);
     }
 
+    const classroomId = parseOptionalUuidQuery(req.query, 'classroomId');
+    if (!classroomId.ok) {
+      return sendError(res, 400, 'BAD_REQUEST', classroomId.message);
+    }
+
     const where: Prisma.attemptWhereInput = accessibleAttemptWhere(
       authedReq.auth.publicUserId
     );
     if (assignmentId.value !== undefined) {
       where.assignment_id = assignmentId.value;
+    }
+    if (classroomId.value !== undefined) {
+      where.assignment = {
+        is: {
+          classroom_id: classroomId.value,
+        },
+      };
     }
 
     const { page, pageSize, skip, take } = pagination.value;

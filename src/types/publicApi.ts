@@ -5,7 +5,6 @@ import type {
   classroom_memberModel,
   classroomModel,
   responseModel,
-  scenario_versionModel,
   scenarioModel,
 } from "../../prisma/generated/models.js";
 
@@ -20,7 +19,6 @@ type Serialized<T> = T extends Date
 export type PublicClassroomBase = Serialized<classroomModel>;
 export type PublicClassroomMemberBase = Serialized<classroom_memberModel>;
 export type PublicScenarioBase = Serialized<scenarioModel>;
-export type PublicScenarioVersionBase = Serialized<scenario_versionModel>;
 export type PublicAssignmentBase = Serialized<assignmentModel>;
 export type PublicAttemptBase = Serialized<attemptModel>;
 export type PublicResponseBase = Serialized<responseModel>;
@@ -75,10 +73,15 @@ export type PublicScenarioTemplate = {
   url: string;
 };
 
-export type PublicScenarioVersion = PublicScenarioVersionBase & {
+export type PublicScenarioVersion = {
+  id: string;
+  scenario_id: string;
+  version_number: number;
+  title: string;
+  published_by_user_id: string;
+  published_at: string;
   scenario_title: string;
   assignment_count: number;
-  has_content: boolean;
 };
 
 export type PublicAssignment = PublicAssignmentBase & {
