@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 import {
   useAssignment,
@@ -10,51 +10,42 @@ import {
   useClassrooms,
   useClassroomAssignments,
   useClassroomMembers,
-  useCurrentUser,
   useResponse,
-} from '../../../lib/usePublicApiHooks';
-import { toUuidOrNull } from '../../../lib/uuid';
+} from "../../../lib/usePublicApiHooks";
+import { toUuidOrNull } from "../../../lib/uuid";
 import type {
   PublicAssignment,
   PublicAttempt,
   PublicClassroom,
-  PublicClassroomRole,
   PublicClassroomMember,
+  PublicClassroomRole,
   PublicResponse,
-  PublicUser,
-} from '../../../types/publicApi';
+} from "../../../types/publicApi";
 import type { DataGuardState } from "../../../components/data/DataGuard";
 
-type ClassroomViewerRole = PublicClassroomRole | null;
 type AssignmentViewerRole = PublicClassroomRole | null;
 
-export type ClassroomViewerData = {
-  classroomId: string | null;
+type InstructorAssignmentCard = {
+  assignment: PublicAssignment;
+  completedCount: number;
+};
+
+export type ClassroomPageData = {
   classroom: PublicClassroom | null;
-  publicUser: PublicUser | null;
   members: PublicClassroomMember[];
-  role: ClassroomViewerRole;
   guard: DataGuardState;
-  studentView: {
-    instructors: PublicClassroomMember[];
-    assignments: PublicAssignment[];
-    assignmentsGuard: DataGuardState;
-  };
-  instructorView: {
-    currentAssignments: Array<{
-      assignment: PublicAssignment;
-      completedCount: number;
-    }>;
-    pastAssignments: Array<{
-      assignment: PublicAssignment;
-      completedCount: number;
-    }>;
-    studentMembers: PublicClassroomMember[];
-    studentCount: number;
-    summaryText: string;
-    assignmentsGuard: DataGuardState;
-    refetch: () => void;
-  };
+};
+
+export type StudentClassroomData = {
+  assignments: PublicAssignment[];
+  assignmentsGuard: DataGuardState;
+};
+
+export type InstructorClassroomData = {
+  currentAssignments: InstructorAssignmentCard[];
+  pastAssignments: InstructorAssignmentCard[];
+  assignmentsGuard: DataGuardState;
+  refetch: () => void;
 };
 
 export type ClassroomListData = {
@@ -66,7 +57,6 @@ export type AssignmentDetailData = {
   classroomId: string | null;
   assignmentId: string | null;
   assignment: PublicAssignment | null;
-  publicUser: PublicUser | null;
   role: AssignmentViewerRole;
   guard: DataGuardState;
   attemptsGuard: DataGuardState;
@@ -105,23 +95,19 @@ export type ClassroomMemberDetailData = {
   guard: DataGuardState;
 };
 
-const CONTENT_GUARD: DataGuardState = { kind: 'content' };
+const CONTENT_GUARD: DataGuardState = { kind: "content" };
 
 function getFirstError(...errors: Array<string | null>) {
   return errors.find((error) => Boolean(error)) ?? null;
 }
 
-function normalizeRole(role: string | null | undefined): ClassroomViewerRole {
-  if (role === 'instructor' || role === 'student') {
-    return role;
-  }
-
-  return null;
-}
-
 function compareAssignments(left: PublicAssignment, right: PublicAssignment) {
-  const leftTime = left.due_at ? new Date(left.due_at).getTime() : Number.MAX_SAFE_INTEGER;
-  const rightTime = right.due_at ? new Date(right.due_at).getTime() : Number.MAX_SAFE_INTEGER;
+  const leftTime = left.due_at
+    ? new Date(left.due_at).getTime()
+    : Number.MAX_SAFE_INTEGER;
+  const rightTime = right.due_at
+    ? new Date(right.due_at).getTime()
+    : Number.MAX_SAFE_INTEGER;
 
   if (leftTime === rightTime) {
     return left.title.localeCompare(right.title);
@@ -146,21 +132,10 @@ function isPastAssignment(assignment: PublicAssignment, now: number) {
   return false;
 }
 
-function getMemberClassroomRole(
-  publicUser: PublicUser | null,
-  members: PublicClassroomMember[],
-): AssignmentViewerRole {
-  if (!publicUser) {
-    return null;
-  }
-
-  const currentMembership =
-    members.find((member) => member.user_id === publicUser.id) ?? null;
-
-  return normalizeRole(currentMembership?.role);
-}
-
-function getAssignmentProgress(assignmentId: string, attempts: PublicAttempt[]) {
+function getAssignmentProgress(
+  assignmentId: string,
+  attempts: PublicAttempt[],
+) {
   const submittedStudentIds = new Set<string>();
 
   attempts.forEach((attempt) => {
@@ -168,7 +143,7 @@ function getAssignmentProgress(assignmentId: string, attempts: PublicAttempt[]) 
       return;
     }
 
-    if (attempt.status === 'submitted') {
+    if (attempt.status === "submitted") {
       submittedStudentIds.add(attempt.student_user_id);
     }
   });
@@ -194,16 +169,16 @@ function createCollectionGuard({
   emptyMessage?: string;
 }): DataGuardState {
   if (unauthorized) {
-    return { kind: 'unauthorized' };
+    return { kind: "unauthorized" };
   }
 
   if (loading) {
-    return { kind: 'loading' };
+    return { kind: "loading" };
   }
 
   if (error) {
     return {
-      kind: 'error',
+      kind: "error",
       message: error,
       onRetry,
     };
@@ -211,7 +186,7 @@ function createCollectionGuard({
 
   if (emptyMessage && itemCount === 0) {
     return {
-      kind: 'empty',
+      kind: "empty",
       message: emptyMessage,
     };
   }
@@ -219,24 +194,87 @@ function createCollectionGuard({
   return CONTENT_GUARD;
 }
 
-export function useClassroomViewer(
+export function useClassroomPageData(
   classroomId: string | null | undefined,
-): ClassroomViewerData {
-  const [pageLoadedAt] = useState(() => Date.now());
+): ClassroomPageData {
   const validClassroomId = toUuidOrNull(classroomId);
-  const currentUser = useCurrentUser();
   const classroom = useClassroom(validClassroomId);
   const members = useClassroomMembers(validClassroomId);
-  const assignments = useClassroomAssignments(validClassroomId);
   const classroomItem = classroom.item;
-  const publicUser = currentUser.user;
   const memberItems = members.items;
-  const role = classroomItem?.viewer_role ?? getMemberClassroomRole(publicUser, memberItems);
-  const attempts = useAttempts(role === 'instructor' ? { pageSize: 100 } : null);
-  const studentMembers = memberItems
-    .filter((member) => normalizeRole(member.role) === 'student')
-    .sort((left, right) => left.user_name.localeCompare(right.user_name));
-  const studentCount = studentMembers.length;
+  const role = classroomItem?.viewer_role ?? null;
+
+  let guard: DataGuardState = CONTENT_GUARD;
+
+  if (!validClassroomId) {
+    guard = {
+      kind: "invalid",
+      message: "The classroom ID in the URL is invalid.",
+    };
+  } else if (classroom.unauthorized || members.unauthorized) {
+    guard = { kind: "unauthorized" };
+  } else if (classroom.loading || members.loading) {
+    guard = { kind: "loading" };
+  } else {
+    const baseError = getFirstError(classroom.error, members.error);
+
+    if (baseError) {
+      guard = {
+        kind: "error",
+        message: baseError,
+        onRetry: () => {
+          classroom.refetch();
+          members.refetch();
+        },
+      };
+    } else if (!classroomItem) {
+      guard = {
+        kind: "empty",
+        message: "Classroom not found.",
+      };
+    } else if (!role) {
+      guard = {
+        kind: "error",
+        message: "We couldn't determine your role in this classroom.",
+      };
+    }
+  }
+
+  return {
+    classroom: classroomItem,
+    members: memberItems,
+    guard,
+  };
+}
+
+export function useStudentClassroomData(
+  classroomId: string | null | undefined,
+): StudentClassroomData {
+  const assignments = useClassroomAssignments(classroomId);
+  const sortedAssignments = [...assignments.items].sort(compareAssignments);
+
+  return {
+    assignments: sortedAssignments,
+    assignmentsGuard: createCollectionGuard({
+      unauthorized: assignments.unauthorized,
+      loading: assignments.loading,
+      error: assignments.error,
+      onRetry: assignments.refetch,
+      itemCount: sortedAssignments.length,
+      emptyMessage: "No assignments found for this classroom.",
+    }),
+  };
+}
+
+export function useInstructorClassroomData(
+  classroomId: string | null | undefined,
+): InstructorClassroomData {
+  const [pageLoadedAt] = useState(() => Date.now());
+  const validClassroomId = toUuidOrNull(classroomId);
+  const assignments = useClassroomAssignments(validClassroomId);
+  const attempts = useAttempts(
+    validClassroomId ? { classroomId: validClassroomId, pageSize: 100 } : null,
+  );
   const sortedAssignments = [...assignments.items].sort(compareAssignments);
   const currentAssignments = sortedAssignments.filter(
     (assignment) => !isPastAssignment(assignment, pageLoadedAt),
@@ -244,105 +282,33 @@ export function useClassroomViewer(
   const pastAssignments = sortedAssignments.filter((assignment) =>
     isPastAssignment(assignment, pageLoadedAt),
   );
-  const summaryText = assignments.loading
-    ? `${studentCount} students | loading assignments`
-    : `${studentCount} students | ${currentAssignments.length} active assignments`;
-  const instructors = memberItems.filter(
-    (member) => normalizeRole(member.role) === 'instructor',
-  );
-  const classroomAttempts = attempts.items.filter(
-    (attempt) => attempt.classroom_id === validClassroomId,
-  );
   const currentAssignmentCards = currentAssignments.map((assignment) => ({
     assignment,
-    completedCount: getAssignmentProgress(assignment.id, classroomAttempts).completedCount,
+    completedCount: getAssignmentProgress(assignment.id, attempts.items)
+      .completedCount,
   }));
   const pastAssignmentCards = pastAssignments.map((assignment) => ({
     assignment,
-    completedCount: getAssignmentProgress(assignment.id, classroomAttempts).completedCount,
+    completedCount: getAssignmentProgress(assignment.id, attempts.items)
+      .completedCount,
   }));
 
-  let guard: DataGuardState = CONTENT_GUARD;
-
-  if (!validClassroomId) {
-    guard = {
-      kind: 'invalid',
-      message: 'The classroom ID in the URL is invalid.',
-    };
-  } else if (currentUser.unauthorized || classroom.unauthorized || members.unauthorized) {
-    guard = { kind: 'unauthorized' };
-  } else if (currentUser.loading || classroom.loading || members.loading) {
-    guard = { kind: 'loading' };
-  } else {
-    const baseError = getFirstError(currentUser.error, classroom.error, members.error);
-
-    if (baseError) {
-      guard = {
-        kind: 'error',
-        message: baseError,
-        onRetry: () => {
-          currentUser.refetch();
-          classroom.refetch();
-          members.refetch();
-        },
-      };
-    } else if (!classroomItem) {
-      guard = {
-        kind: 'empty',
-        message: 'Classroom not found.',
-      };
-    } else if (!publicUser) {
-      guard = {
-        kind: 'empty',
-        message: 'Your profile is not available yet.',
-      };
-    } else if (!role) {
-      guard = {
-        kind: 'error',
-        message: "We couldn't determine your role in this classroom.",
-      };
-    }
-  }
-
   return {
-    classroomId: validClassroomId,
-    classroom: classroomItem,
-    publicUser,
-    members: memberItems,
-    role,
-    guard,
-    studentView: {
-      instructors,
-      assignments: sortedAssignments,
-      assignmentsGuard: createCollectionGuard({
-        unauthorized: assignments.unauthorized,
-        loading: assignments.loading,
-        error: assignments.error,
-        onRetry: assignments.refetch,
-        itemCount: sortedAssignments.length,
-        emptyMessage: 'No assignments found for this classroom.',
-      }),
-    },
-    instructorView: {
-      currentAssignments: currentAssignmentCards,
-      pastAssignments: pastAssignmentCards,
-      studentMembers,
-      studentCount,
-      summaryText,
-      assignmentsGuard: createCollectionGuard({
-        unauthorized: assignments.unauthorized || attempts.unauthorized,
-        loading: assignments.loading || attempts.loading,
-        error: getFirstError(assignments.error, attempts.error),
-        onRetry: () => {
-          assignments.refetch();
-          attempts.refetch();
-        },
-        itemCount: currentAssignmentCards.length + pastAssignmentCards.length,
-      }),
-      refetch: () => {
+    currentAssignments: currentAssignmentCards,
+    pastAssignments: pastAssignmentCards,
+    assignmentsGuard: createCollectionGuard({
+      unauthorized: assignments.unauthorized || attempts.unauthorized,
+      loading: assignments.loading || attempts.loading,
+      error: getFirstError(assignments.error, attempts.error),
+      onRetry: () => {
         assignments.refetch();
         attempts.refetch();
       },
+      itemCount: currentAssignmentCards.length + pastAssignmentCards.length,
+    }),
+    refetch: () => {
+      assignments.refetch();
+      attempts.refetch();
     },
   };
 }
@@ -371,17 +337,17 @@ export function useAssignmentDetailData(
   const validClassroomId = toUuidOrNull(classroomId);
   const validAssignmentId = toUuidOrNull(assignmentId);
   const hasValidIds = validClassroomId !== null && validAssignmentId !== null;
-  const currentUser = useCurrentUser();
-  const members = useClassroomMembers(validClassroomId);
   const assignment = useAssignment(hasValidIds ? validAssignmentId : null);
-  const attempts = useAssignmentAttempts(hasValidIds ? validAssignmentId : null);
+  const attempts = useAssignmentAttempts(
+    hasValidIds ? validAssignmentId : null,
+  );
   const assignmentItem = assignment.item;
-  const publicUser = currentUser.user;
-  const role = getMemberClassroomRole(publicUser, members.items);
+  const role = assignmentItem?.viewer_role ?? null;
   const attemptItems = [...attempts.items].sort(compareAttempts);
   const latestAttempt = attemptItems[0] ?? null;
   const inProgressAttempt =
-    attemptItems.find((attemptItem) => attemptItem.status === 'in_progress') ?? null;
+    attemptItems.find((attemptItem) => attemptItem.status === "in_progress") ??
+    null;
   const isOpen =
     !assignmentItem?.open_at ||
     new Date(assignmentItem.open_at).getTime() <= pageLoadedAt;
@@ -390,17 +356,18 @@ export function useAssignmentDetailData(
     : false;
   const attemptsUsed = attemptItems.length;
   const attemptsRemaining =
-    assignmentItem?.max_attempts === null || typeof assignmentItem?.max_attempts === 'undefined'
+    assignmentItem?.max_attempts === null ||
+    typeof assignmentItem?.max_attempts === "undefined"
       ? null
       : Math.max(assignmentItem.max_attempts - attemptsUsed, 0);
   const hasRunnableAttempt = Boolean(inProgressAttempt) && !isClosed && isOpen;
   const canStartNewAttempt =
-    role === 'student' &&
+    role === "student" &&
     !hasRunnableAttempt &&
     !isClosed &&
     isOpen &&
     (assignmentItem?.max_attempts === null ||
-      typeof assignmentItem?.max_attempts === 'undefined' ||
+      typeof assignmentItem?.max_attempts === "undefined" ||
       attemptsUsed < assignmentItem.max_attempts);
   const runnerLink =
     hasValidIds && validClassroomId && validAssignmentId
@@ -411,61 +378,35 @@ export function useAssignmentDetailData(
 
   if (!hasValidIds) {
     guard = {
-      kind: 'invalid',
-      message: 'The classroom or assignment ID in the URL is invalid.',
+      kind: "invalid",
+      message: "The classroom or assignment ID in the URL is invalid.",
     };
-  } else if (
-    currentUser.unauthorized ||
-    members.unauthorized ||
-    assignment.unauthorized ||
-    attempts.unauthorized
-  ) {
-    guard = { kind: 'unauthorized' };
-  } else if (currentUser.loading || members.loading) {
-    guard = { kind: 'loading' };
-  } else {
-    const identityError = getFirstError(currentUser.error, members.error);
-
-    if (identityError) {
-      guard = {
-        kind: 'error',
-        message: identityError,
-        onRetry: () => {
-          currentUser.refetch();
-          members.refetch();
-        },
-      };
-    } else if (assignment.loading) {
-      guard = { kind: 'loading' };
-    } else if (assignment.error) {
-      guard = {
-        kind: 'error',
-        message: assignment.error,
-        onRetry: assignment.refetch,
-      };
-    } else if (!assignmentItem) {
-      guard = {
-        kind: 'empty',
-        message: 'Assignment not found.',
-      };
-    } else if (!publicUser) {
-      guard = {
-        kind: 'empty',
-        message: 'Your profile is not available yet.',
-      };
-    } else if (!role) {
-      guard = {
-        kind: 'error',
-        message: "We couldn't determine your role for this assignment.",
-      };
-    }
+  } else if (assignment.unauthorized || attempts.unauthorized) {
+    guard = { kind: "unauthorized" };
+  } else if (assignment.loading) {
+    guard = { kind: "loading" };
+  } else if (assignment.error) {
+    guard = {
+      kind: "error",
+      message: assignment.error,
+      onRetry: assignment.refetch,
+    };
+  } else if (!assignmentItem) {
+    guard = {
+      kind: "empty",
+      message: "Assignment not found.",
+    };
+  } else if (!role) {
+    guard = {
+      kind: "error",
+      message: "We couldn't determine your role for this assignment.",
+    };
   }
 
   return {
     classroomId: validClassroomId,
     assignmentId: validAssignmentId,
     assignment: assignmentItem,
-    publicUser,
     role,
     guard,
     attemptsGuard: createCollectionGuard({
@@ -475,9 +416,9 @@ export function useAssignmentDetailData(
       onRetry: attempts.refetch,
       itemCount: attemptItems.length,
       emptyMessage:
-        role === 'student'
-          ? 'You have not started this assignment yet.'
-          : 'No attempts found for this assignment.',
+        role === "student"
+          ? "You have not started this assignment yet."
+          : "No attempts found for this assignment.",
     }),
     attempts: attemptItems,
     latestAttempt,
@@ -503,23 +444,23 @@ export function useAttemptDetailData(
 
   if (!validAttemptId) {
     guard = {
-      kind: 'invalid',
-      message: 'The attempt ID in the URL is invalid.',
+      kind: "invalid",
+      message: "The attempt ID in the URL is invalid.",
     };
   } else if (attempt.unauthorized || responses.unauthorized) {
-    guard = { kind: 'unauthorized' };
+    guard = { kind: "unauthorized" };
   } else if (attempt.loading) {
-    guard = { kind: 'loading' };
+    guard = { kind: "loading" };
   } else if (attempt.error) {
     guard = {
-      kind: 'error',
+      kind: "error",
       message: attempt.error,
       onRetry: attempt.refetch,
     };
   } else if (!attempt.item) {
     guard = {
-      kind: 'empty',
-      message: 'Attempt not found.',
+      kind: "empty",
+      message: "Attempt not found.",
     };
   }
 
@@ -533,7 +474,7 @@ export function useAttemptDetailData(
       error: responses.error,
       onRetry: responses.refetch,
       itemCount: responses.items.length,
-      emptyMessage: 'No responses found for this attempt.',
+      emptyMessage: "No responses found for this attempt.",
     }),
     responses: responses.items,
   };
@@ -560,23 +501,23 @@ export function useResponseDetailData(
 
   if (!hasValidIds) {
     guard = {
-      kind: 'invalid',
-      message: 'Invalid route identifiers.',
+      kind: "invalid",
+      message: "Invalid route identifiers.",
     };
   } else if (response.unauthorized) {
-    guard = { kind: 'unauthorized' };
+    guard = { kind: "unauthorized" };
   } else if (response.loading) {
-    guard = { kind: 'loading' };
+    guard = { kind: "loading" };
   } else if (response.error) {
     guard = {
-      kind: 'error',
+      kind: "error",
       message: response.error,
       onRetry: response.refetch,
     };
   } else if (!response.item) {
     guard = {
-      kind: 'empty',
-      message: 'Response not found.',
+      kind: "empty",
+      message: "Response not found.",
     };
   }
 

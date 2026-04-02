@@ -20,3 +20,6 @@ Performance might be meaningfully improved by implementing a server cache
 
 ## Time zones are ever tricky, our current implementation doesn't take them into account, it probably should!
 
+## Classroom stability
+- Ensure a classroom always has at least one instructor
+- Allow instructors to delete classrooms

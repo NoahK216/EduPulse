@@ -53,8 +53,6 @@ function mapScenarioVersionRow(
     published_by_user_id: row.published_by_user_id,
     published_at: row.published_at,
     scenario_title: row.scenario.title,
-    published_by_name: row.published_by.auth_user.name,
-    published_by_email: row.published_by.auth_user.email,
     assignment_count: row._count.assignments,
     has_content: row.content !== null,
   };

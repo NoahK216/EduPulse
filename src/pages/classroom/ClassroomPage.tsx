@@ -2,41 +2,31 @@ import { useParams } from 'react-router-dom';
 
 import { DataGuard } from '../../components/data/DataGuard';
 import PageShell from '../../components/layout/PageShell';
-import { useClassroomViewer } from './hooks/useClassroomData';
+import { useClassroomPageData } from './hooks/useClassroomData';
 import InstructorClassroom from './views/InstructorClassroom';
 import StudentClassroom from './views/StudentClassroom';
 
 function ClassroomPage() {
   const { classroomId } = useParams();
-  const viewer = useClassroomViewer(classroomId);
+  const page = useClassroomPageData(classroomId);
 
   return (
     <PageShell
-      title={viewer.classroom?.name ?? 'Classroom'}
-      subtitle={viewer.guard.kind === 'invalid' ? 'Invalid classroom identifier' : undefined}
+      title={page.classroom?.name ?? 'Classroom'}
+      subtitle={page.guard.kind === 'invalid' ? 'Invalid classroom identifier' : undefined}
     >
-      <DataGuard state={viewer.guard}>
-        {viewer.classroomId && viewer.classroom && viewer.role === 'instructor' ? (
+      <DataGuard state={page.guard}>
+        {page.classroom && page.classroom.viewer_role === 'instructor' ? (
           <InstructorClassroom
-            classroom={viewer.classroom}
-            classroomId={viewer.classroomId}
-            currentAssignments={viewer.instructorView.currentAssignments}
-            pastAssignments={viewer.instructorView.pastAssignments}
-            studentMembers={viewer.instructorView.studentMembers}
-            studentCount={viewer.instructorView.studentCount}
-            summaryText={viewer.instructorView.summaryText}
-            assignmentsGuard={viewer.instructorView.assignmentsGuard}
-            onAssignmentsChanged={viewer.instructorView.refetch}
+            classroom={page.classroom}
+            classroomMembers={page.members}
           />
         ) : null}
 
-        {viewer.classroomId && viewer.classroom && viewer.role === 'student' ? (
+        {page.classroom && page.classroom.viewer_role === 'student' ? (
           <StudentClassroom
-            classroom={viewer.classroom}
-            classroomId={viewer.classroomId}
-            instructors={viewer.studentView.instructors}
-            assignments={viewer.studentView.assignments}
-            assignmentsGuard={viewer.studentView.assignmentsGuard}
+            classroom={page.classroom}
+            classroomMembers={page.members}
           />
         ) : null}
       </DataGuard>

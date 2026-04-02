@@ -58,76 +58,99 @@ class RouteError extends Error {
   }
 }
 
-const assignmentSelect = {
-  id: true,
-  classroom_id: true,
-  scenario_version_id: true,
-  assigned_by_user_id: true,
-  title: true,
-  instructions: true,
-  open_at: true,
-  due_at: true,
-  close_at: true,
-  max_attempts: true,
-  created_at: true,
-  updated_at: true,
-  classroom: { select: { name: true } },
-  scenario_version: { select: { title: true, version_number: true } },
-  assigned_by: {
-    select: {
-      auth_user: {
-        select: {
-          name: true,
-          email: true,
+function buildAssignmentSelect(publicUserId: string) {
+  return {
+    id: true,
+    classroom_id: true,
+    scenario_version_id: true,
+    assigned_by_user_id: true,
+    title: true,
+    instructions: true,
+    open_at: true,
+    due_at: true,
+    close_at: true,
+    max_attempts: true,
+    created_at: true,
+    updated_at: true,
+    classroom: {
+      select: {
+        name: true,
+        members: {
+          where: { user_id: publicUserId },
+          select: { role: true },
+          take: 1,
         },
       },
     },
-  },
-  _count: { select: { attempts: true } },
-} as const;
+    scenario_version: { select: { title: true, version_number: true } },
+    assigned_by: {
+      select: {
+        auth_user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    },
+    _count: { select: { attempts: true } },
+  } satisfies Prisma.assignmentSelect;
+}
 
-const assignmentAttemptSessionSelect = {
-  id: true,
-  classroom_id: true,
-  scenario_version_id: true,
-  assigned_by_user_id: true,
-  title: true,
-  instructions: true,
-  open_at: true,
-  due_at: true,
-  close_at: true,
-  max_attempts: true,
-  created_at: true,
-  updated_at: true,
-  classroom: { select: { name: true } },
-  scenario_version: {
-    select: {
-      title: true,
-      version_number: true,
-      content: true,
-    },
-  },
-  assigned_by: {
-    select: {
-      auth_user: {
-        select: {
-          name: true,
-          email: true,
+function buildAssignmentAttemptSessionSelect(publicUserId: string) {
+  return {
+    id: true,
+    classroom_id: true,
+    scenario_version_id: true,
+    assigned_by_user_id: true,
+    title: true,
+    instructions: true,
+    open_at: true,
+    due_at: true,
+    close_at: true,
+    max_attempts: true,
+    created_at: true,
+    updated_at: true,
+    classroom: {
+      select: {
+        name: true,
+        members: {
+          where: { user_id: publicUserId },
+          select: { role: true },
+          take: 1,
         },
       },
     },
-  },
-  _count: { select: { attempts: true } },
-} as const;
+    scenario_version: {
+      select: {
+        title: true,
+        version_number: true,
+        content: true,
+      },
+    },
+    assigned_by: {
+      select: {
+        auth_user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+    },
+    _count: { select: { attempts: true } },
+  } satisfies Prisma.assignmentSelect;
+}
+
+type AssignmentRow = Prisma.assignmentGetPayload<{
+  select: ReturnType<typeof buildAssignmentSelect>;
+}>;
+type AssignmentAttemptSessionRow = Prisma.assignmentGetPayload<{
+  select: ReturnType<typeof buildAssignmentAttemptSessionSelect>;
+}>;
 
 function mapAssignmentRow(
-  row: Awaited<
-    ReturnType<
-      typeof prisma.assignment.findFirst<{
-        select: typeof assignmentSelect;
-      }>
-    >
-  >
+  row: AssignmentRow | AssignmentAttemptSessionRow | null,
 ) {
   if (!row) {
     return null;
@@ -147,10 +170,10 @@ function mapAssignmentRow(
     created_at: row.created_at,
     updated_at: row.updated_at,
     classroom_name: row.classroom.name,
+    viewer_role: row.classroom.members[0]!.role,
     scenario_version_title: row.scenario_version.title,
     scenario_version_number: row.scenario_version.version_number,
     assigned_by_name: row.assigned_by.auth_user.name,
-    assigned_by_email: row.assigned_by.auth_user.email,
     attempt_count: row._count.attempts,
   };
 }
@@ -165,7 +188,7 @@ function normalizeOptionalText(value: string | null | undefined) {
 
 function parseOptionalDateTime(
   value: string | null | undefined,
-  field: string
+  field: string,
 ):
   | { ok: true; value: Date | null }
   | { ok: false; message: string } {
@@ -188,7 +211,7 @@ function parseOptionalDateTime(
 }
 
 function toJsonInput(
-  value: Prisma.JsonValue
+  value: Prisma.JsonValue,
 ):
   | { ok: true; value: Prisma.InputJsonValue }
   | { ok: false; message: string } {
@@ -219,12 +242,13 @@ export function createPublicAssignmentsRouter() {
     }
 
     const where: Prisma.assignmentWhereInput = accessibleAssignmentWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.publicUserId,
     );
     if (classroomId.value !== undefined) {
       where.classroom_id = classroomId.value;
     }
 
+    const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
     const { page, pageSize, skip, take } = pagination.value;
 
     try {
@@ -257,6 +281,8 @@ export function createPublicAssignmentsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
 
+    const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
+
     try {
       const row = await prisma.assignment.findFirst({
         where: {
@@ -286,6 +312,10 @@ export function createPublicAssignmentsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
 
+    const assignmentAttemptSessionSelect = buildAssignmentAttemptSessionSelect(
+      authedReq.auth.publicUserId,
+    );
+
     try {
       const assignment = await prisma.assignment.findFirst({
         where: {
@@ -300,14 +330,14 @@ export function createPublicAssignmentsRouter() {
       }
 
       const parsedScenario = ScenarioSchema.safeParse(
-        assignment.scenario_version.content
+        assignment.scenario_version.content,
       );
       if (!parsedScenario.success) {
         return sendError(
           res,
           500,
           'INTERNAL_ERROR',
-          'Published scenario content is invalid for this assignment'
+          'Published scenario content is invalid for this assignment',
         );
       }
 
@@ -317,7 +347,7 @@ export function createPublicAssignmentsRouter() {
           res,
           500,
           'INTERNAL_ERROR',
-          'Published scenario is missing its start node'
+          'Published scenario is missing its start node',
         );
       }
 
@@ -386,7 +416,7 @@ export function createPublicAssignmentsRouter() {
           throw new RouteError(
             400,
             'BAD_REQUEST',
-            'You have reached the maximum number of attempts for this assignment'
+            'You have reached the maximum number of attempts for this assignment',
           );
         }
 
@@ -411,7 +441,9 @@ export function createPublicAssignmentsRouter() {
         item: {
           assignment: mapAssignmentRow(assignment),
           attempt: mapAttemptRow(session.attempt),
-          responses: session.responses.map((response) => mapResponseRow(response, true)),
+          responses: session.responses.map((response) =>
+            mapResponseRow(response, true),
+          ),
           scenario_content: assignment.scenario_version.content,
         },
       });
@@ -505,11 +537,12 @@ export function createPublicAssignmentsRouter() {
         throw new RouteError(
           403,
           'FORBIDDEN',
-          'You must be an instructor in this classroom to assign scenarios'
+          'You must be an instructor in this classroom to assign scenarios',
         );
       }
 
       const row = await prisma.$transaction(async (tx) => {
+        const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
         let scenarioVersionId: string;
         let fallbackTitle: string;
 
@@ -557,7 +590,7 @@ export function createPublicAssignmentsRouter() {
             throw new RouteError(
               400,
               'BAD_REQUEST',
-              'Scenario draft content is required before assigning'
+              'Scenario draft content is required before assigning',
             );
           }
 
@@ -614,7 +647,7 @@ export function createPublicAssignmentsRouter() {
         throw new RouteError(
           500,
           'INTERNAL_ERROR',
-          'Assignment created but could not be loaded'
+          'Assignment created but could not be loaded',
         );
       }
 

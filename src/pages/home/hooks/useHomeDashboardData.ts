@@ -2,7 +2,6 @@ import { authClient } from "../../../lib/auth-client";
 import {
   useAttempts,
   useClassrooms,
-  useCurrentUser,
   useScenarios,
 } from "../../../lib/usePublicApiHooks";
 
@@ -11,7 +10,6 @@ import type {
   PublicClassroom,
   PublicClassroomRole,
   PublicScenario,
-  PublicUser,
 } from "../../../types/publicApi";
 
 import type {
@@ -52,7 +50,7 @@ type RecentWork = {
 type BuildHomeDashboardDataArgs = {
   displayName: string;
   guard: DataGuardState;
-  publicUser: PublicUser | null;
+  viewerUserId: string | null;
   classrooms: PublicClassroom[];
   attempts: PublicAttempt[];
   scenarios: PublicScenario[];
@@ -103,17 +101,13 @@ function createDashboardGuard(sources: GuardSource[]): DataGuardState {
 function buildHomeDashboardData({
   displayName,
   guard,
-  publicUser,
+  viewerUserId,
   classrooms,
   attempts,
   scenarios,
 }: BuildHomeDashboardDataArgs): HomeDashboardData {
-  if (guard.kind === "content" && !publicUser) {
-    return createProfileEmptyState(displayName);
-  }
-
   const classroomRoleSummary = getClassroomRoleSummary(classrooms);
-  const ownAttempts = getOwnAttempts(publicUser, attempts);
+  const ownAttempts = getOwnAttempts(viewerUserId, attempts);
   const recentWork = getRecentWork(scenarios, ownAttempts);
   const continueWork = buildContinueWork(recentWork);
 
@@ -134,23 +128,6 @@ function buildHomeDashboardData({
       continueWork === null,
     hasStudentRole: classroomRoleSummary.hasStudentRole,
     hasInstructorRole: classroomRoleSummary.hasInstructorRole,
-  };
-}
-
-function createProfileEmptyState(displayName: string): HomeDashboardData {
-  return {
-    displayName,
-    activeRoles: [],
-    guard: {
-      kind: "empty",
-      message: "No profile data is available for this account yet.",
-    },
-    actionBarActions: [],
-    classroomList: [],
-    continueWork: null,
-    showEmptyState: true,
-    hasStudentRole: false,
-    hasInstructorRole: false,
   };
 }
 
@@ -181,15 +158,15 @@ function getClassroomRoleSummary(
 }
 
 function getOwnAttempts(
-  publicUser: PublicUser | null,
+  viewerUserId: string | null,
   attempts: PublicAttempt[],
 ): PublicAttempt[] {
-  if (!publicUser) {
+  if (!viewerUserId) {
     return [];
   }
 
   return attempts.filter(
-    (attempt) => attempt.student_user_id === publicUser.id,
+    (attempt) => attempt.student_user_id === viewerUserId,
   );
 }
 
@@ -365,21 +342,20 @@ function buildAttemptLink(attempt: PublicAttempt) {
 
 export function useHomeDashboardData(): HomeDashboardData {
   const { data: session } = authClient.useSession();
-  const currentUser = useCurrentUser();
   const attempts = useAttempts({ pageSize: 100 });
   const classrooms = useClassrooms(100);
   const scenarios = useScenarios(100);
-  const publicUser = currentUser.user;
+  const viewerUserId = session?.session?.userId ?? null;
   const displayName = formatDisplayName(
-    publicUser?.name ?? session?.user?.name ?? session?.user?.email,
+    session?.user?.name ?? session?.user?.email,
   );
 
-  const guard = createDashboardGuard([currentUser, attempts, classrooms]);
+  const guard = createDashboardGuard([attempts, classrooms]);
 
   return buildHomeDashboardData({
     displayName,
     guard,
-    publicUser,
+    viewerUserId,
     classrooms: classrooms.items,
     attempts: attempts.items,
     scenarios: scenarios.items,

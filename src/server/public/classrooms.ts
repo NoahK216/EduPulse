@@ -79,8 +79,6 @@ function mapClassroomRow(
     code: row.code,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
-    created_by_name: row.created_by.auth_user.name,
-    created_by_email: row.created_by.auth_user.email,
     member_count: row._count.members,
     assignment_count: row._count.assignments,
     viewer_role: row.members[0]?.role,

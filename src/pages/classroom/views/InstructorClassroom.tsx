@@ -1,16 +1,15 @@
 import { useState } from 'react';
 
 import type {
-  PublicAssignment,
   PublicClassroom,
   PublicClassroomMember,
 } from '../../../types/publicApi';
 import {
   DataGuard,
-  type DataGuardState,
 } from '../../../components/data/DataGuard';
 import InstructorAssignmentCard from '../components/InstructorAssignmentCard';
 import AssignScenarioModal from '../components/AssignScenarioModal';
+import { useInstructorClassroomData } from '../hooks/useClassroomData';
 
 type InstructorTab = 'assignments' | 'students';
 
@@ -24,35 +23,23 @@ function formatJoinDate(value: string) {
 
 type InstructorClassroomProps = {
   classroom: PublicClassroom;
-  classroomId: string;
-  currentAssignments: Array<{
-    assignment: PublicAssignment;
-    completedCount: number;
-  }>;
-  pastAssignments: Array<{
-    assignment: PublicAssignment;
-    completedCount: number;
-  }>;
-  studentMembers: PublicClassroomMember[];
-  studentCount: number;
-  summaryText: string;
-  assignmentsGuard: DataGuardState;
-  onAssignmentsChanged: () => void;
+  classroomMembers: PublicClassroomMember[];
 };
 
 function InstructorClassroom({
   classroom,
-  classroomId,
-  currentAssignments,
-  pastAssignments,
-  studentMembers,
-  studentCount,
-  summaryText,
-  assignmentsGuard,
-  onAssignmentsChanged,
+  classroomMembers,
 }: InstructorClassroomProps) {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<InstructorTab>('assignments');
+  const data = useInstructorClassroomData(classroom.id);
+  const studentMembers = classroomMembers.filter(
+    (member) => member.role === "student",
+  );
+  const summaryText =
+    data.assignmentsGuard.kind === "loading"
+      ? `${studentMembers.length} students | loading assignments`
+      : `${studentMembers.length} students | ${data.currentAssignments.length} active assignments`;
 
   return (
     <>
@@ -84,22 +71,20 @@ function InstructorClassroom({
             <button
               type="button"
               onClick={() => setActiveTab('assignments')}
-              className={`border-b-2 pb-3 text-sm font-semibold transition ${
-                activeTab === 'assignments'
+              className={`border-b-2 pb-3 text-sm font-semibold transition ${activeTab === 'assignments'
                   ? 'border-cyan-500 text-cyan-700 dark:text-cyan-300'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-              }`}
+                }`}
             >
               Assignments
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('students')}
-              className={`border-b-2 pb-3 text-sm font-semibold transition ${
-                activeTab === 'students'
+              className={`border-b-2 pb-3 text-sm font-semibold transition ${activeTab === 'students'
                   ? 'border-cyan-500 text-cyan-700 dark:text-cyan-300'
                   : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
-              }`}
+                }`}
             >
               Students
             </button>
@@ -108,36 +93,36 @@ function InstructorClassroom({
       </section>
 
       {activeTab === 'assignments' ? (
-        <DataGuard state={assignmentsGuard}>
+        <DataGuard state={data.assignmentsGuard}>
           <>
-            {currentAssignments.length > 0 ? (
+            {data.currentAssignments.length > 0 ? (
               <section className="mt-6">
                 <h3 className="text-lg font-semibold">Current Assignments</h3>
                 <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  {currentAssignments.map(({ assignment, completedCount }) => (
+                  {data.currentAssignments.map(({ assignment, completedCount }) => (
                     <InstructorAssignmentCard
                       key={assignment.id}
                       assignment={assignment}
-                      classroomId={classroomId}
+                      classroomId={classroom.id}
                       completedCount={completedCount}
-                      studentCount={studentCount}
+                      studentCount={studentMembers.length}
                     />
                   ))}
                 </div>
               </section>
             ) : null}
 
-            {pastAssignments.length > 0 ? (
+            {data.pastAssignments.length > 0 ? (
               <section className="mt-8">
                 <h3 className="text-lg font-semibold">Past Assignments</h3>
                 <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                  {pastAssignments.map(({ assignment, completedCount }) => (
+                  {data.pastAssignments.map(({ assignment, completedCount }) => (
                     <InstructorAssignmentCard
                       key={assignment.id}
                       assignment={assignment}
-                      classroomId={classroomId}
+                      classroomId={classroom.id}
                       completedCount={completedCount}
-                      studentCount={studentCount}
+                      studentCount={studentMembers.length}
                     />
                   ))}
                 </div>
@@ -186,8 +171,8 @@ function InstructorClassroom({
 
       {assignModalOpen ? (
         <AssignScenarioModal
-          classroomId={classroomId}
-          onAssigned={onAssignmentsChanged}
+          classroomId={classroom.id}
+          onAssigned={data.refetch}
           onClose={() => setAssignModalOpen(false)}
         />
       ) : null}

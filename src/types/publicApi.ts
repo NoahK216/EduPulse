@@ -17,18 +17,6 @@ type Serialized<T> = T extends Date
       ? { [K in keyof T]: Serialized<T[K]> }
       : T;
 
-export type PublicUser = {
-  id: string;
-  auth_user_id: string;
-  email: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  created_classroom_count: number;
-  classroom_membership_count: number;
-  owned_scenario_count: number;
-  attempt_count: number;
-};
 export type PublicClassroomBase = Serialized<classroomModel>;
 export type PublicClassroomMemberBase = Serialized<classroom_memberModel>;
 export type PublicScenarioBase = Serialized<scenarioModel>;
@@ -36,6 +24,12 @@ export type PublicScenarioVersionBase = Serialized<scenario_versionModel>;
 export type PublicAssignmentBase = Serialized<assignmentModel>;
 export type PublicAttemptBase = Serialized<attemptModel>;
 export type PublicResponseBase = Serialized<responseModel>;
+
+export type CurrentUserProfile = {
+  id: string;
+  email: string;
+  name: string;
+};
 
 export type PagedResponse<T> = {
   items: T[];
@@ -56,8 +50,6 @@ export type PublicApiError = {
 export type PublicClassroomRole = classroom_role;
 
 export type PublicClassroom = PublicClassroomBase & {
-  created_by_name: string;
-  created_by_email: string;
   member_count: number;
   assignment_count: number;
   viewer_role: PublicClassroomRole;
@@ -85,18 +77,16 @@ export type PublicScenarioTemplate = {
 
 export type PublicScenarioVersion = PublicScenarioVersionBase & {
   scenario_title: string;
-  published_by_name: string;
-  published_by_email: string;
   assignment_count: number;
   has_content: boolean;
 };
 
 export type PublicAssignment = PublicAssignmentBase & {
   classroom_name: string;
+  viewer_role: PublicClassroomRole;
   scenario_version_title: string;
   scenario_version_number: number;
   assigned_by_name: string;
-  assigned_by_email: string;
   attempt_count: number;
 };
 

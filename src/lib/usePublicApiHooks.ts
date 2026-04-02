@@ -8,50 +8,36 @@ import type {
   PublicResponse,
   PublicScenario,
   PublicScenarioVersion,
-  PublicUser,
+  CurrentUserProfile,
 } from "../types/publicApi";
 
 import { useApiData, type ApiState } from "./useApiData";
 import { toUuidOrNull } from "./uuid";
 
-type ValidatedIdState = {
-  id: string | null;
-  hasValidId: boolean;
-  invalidId: boolean;
-};
-
 type CollectionState<T> = ApiState<PagedResponse<T>> & {
   items: T[];
-  total: number;
-  page: number | null;
-  pageSize: number | null;
 };
 
-type IdBoundItemState<T> = ApiState<ItemResponse<T>> &
-  ValidatedIdState & {
-    item: T | null;
-  };
-
-type IdBoundCollectionState<T> = CollectionState<T> & ValidatedIdState;
-
-export type CurrentUserState = ApiState<ItemResponse<PublicUser>> & {
-  user: PublicUser | null;
+type ItemState<T> = ApiState<ItemResponse<T>> & {
+  item: T | null;
 };
 
-export type ClassroomState = IdBoundItemState<PublicClassroom>;
+export type CurrentUserState = ApiState<ItemResponse<CurrentUserProfile>> & {
+  user: CurrentUserProfile | null;
+};
+
+export type ClassroomState = ItemState<PublicClassroom>;
 export type ClassroomsState = CollectionState<PublicClassroom>;
-export type AssignmentState = IdBoundItemState<PublicAssignment>;
+export type AssignmentState = ItemState<PublicAssignment>;
 export type AssignmentsState = CollectionState<PublicAssignment>;
-export type AttemptState = IdBoundItemState<PublicAttempt>;
-export type ResponseState = IdBoundItemState<PublicResponse>;
-export type ScenarioState = IdBoundItemState<PublicScenario>;
-export type ClassroomMembersState =
-  IdBoundCollectionState<PublicClassroomMember>;
+export type AttemptState = ItemState<PublicAttempt>;
+export type ResponseState = ItemState<PublicResponse>;
+export type ScenarioState = ItemState<PublicScenario>;
+export type ClassroomMembersState = CollectionState<PublicClassroomMember>;
 export type ClassroomMembershipsState = CollectionState<PublicClassroomMember>;
-export type ClassroomAssignmentsState =
-  IdBoundCollectionState<PublicAssignment>;
-export type AssignmentAttemptsState = IdBoundCollectionState<PublicAttempt>;
-export type AttemptResponsesState = IdBoundCollectionState<PublicResponse>;
+export type ClassroomAssignmentsState = CollectionState<PublicAssignment>;
+export type AssignmentAttemptsState = CollectionState<PublicAttempt>;
+export type AttemptResponsesState = CollectionState<PublicResponse>;
 export type ScenariosState = CollectionState<PublicScenario>;
 export type ScenarioVersionsState = CollectionState<PublicScenarioVersion>;
 export type AttemptsState = CollectionState<PublicAttempt>;
@@ -66,18 +52,6 @@ type AssignmentsQuery = {
   classroomId?: string;
   pageSize?: number;
 };
-
-function resolveValidatedId(
-  value: string | null | undefined,
-): ValidatedIdState {
-  const id = toUuidOrNull(value);
-
-  return {
-    id,
-    hasValidId: id !== null,
-    invalidId: value !== null && typeof value !== "undefined" && id === null,
-  };
-}
 
 function buildPath(
   basePath: string,
@@ -103,13 +77,11 @@ function buildPath(
 
 function useItemResource<T>(
   path: string | null,
-  validatedId: ValidatedIdState,
-): IdBoundItemState<T> {
+): ItemState<T> {
   const state = useApiData<ItemResponse<T>>(path);
 
   return {
     ...state,
-    ...validatedId,
     item: state.data?.item ?? null,
   };
 }
@@ -120,26 +92,11 @@ function useCollectionResource<T>(path: string | null): CollectionState<T> {
   return {
     ...state,
     items: state.data?.items ?? [],
-    total: state.data?.total ?? 0,
-    page: state.data?.page ?? null,
-    pageSize: state.data?.pageSize ?? null,
-  };
-}
-
-function useIdBoundCollectionResource<T>(
-  path: string | null,
-  validatedId: ValidatedIdState,
-): IdBoundCollectionState<T> {
-  const state = useCollectionResource<T>(path);
-
-  return {
-    ...state,
-    ...validatedId,
   };
 }
 
 export function useCurrentUser(): CurrentUserState {
-  const state = useApiData<ItemResponse<PublicUser>>("/api/public/me");
+  const state = useApiData<ItemResponse<CurrentUserProfile>>("/api/public/me");
 
   return {
     ...state,
@@ -150,12 +107,10 @@ export function useCurrentUser(): CurrentUserState {
 export function useClassroom(
   classroomId: string | null | undefined,
 ): ClassroomState {
-  const validatedId = resolveValidatedId(classroomId);
-  const path = validatedId.id
-    ? `/api/public/classrooms/${validatedId.id}`
-    : null;
+  const validClassroomId = toUuidOrNull(classroomId);
+  const path = validClassroomId ? `/api/public/classrooms/${validClassroomId}` : null;
 
-  return useItemResource<PublicClassroom>(path, validatedId);
+  return useItemResource<PublicClassroom>(path);
 }
 
 export function useClassrooms(pageSize?: number): ClassroomsState {
@@ -170,15 +125,15 @@ export function useClassroomMembers(
   classroomId: string | null | undefined,
   pageSize = 100,
 ): ClassroomMembersState {
-  const validatedId = resolveValidatedId(classroomId);
-  const path = validatedId.id
+  const validClassroomId = toUuidOrNull(classroomId);
+  const path = validClassroomId
     ? buildPath("/api/public/classroom-members", {
-        classroomId: validatedId.id,
+        classroomId: validClassroomId,
         pageSize,
       })
     : null;
 
-  return useIdBoundCollectionResource<PublicClassroomMember>(path, validatedId);
+  return useCollectionResource<PublicClassroomMember>(path);
 }
 
 export function useClassroomMemberships(
@@ -195,15 +150,15 @@ export function useClassroomAssignments(
   classroomId: string | null | undefined,
   pageSize = 100,
 ): ClassroomAssignmentsState {
-  const validatedId = resolveValidatedId(classroomId);
-  const path = validatedId.id
+  const validClassroomId = toUuidOrNull(classroomId);
+  const path = validClassroomId
     ? buildPath("/api/public/assignments", {
-        classroomId: validatedId.id,
+        classroomId: validClassroomId,
         pageSize,
       })
     : null;
 
-  return useIdBoundCollectionResource<PublicAssignment>(path, validatedId);
+  return useCollectionResource<PublicAssignment>(path);
 }
 
 export function useAssignments(
@@ -222,27 +177,27 @@ export function useAssignments(
 export function useAssignment(
   assignmentId: string | null | undefined,
 ): AssignmentState {
-  const validatedId = resolveValidatedId(assignmentId);
-  const path = validatedId.id
-    ? `/api/public/assignments/${validatedId.id}`
+  const validAssignmentId = toUuidOrNull(assignmentId);
+  const path = validAssignmentId
+    ? `/api/public/assignments/${validAssignmentId}`
     : null;
 
-  return useItemResource<PublicAssignment>(path, validatedId);
+  return useItemResource<PublicAssignment>(path);
 }
 
 export function useAssignmentAttempts(
   assignmentId: string | null | undefined,
   pageSize = 100,
 ): AssignmentAttemptsState {
-  const validatedId = resolveValidatedId(assignmentId);
-  const path = validatedId.id
+  const validAssignmentId = toUuidOrNull(assignmentId);
+  const path = validAssignmentId
     ? buildPath("/api/public/attempts", {
-        assignmentId: validatedId.id,
+        assignmentId: validAssignmentId,
         pageSize,
       })
     : null;
 
-  return useIdBoundCollectionResource<PublicAttempt>(path, validatedId);
+  return useCollectionResource<PublicAttempt>(path);
 }
 
 export function useAttempts(query?: AttemptsQuery | null): AttemptsState {
@@ -258,47 +213,43 @@ export function useAttempts(query?: AttemptsQuery | null): AttemptsState {
 }
 
 export function useAttempt(attemptId: string | null | undefined): AttemptState {
-  const validatedId = resolveValidatedId(attemptId);
-  const path = validatedId.id ? `/api/public/attempts/${validatedId.id}` : null;
+  const validAttemptId = toUuidOrNull(attemptId);
+  const path = validAttemptId ? `/api/public/attempts/${validAttemptId}` : null;
 
-  return useItemResource<PublicAttempt>(path, validatedId);
+  return useItemResource<PublicAttempt>(path);
 }
 
 export function useAttemptResponses(
   attemptId: string | null | undefined,
   pageSize = 100,
 ): AttemptResponsesState {
-  const validatedId = resolveValidatedId(attemptId);
-  const path = validatedId.id
+  const validAttemptId = toUuidOrNull(attemptId);
+  const path = validAttemptId
     ? buildPath("/api/public/responses", {
-        attemptId: validatedId.id,
+        attemptId: validAttemptId,
         pageSize,
       })
     : null;
 
-  return useIdBoundCollectionResource<PublicResponse>(path, validatedId);
+  return useCollectionResource<PublicResponse>(path);
 }
 
 export function useResponse(
   responseId: string | null | undefined,
 ): ResponseState {
-  const validatedId = resolveValidatedId(responseId);
-  const path = validatedId.id
-    ? `/api/public/responses/${validatedId.id}`
-    : null;
+  const validResponseId = toUuidOrNull(responseId);
+  const path = validResponseId ? `/api/public/responses/${validResponseId}` : null;
 
-  return useItemResource<PublicResponse>(path, validatedId);
+  return useItemResource<PublicResponse>(path);
 }
 
 export function useScenario(
   scenarioId: string | null | undefined,
 ): ScenarioState {
-  const validatedId = resolveValidatedId(scenarioId);
-  const path = validatedId.id
-    ? `/api/public/scenarios/${validatedId.id}`
-    : null;
+  const validScenarioId = toUuidOrNull(scenarioId);
+  const path = validScenarioId ? `/api/public/scenarios/${validScenarioId}` : null;
 
-  return useItemResource<PublicScenario>(path, validatedId);
+  return useItemResource<PublicScenario>(path);
 }
 
 export function useScenarios(pageSize = 100): ScenariosState {

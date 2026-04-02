@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import {
   EmptyPanel,
 } from "../../components/data/DataStatePanels";
-import { useScenarioLibraryData } from "./hooks/useScenarioPageData";
 import { DataGuard } from "../../components/data/DataGuard";
 import PageShell from "../../components/layout/PageShell";
 import {
@@ -12,9 +11,11 @@ import {
   publicApiDelete,
   resolvePublicApiToken,
 } from "../../lib/public-api-client";
+import { useScenarios, useScenarioVersions } from "../../lib/usePublicApiHooks";
 import type {
   PublicScenario,
 } from "../../types/publicApi";
+import type { DataGuardState } from "../../components/data/DataGuard";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -28,15 +29,60 @@ function pluralize(count: number, singular: string, plural: string) {
   return count === 1 ? singular : plural;
 }
 
+function createScenarioLibraryGuard(args: {
+  scenariosUnauthorized: boolean;
+  versionsUnauthorized: boolean;
+  scenariosLoading: boolean;
+  versionsLoading: boolean;
+  scenariosError: string | null;
+  versionsError: string | null;
+  onRetry: () => void;
+}): DataGuardState {
+  if (args.scenariosUnauthorized || args.versionsUnauthorized) {
+    return { kind: "unauthorized" };
+  }
+
+  if (args.scenariosLoading || args.versionsLoading) {
+    return { kind: "loading" };
+  }
+
+  if (args.scenariosError || args.versionsError) {
+    return {
+      kind: "error",
+      message:
+        args.scenariosError ??
+        args.versionsError ??
+        "Failed to load scenario library.",
+      onRetry: args.onRetry,
+    };
+  }
+
+  return { kind: "content" };
+}
+
 function ScenarioLibraryPage() {
-  const library = useScenarioLibraryData();
+  const scenarios = useScenarios();
+  const versions = useScenarioVersions();
   const [deletingScenarioId, setDeletingScenarioId] = useState<string | null>(
     null,
   );
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const scenarioItems = library.scenarios;
-  const versionItems = library.versions;
+  const scenarioItems = scenarios.items;
+  const versionItems = versions.items;
+  const refetchLibrary = useCallback(() => {
+    scenarios.refetch();
+    versions.refetch();
+  }, [scenarios, versions]);
+  const guard = createScenarioLibraryGuard({
+    scenariosUnauthorized: scenarios.unauthorized,
+    versionsUnauthorized: versions.unauthorized,
+    scenariosLoading: scenarios.loading,
+    versionsLoading: versions.loading,
+    scenariosError: scenarios.error,
+    versionsError: versions.error,
+    onRetry: refetchLibrary,
+  });
 
   const handleDeleteScenario = useCallback(
     async (scenario: PublicScenario) => {
@@ -73,7 +119,7 @@ function ScenarioLibraryPage() {
           token,
         );
         setActionMessage(`Deleted "${scenarioTitle}".`);
-        library.refetch();
+        refetchLibrary();
       } catch (error) {
         if (error instanceof ApiRequestError) {
           setActionError(error.message);
@@ -90,7 +136,7 @@ function ScenarioLibraryPage() {
         setDeletingScenarioId(null);
       }
     },
-    [library],
+    [refetchLibrary],
   );
 
   return (
@@ -98,7 +144,7 @@ function ScenarioLibraryPage() {
       title="Scenario Library"
       subtitle="Create, edit, and manage your scenario drafts and published versions."
     >
-      <DataGuard state={library.guard}>
+      <DataGuard state={guard}>
         <div className="space-y-6">
           <section
             className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br 
