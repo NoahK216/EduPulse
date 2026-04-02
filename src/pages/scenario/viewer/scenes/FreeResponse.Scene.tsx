@@ -2,6 +2,10 @@ import { useState, type FormEvent } from "react";
 
 import type { FreeResponseNode } from "../../nodeSchemas";
 import type { NodeSceneProps } from "../viewerTypes";
+import {
+  SceneLayout,
+  scenePrimaryButtonClassName,
+} from "./sceneUi";
 
 export function FreeResponseScene({
   node,
@@ -10,42 +14,49 @@ export function FreeResponseScene({
   dispatch,
 }: NodeSceneProps<FreeResponseNode>) {
   const [response, setResponse] = useState<string>("");
+  const prompt = node.prompt?.trim();
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!response.trim()) return;
+    if (!response.trim()) {
+      return;
+    }
 
     await dispatch({ type: "SUBMIT_FREE_RESPONSE", answerText: response.trim() });
   };
 
   return (
-    <section className="w-full max-w-4xl">
-      <h2 className="text-3xl font-bold">{node.title}</h2>
-      <p className="mt-2 text-sm text-white/75">
-        <span className="font-semibold text-white">Question:</span> {node.prompt}
-      </p>
-      <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-start">
-        <form onSubmit={handleSubmit} className="flex-1 space-y-2">
+    <SceneLayout
+      tone="emerald"
+      label="Written Response"
+      title={node.title?.trim() || "Reflect and respond"}
+      errorMessage={errorMessage}
+    >
+      <div className="space-y-4">
+        {prompt ? (
+          <p className="text-sm leading-6 text-neutral-700 dark:text-neutral-200">
+            {prompt}
+          </p>
+        ) : null}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <textarea
-            className="w-full resize-none rounded-xl border border-white/20 bg-black/20 p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="min-h-56 w-full resize-y rounded-[1.5rem] border border-neutral-200 bg-neutral-50/80 p-4 text-sm leading-6 text-neutral-900 outline-none transition placeholder:text-neutral-400 focus:border-emerald-300 focus:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/70 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-emerald-500/40 dark:focus:bg-neutral-900/70"
             value={response}
-            onChange={(e) => setResponse(e.target.value)}
-            rows={8}
-            placeholder={node.placeholder || "Enter response..."}
+            onChange={(event) => setResponse(event.target.value)}
+            placeholder={node.placeholder || "Write your response here..."}
             disabled={busy}
           />
-          <input
-            className="w-fit cursor-pointer rounded-lg bg-white/10 px-4 py-2 text-sm font-medium hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
-            type="submit"
-            value={busy ? "Submitting..." : "Submit"}
-            disabled={busy || response.trim().length === 0}
-          />
 
-          {errorMessage ? (
-            <p className="text-sm text-red-400">{errorMessage}</p>
-          ) : null}
+          <button
+            className={scenePrimaryButtonClassName}
+            type="submit"
+            disabled={busy || response.trim().length === 0}
+          >
+            {busy ? "Submitting..." : "Submit Response"}
+          </button>
         </form>
       </div>
-    </section>
+    </SceneLayout>
   );
 }

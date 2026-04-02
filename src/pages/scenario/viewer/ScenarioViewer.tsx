@@ -60,7 +60,7 @@ function ScenarioViewer({
   initialNodeId,
   attemptId = null,
   onAttemptUpdate,
-  onFinished: onFinished,
+  onFinished,
 }: ScenarioViewerProps) {
   const [searchParams] = useSearchParams();
   const scenarioUrl = searchParams.get("url");
@@ -78,13 +78,17 @@ function ScenarioViewer({
     completed: boolean;
   } | null>(null);
 
-  const initializeScenario = (nextScenario: Scenario, nextNodeId?: string | null) => {
+  const initializeScenario = (
+    nextScenario: Scenario,
+    nextNodeId?: string | null,
+  ) => {
     setLoadedScenario(nextScenario);
     setCurrentNodeId(nextNodeId ?? nextScenario.startNodeId);
     setScenarioState("doing");
     setErrorMessage(null);
     setActionErrorMessage(null);
     setPendingFeedback(null);
+    setBusy(false);
   };
 
   useEffect(() => {
@@ -110,8 +114,16 @@ function ScenarioViewer({
     }
   }, [initialNodeId, scenario, scenarioUrl]);
 
+  useEffect(() => {
+    if (scenarioState === "finished" && onFinished) {
+      onFinished();
+    }
+  }, [onFinished, scenarioState]);
+
   const currentNode =
-    loadedScenario && currentNodeId ? getScenarioNode(loadedScenario, currentNodeId) : null;
+    loadedScenario && currentNodeId
+      ? getScenarioNode(loadedScenario, currentNodeId)
+      : null;
 
   const applyProgressOutcome = (nextNodeId: string | null, completed: boolean) => {
     if (completed || nextNodeId === null) {
@@ -260,10 +272,18 @@ function ScenarioViewer({
 
   switch (scenarioState) {
     case "loading":
-      return <p>Loading scenario...</p>;
-    case "doing":
+      return (
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">
+          Loading scenario...
+        </p>
+      );
+    case "doing": {
       if (!loadedScenario || !currentNode) {
-        return <p>Loading scenario...</p>;
+        return (
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
+            Loading scenario...
+          </p>
+        );
       }
 
       return (
@@ -282,7 +302,7 @@ function ScenarioViewer({
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
               <div className="w-full max-w-2xl rounded-xl border border-white/20 bg-zinc-900 p-4">
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-base font-semibold">Feedback</h3>
+                  <h3 className="text-base font-semibold text-white">Feedback</h3>
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 text-white/70 hover:bg-white/10 hover:text-white"
@@ -306,12 +326,39 @@ function ScenarioViewer({
           ) : null}
         </>
       );
+    }
     case "finished":
-      if (onFinished)
-        onFinished();
-      return;
+      if (onFinished) {
+        return null;
+      }
+
+      return (
+        <div className="space-y-3 rounded-xl border border-neutral-300 bg-white px-4 py-4 dark:border-neutral-800 dark:bg-neutral-950">
+          <p className="text-sm text-neutral-700 dark:text-neutral-200">
+            You have reached the end of {loadedScenario?.title ?? "this scenario"}.
+          </p>
+          {loadedScenario ? (
+            <button
+              type="button"
+              className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-900"
+              onClick={() =>
+                initializeScenario(
+                  loadedScenario,
+                  initialNodeId ?? loadedScenario.startNodeId,
+                )
+              }
+            >
+              Run again
+            </button>
+          ) : null}
+        </div>
+      );
     case "error":
-      return <p style={{ color: "red" }}>{errorMessage}</p>;
+      return (
+        <p className="text-sm text-rose-600 dark:text-rose-300">
+          {errorMessage ?? "The scenario could not be loaded."}
+        </p>
+      );
   }
 }
 

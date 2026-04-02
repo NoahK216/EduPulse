@@ -1,40 +1,73 @@
-import type { NodeSceneProps } from "../viewerTypes";
-import type { VideoNode } from "../../nodeSchemas";
 import { useEffect, useRef } from "react";
 
-export function VideoScene({ node, busy, errorMessage, dispatch }: NodeSceneProps<VideoNode>) {
-  const playerRef = useRef<HTMLVideoElement>(null);
-  const didAutoAdvanceRef = useRef<boolean>(null);
+import type { VideoNode } from "../../nodeSchemas";
+import type { NodeSceneProps } from "../viewerTypes";
+import { SceneLayout } from "./sceneUi";
 
-  // TODO eventually use a video player without scrub forward.
+export function VideoScene({
+  node,
+  busy,
+  errorMessage,
+  dispatch,
+}: NodeSceneProps<VideoNode>) {
+  const playerRef = useRef<HTMLVideoElement>(null);
+  const didAutoAdvanceRef = useRef<boolean>(false);
+
+  // TODO A video player without scrub forward?
   useEffect(() => {
     if (!node.src && !busy && !didAutoAdvanceRef.current) {
       didAutoAdvanceRef.current = true;
-      dispatch({ type: "ADVANCE" });
+      void dispatch({ type: "ADVANCE" });
     }
-    const v = playerRef.current;
-    if (!v) return;
-    v.onended = () => dispatch({ type: "ADVANCE" });
+
+    const player = playerRef.current;
+    if (!player) {
+      return;
+    }
+
+    player.onended = () => {
+      void dispatch({ type: "ADVANCE" });
+    };
+
+    return () => {
+      player.onended = null;
+    };
   }, [node.id, node.src, busy, dispatch]);
 
   return (
-    <section>
-      <div className=" max-w-4xl">
-        <h2 className="mb-2 text-2xl font-semibold">{node.title}</h2>
-
-        <video
-          ref={playerRef}
-          className="rounded-2xl"
-          controls
-          disablePictureInPicture
-          preload="auto">
-          <source src={node.src} />
-          <track src={node.captionsSrc} kind="subtitles" srcLang="en" label="English" />
-          Your browser does not support the video tag.
-        </video>
-
-        {errorMessage ? <p>{errorMessage}</p> : null}
+    <SceneLayout
+      tone="indigo"
+      label="Video"
+      title={node.title?.trim() || "Watch this clip"}
+      errorMessage={errorMessage}
+    >
+      <div className="overflow-hidden rounded-[1.5rem] border border-neutral-200 bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] dark:border-neutral-800">
+        {node.src ? (
+          <video
+            ref={playerRef}
+            className="aspect-video w-full bg-black"
+            controls
+            disablePictureInPicture
+            preload="auto"
+            autoPlay={Boolean(node.autoplay)}
+          >
+            <source src={node.src} />
+            {node.captionsSrc ? (
+              <track
+                src={node.captionsSrc}
+                kind="subtitles"
+                srcLang="en"
+                label="English"
+              />
+            ) : null}
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          <div className="flex aspect-video items-center justify-center px-6 text-center text-sm text-neutral-300">
+            Preparing the next scene...
+          </div>
+        )}
       </div>
-    </section>
+    </SceneLayout>
   );
 }

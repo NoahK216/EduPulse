@@ -58,9 +58,7 @@ function ScenarioTestRunPage() {
               </Link>
             </div>
 
-            <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-4">
-              <ScenarioViewer scenario={scenarioDocument} />
-            </div>
+            <ScenarioViewer scenario={scenarioDocument} />
           </>
         ) : null}
       </DataGuard>

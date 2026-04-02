@@ -185,15 +185,13 @@ function AssignmentRunnerPage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-neutral-800 bg-neutral-950/70 p-4">
-        <ScenarioViewer
-          scenario={parsedScenario.data}
-          initialNodeId={initialNodeId}
-          attemptId={attempt.id}
-          onAttemptUpdate={setAttempt}
-          onFinished={() => {navigate(`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`)}}
-        />
-      </div>
+      <ScenarioViewer
+        scenario={parsedScenario.data}
+        initialNodeId={initialNodeId}
+        attemptId={attempt.id}
+        onAttemptUpdate={setAttempt}
+        onFinished={() => { navigate(`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`) }}
+      />
     </PageShell>
   );
 }
