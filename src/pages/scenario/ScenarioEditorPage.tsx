@@ -32,6 +32,7 @@ function ScenarioEditorPage() {
     <ScenarioCreator
       initialScenario={data.scenarioDocument}
       initialScenarioId={data.scenarioItem.id}
+      initialDescription={data.scenarioItem.description ?? null}
     />
   );
 }

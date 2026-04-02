@@ -176,6 +176,11 @@ function ScenarioLibraryPage() {
                           >
                             {scenarioTitle}
                           </Link>
+                          {scenario.description ? (
+                            <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2">
+                              {scenario.description}
+                            </p>
+                          ) : null}
                           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                             Updated {formatDate(scenario.updated_at)} |{" "}
                             {scenario.version_count}{" "}
