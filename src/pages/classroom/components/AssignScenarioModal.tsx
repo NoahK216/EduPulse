@@ -1,17 +1,20 @@
-import { useMemo, useState } from 'react';
-import { FaMagnifyingGlass } from 'react-icons/fa6';
+import { useMemo, useState } from "react";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 
-import { publicApiPost, resolvePublicApiToken } from '../../../lib/public-api-client';
-import { useScenarioVersions, useScenarios } from '../../../lib/usePublicApiHooks';
-import type {
-  ItemResponse,
-  PublicAssignment,
-} from '../../../types/publicApi';
+import {
+  publicApiPost,
+  resolvePublicApiToken,
+} from "../../../lib/public-api-client";
+import {
+  useScenarioVersions,
+  useScenarios,
+} from "../../../lib/usePublicApiHooks";
+import type { ItemResponse, PublicAssignment } from "../../../types/publicApi";
 import {
   EmptyPanel,
   ErrorPanel,
   LoadingPanel,
-} from '../../../components/data/DataStatePanels';
+} from "../../../components/data/DataStatePanels";
 
 type AssignScenarioModalProps = {
   classroomId: string;
@@ -24,14 +27,14 @@ type ScenarioOption = {
   label: string;
   meta: string;
   assignmentTitle: string;
-  sourceType: 'scenario' | 'scenarioVersion';
+  sourceType: "scenario" | "scenarioVersion";
   scenarioId: string;
   scenarioVersionId: string | null;
   publishHint: string;
 };
 
 function padDateTimePart(value: number) {
-  return value.toString().padStart(2, '0');
+  return value.toString().padStart(2, "0");
 }
 
 function toDateTimeLocalValue(value: Date) {
@@ -72,15 +75,15 @@ function AssignScenarioModal({
   onClose,
   onAssigned,
 }: AssignScenarioModalProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [titleEdited, setTitleEdited] = useState(false);
-  const [openAt, setOpenAt] = useState('');
+  const [openAt, setOpenAt] = useState("");
   const [dueAt, setDueAt] = useState(defaultDueAtValue);
-  const [closeAt, setCloseAt] = useState('');
-  const [maxAttempts, setMaxAttempts] = useState('');
-  const [instructions, setInstructions] = useState('');
+  const [closeAt, setCloseAt] = useState("");
+  const [maxAttempts, setMaxAttempts] = useState("");
+  const [instructions, setInstructions] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -93,10 +96,11 @@ function AssignScenarioModal({
       label: scenario.title,
       meta: `Draft scenario | ${scenario.version_count} published versions`,
       assignmentTitle: scenario.title,
-      sourceType: 'scenario',
+      sourceType: "scenario",
       scenarioId: scenario.id,
       scenarioVersionId: null,
-      publishHint: 'A new published scenario version will be created when this assignment is sent.',
+      publishHint:
+        "A new published scenario version will be created when this assignment is sent.",
     }));
 
     const versionOptions: ScenarioOption[] = versions.items.map((version) => ({
@@ -104,7 +108,7 @@ function AssignScenarioModal({
       label: version.scenario_title,
       meta: `${version.title} | Published version v${version.version_number}`,
       assignmentTitle: version.scenario_title,
-      sourceType: 'scenarioVersion',
+      sourceType: "scenarioVersion",
       scenarioId: version.scenario_id,
       scenarioVersionId: version.id,
       publishHint: `This will assign existing published version v${version.version_number}.`,
@@ -128,7 +132,9 @@ function AssignScenarioModal({
   const selectedOption =
     allOptions.find((option) => option.id === selectedOptionId) ?? null;
   const effectiveTitle =
-    title.trim().length > 0 ? title.trim() : selectedOption?.assignmentTitle ?? '';
+    title.trim().length > 0
+      ? title.trim()
+      : (selectedOption?.assignmentTitle ?? "");
   const parsedMaxAttempts = parseOptionalPositiveInteger(maxAttempts);
   const hasError = scenarios.error || versions.error;
   const isLoading = scenarios.loading || versions.loading;
@@ -139,10 +145,11 @@ function AssignScenarioModal({
 
   function handleSelectOption(optionId: string) {
     clearMessages();
-    const option = allOptions.find((candidate) => candidate.id === optionId) ?? null;
+    const option =
+      allOptions.find((candidate) => candidate.id === optionId) ?? null;
     setSelectedOptionId(optionId);
     if (!titleEdited) {
-      setTitle(option?.assignmentTitle ?? '');
+      setTitle(option?.assignmentTitle ?? "");
     }
   }
 
@@ -150,22 +157,22 @@ function AssignScenarioModal({
     clearMessages();
 
     if (!selectedOption) {
-      setFormError('Select a scenario or published scenario version first.');
+      setFormError("Select a scenario or published scenario version first.");
       return;
     }
 
     if (effectiveTitle.length === 0) {
-      setFormError('Assignment title is required.');
+      setFormError("Assignment title is required.");
       return;
     }
 
     if (!dueAt) {
-      setFormError('Due at is required.');
+      setFormError("Due at is required.");
       return;
     }
 
     if (parsedMaxAttempts === null) {
-      setFormError('Max attempts must be a positive integer when provided.');
+      setFormError("Max attempts must be a positive integer when provided.");
       return;
     }
 
@@ -174,27 +181,27 @@ function AssignScenarioModal({
     const closeAtDate = closeAt ? new Date(closeAt) : null;
 
     if (openAtDate && Number.isNaN(openAtDate.getTime())) {
-      setFormError('Open at must be a valid datetime.');
+      setFormError("Open at must be a valid datetime.");
       return;
     }
 
     if (!dueAtDate || Number.isNaN(dueAtDate.getTime())) {
-      setFormError('Due at must be a valid datetime.');
+      setFormError("Due at must be a valid datetime.");
       return;
     }
 
     if (closeAtDate && Number.isNaN(closeAtDate.getTime())) {
-      setFormError('Close at must be a valid datetime.');
+      setFormError("Close at must be a valid datetime.");
       return;
     }
 
     if (openAtDate && openAtDate.getTime() > dueAtDate.getTime()) {
-      setFormError('Open at must be before due at.');
+      setFormError("Open at must be before due at.");
       return;
     }
 
     if (closeAtDate && closeAtDate.getTime() < dueAtDate.getTime()) {
-      setFormError('Close at must be after due at.');
+      setFormError("Close at must be after due at.");
       return;
     }
 
@@ -203,31 +210,40 @@ function AssignScenarioModal({
     try {
       const token = await resolvePublicApiToken();
       if (!token) {
-        setFormError('You must be logged in to assign a scenario.');
+        setFormError("You must be logged in to assign a scenario.");
         return;
       }
 
-      await publicApiPost<ItemResponse<PublicAssignment>>('/api/public/assignments', token, {
-        classroom_id: classroomId,
-        scenario_id:
-          selectedOption.sourceType === 'scenario' ? selectedOption.scenarioId : undefined,
-        scenario_version_id:
-          selectedOption.sourceType === 'scenarioVersion'
-            ? selectedOption.scenarioVersionId
-            : undefined,
-        title: title.trim().length > 0 ? title.trim() : undefined,
-        instructions: instructions.trim().length > 0 ? instructions.trim() : undefined,
-        open_at: toOptionalIsoString(openAt),
-        due_at: toOptionalIsoString(dueAt),
-        close_at: toOptionalIsoString(closeAt),
-        max_attempts: parsedMaxAttempts,
-      });
+      await publicApiPost<ItemResponse<PublicAssignment>>(
+        "/api/public/assignments",
+        token,
+        {
+          classroom_id: classroomId,
+          scenario_id:
+            selectedOption.sourceType === "scenario"
+              ? selectedOption.scenarioId
+              : undefined,
+          scenario_version_id:
+            selectedOption.sourceType === "scenarioVersion"
+              ? selectedOption.scenarioVersionId
+              : undefined,
+          title: title.trim().length > 0 ? title.trim() : undefined,
+          instructions:
+            instructions.trim().length > 0 ? instructions.trim() : undefined,
+          open_at: toOptionalIsoString(openAt),
+          due_at: toOptionalIsoString(dueAt),
+          close_at: toOptionalIsoString(closeAt),
+          max_attempts: parsedMaxAttempts,
+        },
+      );
 
       onAssigned?.();
       onClose();
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : 'Failed to assign the selected scenario.',
+        error instanceof Error
+          ? error.message
+          : "Failed to assign the selected scenario.",
       );
     } finally {
       setSubmitting(false);
@@ -241,7 +257,8 @@ function AssignScenarioModal({
           <div>
             <h2 className="text-2xl font-semibold">Assign Scenario</h2>
             <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-              Configure the assignment fields that map to the assignment schema before publishing.
+              Configure the assignment fields that map to the assignment schema
+              before publishing.
             </p>
           </div>
           <button
@@ -253,7 +270,7 @@ function AssignScenarioModal({
           </button>
         </div>
 
-        <div className="mt-6 grid lg:grid-cols-[1]">
+        <div className="mt-6 grid w-full">
           <div className="space-y-5">
             <section className="rounded-2xl border border-neutral-200 p-4 dark:border-neutral-800">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -296,28 +313,31 @@ function AssignScenarioModal({
                   ) : null}
                   {!isLoading && !hasError && filteredOptions.length > 0
                     ? filteredOptions.map((option) => (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => handleSelectOption(option.id)}
-                        className={`block w-full rounded-xl border px-4 py-3 text-left transition ${selectedOptionId === option.id
-                          ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/30'
-                          : 'border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700'
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => handleSelectOption(option.id)}
+                          className={`block w-full rounded-xl border px-4 py-3 text-left transition ${
+                            selectedOptionId === option.id
+                              ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-950/30"
+                              : "border-neutral-200 hover:border-neutral-300 dark:border-neutral-800 dark:hover:border-neutral-700"
                           }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium">{option.label}</p>
-                            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
-                              {option.meta}
-                            </p>
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-medium">{option.label}</p>
+                              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
+                                {option.meta}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                              {option.sourceType === "scenario"
+                                ? "Draft"
+                                : "Published"}
+                            </span>
                           </div>
-                          <span className="rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
-                            {option.sourceType === 'scenario' ? 'Draft' : 'Published'}
-                          </span>
-                        </div>
-                      </button>
-                    ))
+                        </button>
+                      ))
                     : null}
                 </div>
               </div>
@@ -327,7 +347,9 @@ function AssignScenarioModal({
               <h3 className="text-sm font-medium">Assignment details</h3>
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium">Assignment title</span>
+                  <span className="mb-2 block text-sm font-medium">
+                    Assignment title
+                  </span>
                   <input
                     type="text"
                     value={title}
@@ -337,7 +359,8 @@ function AssignScenarioModal({
                       setTitleEdited(event.target.value.trim().length > 0);
                     }}
                     placeholder={
-                      selectedOption?.assignmentTitle ?? 'Defaults to the selected scenario title'
+                      selectedOption?.assignmentTitle ??
+                      "Defaults to the selected scenario title"
                     }
                     className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 dark:border-neutral-700 dark:bg-neutral-900"
                   />
@@ -348,7 +371,9 @@ function AssignScenarioModal({
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Open at</span>
+                    <span className="mb-2 block text-sm font-medium">
+                      Open at
+                    </span>
                     <input
                       type="datetime-local"
                       value={openAt}
@@ -364,7 +389,9 @@ function AssignScenarioModal({
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Due at</span>
+                    <span className="mb-2 block text-sm font-medium">
+                      Due at
+                    </span>
                     <input
                       type="datetime-local"
                       value={dueAt}
@@ -377,7 +404,9 @@ function AssignScenarioModal({
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Close at</span>
+                    <span className="mb-2 block text-sm font-medium">
+                      Close at
+                    </span>
                     <input
                       type="datetime-local"
                       value={closeAt}
@@ -388,12 +417,15 @@ function AssignScenarioModal({
                       className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 dark:border-neutral-700 dark:bg-neutral-900"
                     />
                     <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                      Leave blank to keep the assignment accessible after the due time.
+                      Leave blank to keep the assignment accessible after the
+                      due time.
                     </p>
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-sm font-medium">Max attempts (optional)</span>
+                    <span className="mb-2 block text-sm font-medium">
+                      Max attempts (optional)
+                    </span>
                     <input
                       type="number"
                       min={1}
@@ -412,7 +444,9 @@ function AssignScenarioModal({
                 </div>
 
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium">Instructions</span>
+                  <span className="mb-2 block text-sm font-medium">
+                    Instructions
+                  </span>
                   <textarea
                     value={instructions}
                     onChange={(event) => {
@@ -443,13 +477,18 @@ function AssignScenarioModal({
               <button
                 type="button"
                 onClick={handleAssign}
-                disabled={submitting || !selectedOption || !dueAt || parsedMaxAttempts === null}
+                disabled={
+                  submitting ||
+                  !selectedOption ||
+                  !dueAt ||
+                  parsedMaxAttempts === null
+                }
                 className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
               >
-                {submitting ? 'Assigning...' : 'Assign'}
+                {submitting ? "Assigning..." : "Assign"}
               </button>
             </div>
-          </div>  
+          </div>
         </div>
       </div>
     </div>
