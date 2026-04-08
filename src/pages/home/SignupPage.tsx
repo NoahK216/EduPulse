@@ -27,7 +27,10 @@ function SignupPage() {
     setIsSubmitting(true);
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-      const callbackUrl = new URL("/login?verificationSuccess=1", window.location.origin);
+      const callbackUrl = new URL(
+        "/login?verificationSuccess=1",
+        window.location.origin,
+      );
       callbackUrl.searchParams.set("next", "/");
 
       const { error } = await authClient.signUp.email({
@@ -68,7 +71,7 @@ function SignupPage() {
                 First Name
               </label>
               <input
-                className="mt-2 w-half rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
@@ -80,7 +83,7 @@ function SignupPage() {
                 Last Name
               </label>
               <input
-                className="mt-2 w-half rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}

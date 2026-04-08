@@ -435,7 +435,7 @@ function AssignScenarioModal({
                         clearMessages();
                         setMaxAttempts(event.target.value);
                       }}
-                      className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 dark:border-neutral-700 dark:bg-neutral-900"
+                      className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-cyan-500 dark:border-neutral-700 dark:bg-neutral-900 scheme-light dark:scheme-dark"
                     />
                     <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
                       Leave blank for unlimited attempts.
@@ -483,7 +483,7 @@ function AssignScenarioModal({
                   !dueAt ||
                   parsedMaxAttempts === null
                 }
-                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400 dark:disabled:bg-neutral-700"
               >
                 {submitting ? "Assigning..." : "Assign"}
               </button>
