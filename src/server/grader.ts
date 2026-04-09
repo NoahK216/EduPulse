@@ -13,6 +13,7 @@ export const gradeRequestSchema = z.object({
 export const gradeResultSchema = z.object({
   bucket_id: z.string(),
   feedback: z.string(),
+  evidence: z.array(z.string()),
 });
 
 type GradeRequest = z.infer<typeof gradeRequestSchema>;
@@ -23,12 +24,27 @@ type GradeResult = z.infer<typeof gradeResultSchema>;
 export const gradeResultJsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['bucket_id', 'feedback'],
+  required: ['bucket_id', 'feedback', 'evidence'],
   properties: {
     bucket_id: { type: 'string' },
     feedback: { type: 'string' },
+    evidence: {
+      type: 'array',
+      items: { type: 'string' },
+    },
   },
 };
+
+// ---- Sanitization ----
+
+function sanitizeLearnerResponse(text: string): string {
+  return text
+    .replace(/<\/?SYSTEM>/gi, '[REMOVED_TAG]')
+    .replace(/<\/?INSTRUCTIONS?>/gi, '[REMOVED_TAG]')
+    .replace(/<\/?RUBRIC>/gi, '[REMOVED_TAG]')
+    .replace(/<\/?QUESTION>/gi, '[REMOVED_TAG]')
+    .replace(/<\/?LEARNER_RESPONSE>/gi, '[REMOVED_TAG]');
+}
 
 // ---- Prompts ----
 
@@ -57,8 +73,9 @@ ${JSON.stringify(rubric, null, 2)}
 }
 
 function buildResponseMessage(user_response_text: string): string {
+  const sanitized = sanitizeLearnerResponse(user_response_text);
   return `<LEARNER_RESPONSE>
-${user_response_text}
+${sanitized}
 </LEARNER_RESPONSE>`;
 }
 
@@ -73,7 +90,8 @@ You must follow these grading rules exactly:
 5. Select the single best answer bucket (classifier) that matches the response content.
 6. Return its bucket_id.
 7. Provide feedback: concise explanation of what is missing versus the best bucket, citing key phrases from the response.
-8. Return ONLY the JSON that matches the schema. No explanations, summaries, or deviations.
+8. Return evidence: an array of 1-3 specific quotes or phrases from the learner response that support your grading decision.
+9. Return ONLY the JSON that matches the schema. No explanations, summaries, or deviations.
 
 Example bucket style: { "id": "1", "classifier": "Good Answer. plants take sunlight, use that sunlight and water and nutrients to make sugar, and break down that sugar to make energy." }
 </INSTRUCTIONS>`;
@@ -188,8 +206,9 @@ function enforceResult(aiResult: GradeResult, rubric: Rubric): GradeResult {
     : rubric.answerBuckets[0]?.id ?? 'bucket';
 
   const feedback = aiResult.feedback || 'No feedback provided.';
+  const evidence = Array.isArray(aiResult.evidence) ? aiResult.evidence.slice(0, 3) : [];
 
-  return { bucket_id, feedback };
+  return { bucket_id, feedback, evidence };
 }
 
 export function createGraderRouter(openai: OpenAI) {
