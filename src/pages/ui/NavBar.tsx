@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authClient } from "../../lib/auth-client";
+import { clearPublicApiTokenCache } from "../../lib/public-api-client";
 
 function NavBar() {
   const [open, setOpen] = useState(false);
@@ -65,7 +66,13 @@ function NavBar() {
                   href="#"
                   onClick={async (e) => {
                     e.preventDefault();
+                    try {
+                      await authClient.revokeSessions();
+                    } catch {
+                      // Best effort: proceed with sign out even if revoke fails.
+                    }
                     await authClient.signOut();
+                    clearPublicApiTokenCache();
                     navigate("/");
                   }}
                   className="block !text-white px-3 py-2 text-sm hover:bg-gray-700">

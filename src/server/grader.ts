@@ -40,32 +40,33 @@ const graderSystemPrompt = `You are an exacting rubric grader.
 - Return feedback: a brief explanation of what is missing compared to the best bucket/classifier, referencing the learner response.
 - Keep feedback concise (2-4 sentences).`;
 
-function buildGradeUserPrompt(params: {
-  question_prompt: string;
-  user_response_text: string;
-  rubric: Rubric;
-}) {
-  const { question_prompt, user_response_text, rubric } = params;
+function buildQuestionMessage(question_prompt: string): string {
+  return `<QUESTION>
+${question_prompt}
+</QUESTION>`;
+}
 
-  return [
-    'Grade the learner response using the rubric answer buckets.',
-    'Example bucket style: { "id": "1", "classifier": "Good Answer. plants take sunlight, use that sunlight and water and nutrients to make sugar, and break down that sugar to make energy." }',
-    '',
-    'Question prompt the learner answered:',
-    question_prompt,
-    '',
-    'Rubric JSON (use this exactly):',
-    JSON.stringify(rubric, null, 2),
-    '',
-    'Learner response:',
-    user_response_text,
-    '',
-    'Instructions:',
-    '- Select the single best answer bucket (classifier) that matches the response.',
-    '- Return its bucket_id.',
-    '- feedback: concise explanation of what is missing versus the best bucket, citing key phrases from the response.',
-    'Return only the JSON that matches the schema.',
-  ].join('\n');
+function buildRubricMessage(rubric: Rubric): string {
+  return `<RUBRIC>
+${JSON.stringify(rubric, null, 2)}
+</RUBRIC>`;
+}
+
+function buildResponseMessage(user_response_text: string): string {
+  return `<LEARNER_RESPONSE>
+${user_response_text}
+</LEARNER_RESPONSE>`;
+}
+
+function buildInstructionsMessage(): string {
+  return `<INSTRUCTIONS>
+Grade the learner response using the rubric answer buckets.
+Example bucket style: { "id": "1", "classifier": "Good Answer. plants take sunlight, use that sunlight and water and nutrients to make sugar, and break down that sugar to make energy." }
+- Select the single best answer bucket (classifier) that matches the response.
+- Return its bucket_id.
+- feedback: concise explanation of what is missing versus the best bucket, citing key phrases from the response.
+Return only the JSON that matches the schema.
+</INSTRUCTIONS>`;
 }
 
 // ---- Grading orchestration ----
@@ -83,7 +84,10 @@ export async function gradeWithOpenAI(
 
   const messages = [
     { role: 'system' as const, content: graderSystemPrompt },
-    { role: 'user' as const, content: buildGradeUserPrompt(body) },
+    { role: 'user' as const, content: buildQuestionMessage(body.question_prompt) },
+    { role: 'user' as const, content: buildRubricMessage(body.rubric) },
+    { role: 'user' as const, content: buildResponseMessage(body.user_response_text) },
+    { role: 'user' as const, content: buildInstructionsMessage() },
   ];
 
   // First attempt
@@ -113,6 +117,7 @@ async function callModel(
   const completion = await openai.chat.completions.create({
     model: MODEL,
     temperature: 0.2,
+    max_tokens: 500,
     messages,
     response_format: responseFormat,
   });
@@ -128,6 +133,7 @@ async function fixJson(
   const completion = await openai.chat.completions.create({
     model: MODEL,
     temperature: 0,
+    max_tokens: 500,
     messages: [
       {
         role: 'system',

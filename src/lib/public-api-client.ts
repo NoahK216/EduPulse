@@ -180,11 +180,13 @@ export async function publicApiPut<T>(
 
 export async function publicApiDelete<T>(
   path: string,
-  token: string
+  token: string,
+  body?: unknown
 ): Promise<T> {
   return publicApiRequest<T>(path, {
     method: 'DELETE',
     token,
+    body,
   });
 }
 
