@@ -9,12 +9,6 @@ const HelpMenu = ({ actions }: HelpMenuProps) => {
   const items: MenuDropdownItem[] = [
     {
       type: "item",
-      id: "tutorial",
-      label: "Show Tutorial",
-      onSelect: actions.onShowTutorial,
-    },
-    {
-      type: "item",
       id: "tutorial-scenario",
       label: "Open Tutorial Video",
       onSelect: actions.onOpenTutorial,

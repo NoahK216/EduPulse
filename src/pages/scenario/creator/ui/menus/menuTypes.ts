@@ -18,11 +18,11 @@ export type CreatorViewActions = {
   onZoomOut: () => void;
   onResetZoom: () => void;
   onFitView: () => void;
+  onAutoLayout: () => void;
   disabled: boolean;
 };
 
 export type CreatorHelpActions = {
-  onShowTutorial: () => void;
   onOpenTutorial: () => void;
   onShowKeyboardShortcuts?: () => void;
 };

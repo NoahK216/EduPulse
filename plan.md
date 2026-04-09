@@ -67,7 +67,7 @@ Make the classroom workflow real.
 - Instructor can assign a published scenario to a classroom.
 - Student sees assigned, in-progress, and completed work.
 - Starting an assignment creates an attempt.
-- Scenario viewer loads from an assignment, not from demo JSON.
+- Scenario viewer loads from an assignment.
 - Node responses are persisted as the student progresses.
 
 ### Definition Of Done

@@ -129,9 +129,9 @@ export function FreeResponseTab({ node }: NodeTabProps<FreeResponseNode>) {
           {node.rubric.answerBuckets.map((bucket, index) => (
             <div
               key={bucket.id}
-              className="flex items-center gap-2 rounded-lg border border-slate-700/70 bg-slate-900/35 p-2"
+              className="flex items-center gap-2 rounded-lg border p-2 border-slate-300 bg-slate-100 dark:border-slate-700/70 dark:bg-slate-900/35"
             >
-              <span className="w-8 text-center text-xs font-semibold text-slate-400">
+              <span className="w-8 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
                 {index + 1}
               </span>
               <input

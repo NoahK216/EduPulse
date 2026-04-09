@@ -1,0 +1,143 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import NavBar from "../../components/layout/NavBar";
+import { authClient } from "../../lib/auth-client";
+
+function SignupPage() {
+  const navigate = useNavigate();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!firstName || !lastName) {
+      setError("First and last name are required");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const fullName = `${firstName} ${lastName}`.trim();
+      const callbackUrl = new URL(
+        "/login?verificationSuccess=1",
+        window.location.origin,
+      );
+      callbackUrl.searchParams.set("next", "/");
+
+      const { error } = await authClient.signUp.email({
+        email,
+        password,
+        name: fullName,
+        callbackURL: callbackUrl.toString(),
+      });
+      if (error) {
+        setError(error.message || "Failed to sign up");
+      } else {
+        navigate("/login?verificationRequired=1");
+      }
+    } catch (error) {
+      console.error("signup error", error);
+      setError(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-screen bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-150 pt-10">
+      <NavBar showMenu={false} />
+      <main className="mx-auto max-w-md px-8 py-15">
+        <h1 className="text-3xl dark:text-white font-semibold">
+          Create Account
+        </h1>
+        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          <div aria-live="polite">
+            {error && <div className="text-red-400 text-sm">{error}</div>}
+          </div>
+          <div className="grid gap-5 grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium dark:text-neutral-200">
+                First Name
+              </label>
+              <input
+                className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="First Name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium dark:text-neutral-200">
+                Last Name
+              </label>
+              <input
+                className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Last Name"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium dark:text-neutral-200">
+              Email
+            </label>
+            <input
+              className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium dark:text-neutral-200">
+              Password
+            </label>
+            <input
+              className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium dark:text-neutral-200">
+              Confirm Password
+            </label>
+            <input
+              className="mt-2 w-full rounded-md border bg-neutral-200 dark:text-white border-neutral-700 dark:bg-neutral-800 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Password"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-md text-white bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
+          >
+            {isSubmitting ? "Creating..." : "Sign up"}
+          </button>
+        </form>
+      </main>
+    </div>
+  );
+}
+
+export default SignupPage;

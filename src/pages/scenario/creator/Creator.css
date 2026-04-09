@@ -1,12 +1,17 @@
-.creator-demo {
-    color: #e2e8f0;
-    background-color: #020617;
+.scenario-editor {
+    color: #0f172a;
+    background-color: #f8fafc;
     width: 100%;
     height: 100vh;
     overflow: hidden;
 }
 
-.creator-demo .react-flow__controls {
+.dark .scenario-editor {
+    color: #e2e8f0;
+    background-color: #020617;
+}
+
+.scenario-editor .react-flow__controls {
     overflow: hidden;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 10px;
@@ -14,7 +19,7 @@
     box-shadow: 0 10px 24px rgba(2, 6, 23, 0.45);
 }
 
-.creator-demo .react-flow__controls-button {
+.scenario-editor .react-flow__controls-button {
     width: 30px;
     height: 30px;
     border: 0;
@@ -27,27 +32,31 @@
     transition: background 120ms ease-in-out, border-color 120ms ease-in-out;
 }
 
-.creator-demo .react-flow__controls-button:last-child {
+.scenario-editor .react-flow__controls-button:last-child {
     border-bottom: 0;
 }
 
-.creator-demo .react-flow__controls-button:hover {
+.scenario-editor .react-flow__controls-button:hover {
     border-color: rgba(125, 211, 252, 0.5);
     background: #1e293b;
 }
 
-.creator-demo .react-flow__controls-button svg {
+.scenario-editor .react-flow__controls-button svg {
     fill: currentColor;
 }
 
-.creator-demo .react-flow__minimap {
+.scenario-editor .react-flow__minimap {
     overflow: hidden;
     border: 1px solid rgba(148, 163, 184, 0.35);
     border-radius: 10px;
+    background: rgba(173, 174, 176, 0.95);
+}
+
+.dark .scenario-editor .react-flow__minimap {
     background: rgba(15, 23, 42, 0.88);
 }
 
-.creator-demo .react-flow__nodesselection-rect {
+.scenario-editor .react-flow__nodesselection-rect {
     pointer-events: none;
 }
 
@@ -55,13 +64,20 @@
     --creator-card-padding: 12px;
     min-width: 250px;
     max-width: 320px;
-    border: 1px solid rgba(56, 189, 248, 0.35);
+    border: 1px solid rgba(59, 130, 246, 0.25);
     border-radius: 14px;
     padding: var(--creator-card-padding);
+    background: linear-gradient(165deg, #ffffff 0%, #eff6ff 100%);
+    color: #0f172a;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+    transition: border-color 140ms ease-in-out, box-shadow 140ms ease-in-out;
+}
+
+.dark .creator-card {
+    border: 1px solid rgba(56, 189, 248, 0.35);
     background: linear-gradient(165deg, #0f172a 0%, #132045 100%);
     color: #e2e8f0;
     box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
-    transition: border-color 140ms ease-in-out, box-shadow 140ms ease-in-out;
 }
 
 .creator-card--selected {
@@ -84,6 +100,10 @@
     letter-spacing: 0.12em;
     font-size: 10px;
     font-weight: 700;
+    color: #2c769e;
+}
+
+.dark .creator-card-kicker {
     color: #7dd3fc;
 }
 
@@ -91,6 +111,10 @@
     margin: 4px 0 0;
     font-size: 14px;
     font-weight: 700;
+    color: #40444f;
+}
+
+.dark .creator-card-title {
     color: #f8fafc;
 }
 
@@ -98,12 +122,20 @@
     margin: 6px 0 0;
     font-size: 12px;
     line-height: 1.35;
+    color: rgba(15, 23, 42, 0.85);
+}
+
+.dark .creator-card-description {
     color: rgba(226, 232, 240, 0.9);
 }
 
 .creator-card-subtle {
     margin: 6px 0 0;
     font-size: 11px;
+    color: rgba(51, 65, 85, 0.8);
+}
+
+.dark .creator-card-subtle {
     color: rgba(226, 232, 240, 0.72);
 }
 
@@ -133,9 +165,9 @@
     width: 22px;
     height: 22px;
     border-radius: 999px;
-    border: 1px solid rgba(125, 211, 252, 0.45);
-    background: rgba(14, 116, 144, 0.25);
-    color: #bae6fd;
+    border: 1px solid rgba(14, 165, 233, 0.35);
+    background: rgba(186, 230, 253, 0.7);
+    color: #0369a1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -143,18 +175,29 @@
     font-weight: 700;
 }
 
+.dark .creator-card-badge {
+    border: 1px solid rgba(125, 211, 252, 0.45);
+    background: rgba(14, 116, 144, 0.25);
+    color: #bae6fd;
+}
+
 .creator-card-pill {
     flex: 1;
     min-width: 0;
     border-radius: 7px;
     border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(15, 23, 42, 0.7);
-    color: #f1f5f9;
+    background: rgba(255, 255, 255, 0.85);
+    color: #0f172a;
     padding: 5px 8px;
     font-size: 12px;
     line-height: 1.25;
     text-align: left;
     word-break: break-word;
+}
+
+.dark .creator-card-pill {
+    background: rgba(15, 23, 42, 0.7);
+    color: #f1f5f9;
 }
 
 .creator-card-meta {
@@ -167,13 +210,18 @@
 .creator-card-tag {
     border-radius: 999px;
     border: 1px solid rgba(148, 163, 184, 0.35);
-    background: rgba(15, 23, 42, 0.7);
-    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.85);
+    color: #475569;
     padding: 3px 8px;
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-weight: 700;
+}
+
+.dark .creator-card-tag {
+    background: rgba(15, 23, 42, 0.7);
+    color: #cbd5e1;
 }
 
 .creator-card-video-preview {
@@ -183,11 +231,12 @@
     display: block;
     border-radius: 9px;
     border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(2, 6, 23, 0.55);
+    background: rgba(255, 255, 255, 0.85);
+    object-fit: contain;
 }
 
-.creator-card-video-preview {
-    object-fit: contain;
+.dark .creator-card-video-preview {
+    background: rgba(2, 6, 23, 0.55);
 }
 
 .creator-card-video-empty {
@@ -195,17 +244,19 @@
     width: 100%;
     height: 108px;
     border-radius: 9px;
-    border: 1px solid rgba(148, 163, 184, 0.3);
-    background: rgba(2, 6, 23, 0.55);
-}
-
-.creator-card-video-empty {
+    border: 1px solid rgba(164, 171, 179, 0.3);
+    background: rgba(223, 221, 221, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: rgba(83, 85, 89, 0.85);
+}
+
+.dark .creator-card-video-empty {
+    background: rgba(2, 6, 23, 0.55);
     color: rgba(203, 213, 225, 0.75);
 }
 

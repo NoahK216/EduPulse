@@ -5,14 +5,14 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 
 const syncScenarioBodySchema = z.object({
-  scenario_id: z.number().int().positive().optional(),
+  scenario_id: z.string().uuid().optional(),
   title: z.string().trim().min(1).max(255),
   description: z.string().trim().max(4000).nullable().optional(),
   draft_content: z.unknown(),
@@ -26,7 +26,16 @@ const scenarioListSelect = {
   latest_version_number: true,
   created_at: true,
   updated_at: true,
-  owner: { select: { name: true, email: true } },
+  owner: {
+    select: {
+      auth_user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  },
   _count: { select: { versions: true } },
 } as const;
 
@@ -74,8 +83,8 @@ function mapScenarioRow(
     latest_version_number: row.latest_version_number,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    owner_name: row.owner.name,
-    owner_email: row.owner.email,
+    owner_name: row.owner.auth_user.name,
+    owner_email: row.owner.auth_user.email,
     version_count: row._count.versions,
   };
 }
@@ -102,8 +111,8 @@ function mapScenarioDetailRow(
     latest_version_number: row.latest_version_number,
     created_at: row.created_at,
     updated_at: row.updated_at,
-    owner_name: row.owner.name,
-    owner_email: row.owner.email,
+    owner_name: row.owner.auth_user.name,
+    owner_email: row.owner.auth_user.email,
     version_count: row._count.versions,
   };
 }
@@ -146,7 +155,7 @@ export function createPublicScenariosRouter() {
 
   router.get('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
@@ -173,35 +182,44 @@ export function createPublicScenariosRouter() {
 
   router.delete('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
 
     try {
-      const existing = await prisma.scenario.findFirst({
-        where: {
-          id: id.value,
-          owner_user_id: authedReq.auth.publicUserId,
-        },
-        select: {
-          id: true,
-          versions: {
-            select: {
-              _count: { select: { assignments: true } },
+      const where = {
+        id: id.value,
+        owner_user_id: authedReq.auth.publicUserId,
+      } satisfies Prisma.scenarioWhereInput;
+      const [existing, assignedVersion] = await Promise.all([
+        prisma.scenario.findFirst({
+          where,
+          select: {
+            id: true,
+          },
+        }),
+        prisma.scenario_version.findFirst({
+          where: {
+            scenario_id: id.value,
+            scenario: {
+              owner_user_id: authedReq.auth.publicUserId,
+            },
+            assignments: {
+              some: {},
             },
           },
-        },
-      });
+          select: {
+            id: true,
+          },
+        }),
+      ]);
 
       if (!existing) {
         return sendError(res, 404, 'NOT_FOUND', 'Scenario not found');
       }
 
-      const hasAssignedVersions = existing.versions.some(
-        (version) => version._count.assignments > 0
-      );
-      if (hasAssignedVersions) {
+      if (assignedVersion) {
         return sendError(
           res,
           400,
@@ -247,7 +265,7 @@ export function createPublicScenariosRouter() {
     const scenarioId = parsed.data.scenario_id;
 
     try {
-      let savedId: number;
+      let savedId: string;
 
       if (scenarioId) {
         const existing = await prisma.scenario.findFirst({

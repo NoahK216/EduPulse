@@ -4,40 +4,51 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
-  parseOptionalIntQuery,
+  parseOptionalUuidQuery,
   parsePagination,
+  parseUuidParam,
   sendError,
   sendInternalError,
 } from './common.js';
 import { accessibleResponseWhere } from './scopes.js';
 
-function mapResponseRow(
+export const responseSelect = {
+  id: true,
+  attempt_id: true,
+  node_id: true,
+  response_payload: true,
+  feedback: true,
+  created_at: true,
+  attempt: {
+    select: {
+      id: true,
+      attempt_number: true,
+      assignment: {
+        select: {
+          id: true,
+          title: true,
+          classroom: { select: { id: true, name: true } },
+        },
+      },
+      student: {
+        select: {
+          auth_user: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+export function mapResponseRow(
   row: Awaited<
     ReturnType<
       typeof prisma.response.findFirst<{
-        select: {
-          id: true;
-          attempt_id: true;
-          node_id: true;
-          response_payload: true;
-          feedback: true;
-          created_at: true;
-          attempt: {
-            select: {
-              id: true;
-              attempt_number: true;
-              assignment: {
-                select: {
-                  id: true;
-                  title: true;
-                  classroom: { select: { id: true; name: true } };
-                };
-              };
-              student: { select: { name: true; email: true } };
-            };
-          };
-        };
+        select: typeof responseSelect;
       }>
     >
   >,
@@ -58,8 +69,8 @@ function mapResponseRow(
     assignment_title: row.attempt.assignment.title,
     classroom_id: row.attempt.assignment.classroom.id,
     classroom_name: row.attempt.assignment.classroom.name,
-    student_name: row.attempt.student.name,
-    student_email: row.attempt.student.email,
+    student_name: row.attempt.student.auth_user.name,
+    student_email: row.attempt.student.auth_user.email,
     has_response_payload: row.response_payload !== null,
     response_payload: includePayload ? row.response_payload : undefined,
   };
@@ -75,7 +86,7 @@ export function createPublicResponsesRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const attemptId = parseOptionalIntQuery(req.query, 'attemptId');
+    const attemptId = parseOptionalUuidQuery(req.query, 'attemptId');
     if (!attemptId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', attemptId.message);
     }
@@ -97,28 +108,7 @@ export function createPublicResponsesRouter() {
           orderBy: { created_at: 'desc' },
           skip,
           take,
-          select: {
-            id: true,
-            attempt_id: true,
-            node_id: true,
-            response_payload: true,
-            feedback: true,
-            created_at: true,
-            attempt: {
-              select: {
-                id: true,
-                attempt_number: true,
-                assignment: {
-                  select: {
-                    id: true,
-                    title: true,
-                    classroom: { select: { id: true, name: true } },
-                  },
-                },
-                student: { select: { name: true, email: true } },
-              },
-            },
-          },
+          select: responseSelect,
         }),
       ]);
 
@@ -135,7 +125,7 @@ export function createPublicResponsesRouter() {
 
   router.get('/:id', async (req, res) => {
     const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
+    const id = parseUuidParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
@@ -145,28 +135,7 @@ export function createPublicResponsesRouter() {
         where: {
           AND: [{ id: id.value }, accessibleResponseWhere(authedReq.auth.publicUserId)],
         },
-        select: {
-          id: true,
-          attempt_id: true,
-          node_id: true,
-          response_payload: true,
-          feedback: true,
-          created_at: true,
-          attempt: {
-            select: {
-              id: true,
-              attempt_number: true,
-              assignment: {
-                select: {
-                  id: true,
-                  title: true,
-                  classroom: { select: { id: true, name: true } },
-                },
-              },
-              student: { select: { name: true, email: true } },
-            },
-          },
-        },
+        select: responseSelect,
       });
 
       const item = mapResponseRow(row, true);

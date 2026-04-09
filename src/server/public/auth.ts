@@ -197,27 +197,33 @@ export async function requireSession(
       return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
     }
 
-    const publicUser = await prisma.public_user.findUnique({
+    const authUser = await prisma.user.findUnique({
+      where: { id: authUserId },
+      select: { id: true },
+    });
+
+    if (!authUser) {
+      debugAuth('auth user missing', {
+        requestId,
+        authUserId,
+      });
+      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
+    }
+
+    const publicUser = await prisma.user_profile.upsert({
       where: {
-        auth_user_id: authUserId,
+        id: authUserId,
+      },
+      update: {},
+      create: {
+        auth_user: {
+          connect: { id: authUserId },
+        },
       },
       select: {
         id: true,
       },
     });
-
-    if (!publicUser) {
-      debugAuth('public user mapping missing', {
-        requestId,
-        authUserId,
-      });
-      return sendError(
-        res,
-        403,
-        'FORBIDDEN',
-        'No mapped public user found for this authenticated session'
-      );
-    }
 
     asAuthedRequest(req).auth = {
       sessionId: resolvedSessionId ?? 'unknown',

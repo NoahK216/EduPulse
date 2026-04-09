@@ -4,29 +4,28 @@ import type { Prisma } from '../../../prisma/generated/client.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
-  parseIntParam,
-  parseOptionalIntQuery,
+  parseOptionalUuidQuery,
   parsePagination,
   sendError,
   sendInternalError,
 } from './common.js';
 
+const scenarioVersionSelect = {
+  id: true,
+  scenario_id: true,
+  version_number: true,
+  title: true,
+  published_by_user_id: true,
+  published_at: true,
+  scenario: { select: { title: true } },
+  _count: { select: { assignments: true } },
+} as const;
+
 function mapScenarioVersionRow(
   row: Awaited<
     ReturnType<
       typeof prisma.scenario_version.findFirst<{
-        select: {
-          id: true;
-          scenario_id: true;
-          version_number: true;
-          title: true;
-          content: true;
-          published_by_user_id: true;
-          published_at: true;
-          scenario: { select: { title: true } };
-          published_by: { select: { name: true; email: true } };
-          _count: { select: { assignments: true } };
-        };
+        select: typeof scenarioVersionSelect;
       }>
     >
   >
@@ -43,10 +42,7 @@ function mapScenarioVersionRow(
     published_by_user_id: row.published_by_user_id,
     published_at: row.published_at,
     scenario_title: row.scenario.title,
-    published_by_name: row.published_by.name,
-    published_by_email: row.published_by.email,
     assignment_count: row._count.assignments,
-    has_content: row.content !== null,
   };
 }
 
@@ -60,7 +56,7 @@ export function createPublicScenarioVersionsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const scenarioId = parseOptionalIntQuery(req.query, 'scenarioId');
+    const scenarioId = parseOptionalUuidQuery(req.query, 'scenarioId');
     if (!scenarioId.ok) {
       return sendError(res, 400, 'BAD_REQUEST', scenarioId.message);
     }
@@ -82,18 +78,7 @@ export function createPublicScenarioVersionsRouter() {
           orderBy: [{ published_at: 'desc' }, { id: 'desc' }],
           skip,
           take,
-          select: {
-            id: true,
-            scenario_id: true,
-            version_number: true,
-            title: true,
-            content: true,
-            published_by_user_id: true,
-            published_at: true,
-            scenario: { select: { title: true } },
-            published_by: { select: { name: true, email: true } },
-            _count: { select: { assignments: true } },
-          },
+          select: scenarioVersionSelect,
         }),
       ]);
 
@@ -105,46 +90,6 @@ export function createPublicScenarioVersionsRouter() {
       });
     } catch (error) {
       return sendInternalError(res, 'Failed to list scenario versions', error);
-    }
-  });
-
-  router.get('/:id', async (req, res) => {
-    const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
-    if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
-    }
-
-    try {
-      const row = await prisma.scenario_version.findFirst({
-        where: {
-          AND: [
-            { id: id.value },
-            { scenario: { owner_user_id: authedReq.auth.publicUserId } },
-          ],
-        },
-        select: {
-          id: true,
-          scenario_id: true,
-          version_number: true,
-          title: true,
-          content: true,
-          published_by_user_id: true,
-          published_at: true,
-          scenario: { select: { title: true } },
-          published_by: { select: { name: true, email: true } },
-          _count: { select: { assignments: true } },
-        },
-      });
-
-      const item = mapScenarioVersionRow(row);
-      if (!item) {
-        return sendError(res, 404, 'NOT_FOUND', 'Scenario version not found');
-      }
-
-      return res.json({ item });
-    } catch (error) {
-      return sendInternalError(res, 'Failed to fetch scenario version', error);
     }
   });
 

@@ -48,4 +48,13 @@ export const ChoiceNodeSchema = BaseNodeSchema.extend({
 });
 export type ChoiceNode = z.infer<typeof ChoiceNodeSchema>;
 
+export const GenericNodeSchema = z.discriminatedUnion('type', [
+  StartNodeSchema,
+  TextNodeSchema,
+  VideoNodeSchema,
+  ChoiceNodeSchema,
+  FreeResponseNodeSchema,
+]);
+export type GenericNode = z.infer<typeof GenericNodeSchema>;
+export type NodeType = GenericNode['type'];
 

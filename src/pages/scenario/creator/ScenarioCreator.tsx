@@ -1,4 +1,11 @@
-import { useState, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { type Scenario } from "../scenarioSchemas";
 import { cards } from "../nodes";
@@ -33,7 +40,8 @@ import NodeAddPanel from "./ui/NodeAddPanel";
 import CreatorTopBar from "./ui/CreatorTopBar";
 import NodeEditorPanel from "./ui/NodeEditorPanel";
 import { downloadJson } from "./DownloadJson";
-import { flowGraphFromScenario, loadScenario } from "./import";
+import { applyAutoLayout } from "./autoLayout";
+import { flowGraphFromScenario, loadScenario } from "./scenarioImport";
 import { NodeInspectorProvider } from "./cards/NodeCardFrame";
 import { EditorDispatchProvider } from "./editor-store/EditorDispatchContext";
 import {
@@ -52,9 +60,7 @@ import {
   toScenarioEdge,
 } from "./ScenarioCreatorCallbacks";
 import { buildStarterScenario } from "./starterScenario";
-import type {
-  CreatorStatusTone,
-} from "./ui/menus/menuTypes";
+import type { CreatorStatusTone } from "./ui/menus/menuTypes";
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -69,10 +75,8 @@ type SyncStatus = "idle" | "syncing" | "success" | "error";
 type ScenarioCreatorProps = {
   scenarioUrl?: string;
   initialScenario?: Scenario;
-  initialScenarioId?: number | null;
+  initialScenarioId?: string | null;
 };
-
-const TUTORIAL_TOP_OFFSET = 84;
 
 const ScenarioCreator = ({
   scenarioUrl,
@@ -96,12 +100,10 @@ const ScenarioCreator = ({
   } | null>(null);
   const snapTargetNodeIdRef = useRef<string | null>(null);
   const rfNodesRef = useRef<Node[]>([]);
+  const skipNextFlowRebuildRef = useRef(false);
   const inspectedNodeId =
     state.status === "loaded" ? state.ui.inspectedNodeId : null;
-  const [tipNum, setTipNum] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
-  const [tipOpen, setTipOpen] = useState(false);
-  const [tipClosed, setTipClosed] = useState(true);
-  const [syncedScenarioId, setSyncedScenarioId] = useState<number | null>(null);
+  const [syncedScenarioId, setSyncedScenarioId] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [syncMessage, setSyncMessage] = useState<string>("");
   const [baselineSerializedDoc, setBaselineSerializedDoc] = useState<
@@ -128,7 +130,7 @@ const ScenarioCreator = ({
   );
 
   const initializeEditor = useCallback(
-    (scenario: Scenario, scenarioId?: number | null) => {
+    (scenario: Scenario, scenarioId?: string | null) => {
       dispatch({ type: "initScenario", scenario });
       setSyncedScenarioId(scenarioId ?? null);
       setSyncStatus("idle");
@@ -156,17 +158,13 @@ const ScenarioCreator = ({
     [isDirty],
   );
 
-  const reopenTutorial = useCallback(() => {
-    setTipClosed(false);
-    setTipNum(1);
-    setTipOpen(true);
-  }, []);
-
   const openTutorialScenario = useCallback(() => {
-    const tutorialUrl = new URL("/EdupulseTutorial.mp4", window.location.origin);
+    const tutorialUrl = new URL(
+      "/EdupulseTutorial.mp4",
+      window.location.origin,
+    );
     window.open(tutorialUrl.toString(), "_blank", "noopener,noreferrer");
   }, []);
-
 
   useEffect(() => {
     if (!scenarioUrl) return;
@@ -187,6 +185,10 @@ const ScenarioCreator = ({
   // Drives ReactFlow state by the SSoT: editorReducer
   useEffect(() => {
     if (state.status !== "loaded") return;
+    if (skipNextFlowRebuildRef.current) {
+      skipNextFlowRebuildRef.current = false;
+      return;
+    }
 
     const { nodes, edges } = flowGraphFromScenario(state.doc);
     setRfNodes((nodesSnapshot) => {
@@ -356,25 +358,22 @@ const ScenarioCreator = ({
     [applyConnection],
   );
 
-  const updateSnapTarget: NodeMouseHandler = useCallback(
-    (_, nodeSnapshot) => {
-      const sourceSnapshot = activeConnectionSourceRef.current;
-      if (!sourceSnapshot) return;
+  const updateSnapTarget: NodeMouseHandler = useCallback((_, nodeSnapshot) => {
+    const sourceSnapshot = activeConnectionSourceRef.current;
+    if (!sourceSnapshot) return;
 
-      if (
-        nodeSnapshot.type === "start" ||
-        nodeSnapshot.id === sourceSnapshot.nodeId
-      ) {
-        snapTargetNodeIdRef.current = null;
-        setSnapTargetNodeId(null);
-        return;
-      }
+    if (
+      nodeSnapshot.type === "start" ||
+      nodeSnapshot.id === sourceSnapshot.nodeId
+    ) {
+      snapTargetNodeIdRef.current = null;
+      setSnapTargetNodeId(null);
+      return;
+    }
 
-      snapTargetNodeIdRef.current = nodeSnapshot.id;
-      setSnapTargetNodeId(nodeSnapshot.id);
-    },
-    [],
-  );
+    snapTargetNodeIdRef.current = nodeSnapshot.id;
+    setSnapTargetNodeId(nodeSnapshot.id);
+  }, []);
 
   const onNodeMouseLeave: NodeMouseHandler = useCallback((_, nodeSnapshot) => {
     if (snapTargetNodeIdRef.current === nodeSnapshot.id) {
@@ -418,31 +417,12 @@ const ScenarioCreator = ({
       if (node.type === "start") return;
 
       inspectNode(node.id);
-
-      if (node.type === "free_response") {
-        setTimeout(() => {
-          setTipNum(3);
-          setTipOpen(true);
-        });
-        return;
-      }
-
-      if (node.type === "choice") {
-        setTipNum(4);
-        setTipOpen(true);
-        return;
-      }
-
-      if (node.type === "video") {
-        setTipNum(5);
-        setTipOpen(true);
-      }
     },
     [inspectNode],
   );
 
   const syncScenarioDraft = useCallback(async () => {
-    if (state.status !== "loaded") return;
+    if (state.status !== "loaded") return null;
 
     const scenarioSnapshot = state.doc;
     const serializedSnapshot = JSON.stringify(scenarioSnapshot);
@@ -471,24 +451,27 @@ const ScenarioCreator = ({
       setSyncedScenarioId(response.item.id);
       setSyncStatus("success");
       setSyncMessage(
-        `Synced scenario #${response.item.id} at ${new Date().toLocaleTimeString()}`,
+        `Synced scenario ${response.item.id} at ${new Date().toLocaleTimeString()}`,
       );
       setBaselineSerializedDoc(serializedSnapshot);
 
       if (wasUnsyncedScenario) {
         navigate(`/scenario/${response.item.id}/editor`, { replace: true });
       }
+
+      return response.item.id;
     } catch (error) {
       setSyncStatus("error");
       if (error instanceof ApiRequestError) {
         setSyncMessage(error.message);
-        return;
+        return null;
       }
       if (error instanceof Error) {
         setSyncMessage(error.message);
-        return;
+        return null;
       }
       setSyncMessage("Failed to sync scenario");
+      return null;
     }
   }, [navigate, state, syncedScenarioId]);
 
@@ -523,9 +506,12 @@ const ScenarioCreator = ({
   }, [syncScenarioDraft]);
 
   const handleTestScenario = useCallback(() => {
-    syncScenarioDraft();
-    navigate(`/scenario/${syncedScenarioId}/viewer`);
-  }, [navigate, syncScenarioDraft, syncedScenarioId]);
+    void (async () => {
+      const scenarioId = await syncScenarioDraft();
+      if (!scenarioId) return;
+      navigate(`/scenario/${scenarioId}/viewer`);
+    })();
+  }, [navigate, syncScenarioDraft]);
 
   const handleDownloadJson = useCallback(() => {
     if (state.status !== "loaded") return;
@@ -549,6 +535,29 @@ const ScenarioCreator = ({
   const handleFitView = useCallback(() => {
     reactFlowInstance?.fitView(fitViewOptions);
   }, [reactFlowInstance]);
+
+  const handleAutoLayout = useCallback(() => {
+    if (!reactFlowInstance) return;
+    const measuredNodes = reactFlowInstance.getNodes();
+    const currentEdges = reactFlowInstance.getEdges();
+
+    const laidOutNodes = applyAutoLayout(measuredNodes, currentEdges);
+
+    // Prevent the state-driven useEffect from overwriting our new positions
+    skipNextFlowRebuildRef.current = true;
+
+    // Directly update rfNodes so ReactFlow reflects positions immediately
+    setRfNodes(laidOutNodes);
+
+    // Persist positions into the scenario doc
+    const positions: Record<string, { x: number; y: number }> = {};
+    for (const n of laidOutNodes) {
+      positions[n.id] = n.position;
+    }
+    dispatch({ type: 'setNodePositions', positions });
+
+    requestAnimationFrame(() => reactFlowInstance?.fitView(fitViewOptions));
+  }, [reactFlowInstance, dispatch, setRfNodes]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -619,158 +628,80 @@ const ScenarioCreator = ({
 
   return (
     <EditorDispatchProvider dispatch={dispatch}>
-      <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
-      <CreatorTopBar
-        title={state.status === "loaded" ? state.doc.title : ""}
-        titleDisabled={state.status !== "loaded"}
-        onLogoClick={handleLogoClick}
-        onTitleChange={(title) => dispatch({ type: "setScenarioTitle", title })}
-        fileActions={{
-          onNewScenario: handleCreateNewScenario,
-          onOpenLibrary: handleOpenScenarioLibrary,
-          onBeforeImport: handleBeforeImport,
-          onImportScenarioLoaded: handleImportedScenarioLoaded,
-          onSaveDraft: handleSaveDraft,
-          onTestScenario: handleTestScenario,
-          onDownloadJson: handleDownloadJson,
-          saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
-          downloadDisabled: state.status !== "loaded",
-          saveLabel: syncStatus === "syncing" ? "Saving..." : "Save",
-        }}
-        editActions={{
-          onUndo: undefined,
-          onRedo: undefined,
-        }}
-        viewActions={{
-          onZoomIn: handleZoomIn,
-          onZoomOut: handleZoomOut,
-          onResetZoom: handleResetZoom,
-          onFitView: handleFitView,
-          disabled: !reactFlowInstance,
-        }}
-        helpActions={{
-          onShowTutorial: reopenTutorial,
-          onOpenTutorial: openTutorialScenario,
-          onShowKeyboardShortcuts: undefined,
-        }}
-        statusMessage={topBarStatus.message}
-        statusTone={topBarStatus.tone}
-      />
-      {!tipClosed && tipOpen && tipNum !== 0 && (
-        <div
-          className="fixed z-50 max-w-sm rounded-lg border border-[#0b1f3a] bg-[#081426] p-4 text-blue-100 shadow-lg"
-          style={{
-            top:
-              (tipNum === 1
-                ? 100
-                : tipNum === 2
-                  ? 140
-                  : tipNum === 3
-                    ? 300
-                    : tipNum === 4
-                      ? 350
-                      : 250) + TUTORIAL_TOP_OFFSET,
-            left:
-              tipNum === 1
-                ? 215
-                : tipNum === 2
-                  ? 250
-                  : tipNum === 5
-                    ? 735
-                    : 700,
+      <div className="scenario-editor flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+        <CreatorTopBar
+          title={state.status === "loaded" ? state.doc.title : ""}
+          titleDisabled={state.status !== "loaded"}
+          onLogoClick={handleLogoClick}
+          onTitleChange={(title) =>
+            dispatch({ type: "setScenarioTitle", title })
+          }
+          fileActions={{
+            onNewScenario: handleCreateNewScenario,
+            onOpenLibrary: handleOpenScenarioLibrary,
+            onBeforeImport: handleBeforeImport,
+            onImportScenarioLoaded: handleImportedScenarioLoaded,
+            onSaveDraft: handleSaveDraft,
+            onTestScenario: handleTestScenario,
+            onDownloadJson: handleDownloadJson,
+            saveDisabled: state.status !== "loaded" || syncStatus === "syncing",
+            downloadDisabled: state.status !== "loaded",
+            saveLabel: syncStatus === "syncing" ? "Saving..." : "Save",
           }}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold">
-                {tipNum === 1 && "Add nodes"}
-                {tipNum === 2 && "Edit nodes"}
-                {tipNum === 3 && "Free Response"}
-                {tipNum === 4 && "Multiple Choice"}
-                {tipNum === 5 && "Video node"}
-              </div>
-
-              <div className="mt-1 text-sm text-neutral-300">
-                {tipNum === 1 &&
-                  "Click a node in the left panel to add it to the scenario."}
-
-                {tipNum === 2 &&
-                  "Click any node on the canvas to edit its content on the right."}
-                {tipNum === 3 && (
-                  <div className="space-y-2">
-                    <div>
-                      <b>Prompt</b>: The question
-                    </div>
-                    <div>
-                      <b>Rubric Context</b>: Context for the AI grader to use
-                    </div>
-                    <div>
-                      <b>Answer Buckets</b>: How the responses should be scored
-                    </div>
-                  </div>
-                )}
-                {tipNum === 4 &&
-                  "Input prompt and add as many choices as necessary."}
-                {tipNum === 5 &&
-                  "Edit title, video, and captions if available."}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="ml-2 rounded-md !bg-blue-950 px-2 py-1 !text-blue-200 transition hover:!bg-blue-900"
-              onClick={() => {
-                setTipClosed(true);
-                setTipOpen(false);
-              }}
-            >
-              X
-            </button>
-          </div>
-        </div>
-      )}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
-        <NodeAddPanel
-          onAddNode={() => {
-            if (tipNum === 1) {
-              setTipNum(2);
-              setTipOpen(true);
-            }
+          editActions={{
+            onUndo: undefined,
+            onRedo: undefined,
           }}
+          viewActions={{
+            onZoomIn: handleZoomIn,
+            onZoomOut: handleZoomOut,
+            onResetZoom: handleResetZoom,
+            onFitView: handleFitView,
+            onAutoLayout: handleAutoLayout,
+            disabled: !reactFlowInstance,
+          }}
+          helpActions={{
+            onOpenTutorial: openTutorialScenario,
+            onShowKeyboardShortcuts: undefined,
+          }}
+          statusMessage={topBarStatus.message}
+          statusTone={topBarStatus.tone}
         />
-        <NodeInspectorProvider
-          inspectedNodeId={inspectedNodeId}
-          inspectNode={inspectNode}
-        >
-          <ReactFlow
-            className="min-h-0 min-w-0 flex-1"
-            onInit={(instance) => setReactFlowInstance(instance)}
-            nodes={rfNodes}
-            edges={rfEdges}
-            nodeTypes={cards}
-            proOptions={{ hideAttribution: true }}
-            fitView
-            fitViewOptions={fitViewOptions}
-            defaultEdgeOptions={defaultEdgeOptions}
-            connectionLineComponent={snapConnectionLine}
-            panOnDrag={[2]}
-            selectionOnDrag={true}
-            onNodeClick={onNodeClick}
-            onNodeMouseEnter={updateSnapTarget}
-            onNodeMouseMove={updateSnapTarget}
-            onNodeMouseLeave={onNodeMouseLeave}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnectStart={onConnectStart}
-            onConnect={onConnect}
-            onConnectEnd={onConnectEnd}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-row overflow-hidden">
+          <NodeAddPanel />
+          <NodeInspectorProvider
+            inspectedNodeId={inspectedNodeId}
+            inspectNode={inspectNode}
           >
-            <Background />
-            <MiniMap nodeStrokeWidth={3} />
-          </ReactFlow>
-        </NodeInspectorProvider>
-        <NodeEditorPanel editorState={state} />
-      </div>
+            <ReactFlow
+              className="min-h-0 min-w-0 flex-1"
+              onInit={(instance) => setReactFlowInstance(instance)}
+              nodes={rfNodes}
+              edges={rfEdges}
+              nodeTypes={cards}
+              proOptions={{ hideAttribution: true }}
+              fitView
+              fitViewOptions={fitViewOptions}
+              defaultEdgeOptions={defaultEdgeOptions}
+              connectionLineComponent={snapConnectionLine}
+              panOnDrag={[2]}
+              selectionOnDrag={true}
+              onNodeClick={onNodeClick}
+              onNodeMouseEnter={updateSnapTarget}
+              onNodeMouseMove={updateSnapTarget}
+              onNodeMouseLeave={onNodeMouseLeave}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnectStart={onConnectStart}
+              onConnect={onConnect}
+              onConnectEnd={onConnectEnd}
+            >
+              <Background />
+              <MiniMap nodeStrokeWidth={3} />
+            </ReactFlow>
+          </NodeInspectorProvider>
+          <NodeEditorPanel editorState={state} />
+        </div>
       </div>
     </EditorDispatchProvider>
   );

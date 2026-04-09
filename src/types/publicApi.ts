@@ -1,13 +1,12 @@
+import type { classroom_role } from "../../prisma/generated/enums.js";
 import type {
   assignmentModel,
   attemptModel,
   classroom_memberModel,
   classroomModel,
-  public_userModel,
   responseModel,
-  scenario_versionModel,
   scenarioModel,
-} from '../../prisma/generated/models.js';
+} from "../../prisma/generated/models.js";
 
 type Serialized<T> = T extends Date
   ? string
@@ -17,14 +16,18 @@ type Serialized<T> = T extends Date
       ? { [K in keyof T]: Serialized<T[K]> }
       : T;
 
-export type PublicUserBase = Serialized<public_userModel>;
 export type PublicClassroomBase = Serialized<classroomModel>;
 export type PublicClassroomMemberBase = Serialized<classroom_memberModel>;
 export type PublicScenarioBase = Serialized<scenarioModel>;
-export type PublicScenarioVersionBase = Serialized<scenario_versionModel>;
 export type PublicAssignmentBase = Serialized<assignmentModel>;
 export type PublicAttemptBase = Serialized<attemptModel>;
 export type PublicResponseBase = Serialized<responseModel>;
+
+export type CurrentUserProfile = {
+  id: string;
+  email: string;
+  name: string;
+};
 
 export type PagedResponse<T> = {
   items: T[];
@@ -42,11 +45,13 @@ export type PublicApiError = {
   message: string;
 };
 
+export type PublicClassroomRole = classroom_role;
+
 export type PublicClassroom = PublicClassroomBase & {
-  created_by_name: string;
-  created_by_email: string;
   member_count: number;
   assignment_count: number;
+  viewer_role: PublicClassroomRole;
+  active_assignment_count: number;
 };
 
 export type PublicClassroomMember = PublicClassroomMemberBase & {
@@ -68,40 +73,57 @@ export type PublicScenarioTemplate = {
   url: string;
 };
 
-export type PublicScenarioVersion = PublicScenarioVersionBase & {
+export type PublicScenarioVersion = {
+  id: string;
+  scenario_id: string;
+  version_number: number;
+  title: string;
+  published_by_user_id: string;
+  published_at: string;
   scenario_title: string;
-  published_by_name: string;
-  published_by_email: string;
   assignment_count: number;
-  has_content: boolean;
 };
 
 export type PublicAssignment = PublicAssignmentBase & {
   classroom_name: string;
+  viewer_role: PublicClassroomRole;
   scenario_version_title: string;
   scenario_version_number: number;
   assigned_by_name: string;
-  assigned_by_email: string;
   attempt_count: number;
 };
 
 export type PublicAttempt = PublicAttemptBase & {
   assignment_title: string;
-  classroom_id: number;
+  classroom_id: string;
   classroom_name: string;
   student_name: string;
   student_email: string;
   response_count: number;
 };
 
-export type PublicResponse = PublicResponseBase & {
+export type PublicResponse = Omit<PublicResponseBase, "response_payload"> & {
   attempt_number: number;
-  assignment_id: number;
+  assignment_id: string;
   assignment_title: string;
-  classroom_id: number;
+  classroom_id: string;
   classroom_name: string;
   student_name: string;
   student_email: string;
   has_response_payload: boolean;
-  response_payload?: PublicResponseBase['response_payload'];
+  response_payload?: PublicResponseBase["response_payload"];
+};
+
+export type PublicAssignmentAttemptSession = {
+  assignment: PublicAssignment;
+  attempt: PublicAttempt;
+  responses: PublicResponse[];
+  scenario_content: unknown;
+};
+
+export type PublicAttemptProgressResult = {
+  attempt: PublicAttempt;
+  response: PublicResponse | null;
+  next_node_id: string | null;
+  completed: boolean;
 };

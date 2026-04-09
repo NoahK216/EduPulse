@@ -1,6 +1,6 @@
 import {z} from 'zod';
 
-import {GenericNodeSchema} from './nodes';
+import { GenericNodeSchema, type GenericNode } from "./nodeSchemas.js";
 
 export const NodeEdgeSchema = z.object({
   id: z.string(), 
@@ -35,3 +35,34 @@ export const ScenarioSchema = z.object({
   layout: z.record(z.string(), NodeLayoutSchema)  // keyed by nodeId
 });
 export type Scenario = z.infer<typeof ScenarioSchema>;
+
+export function getScenarioNode(
+  scenario: Scenario,
+  nodeId: string | null | undefined,
+): GenericNode | null {
+  if (!nodeId) {
+    return null;
+  }
+
+  return scenario.nodes[nodeId] ?? null;
+}
+
+export function getNextNodeIdForScenarioNode(
+  node: GenericNode,
+  edges: NodeEdge[],
+  port?: string,
+) {
+  const edge = edges.find((candidate) => {
+    if (candidate.from.nodeId !== node.id) {
+      return false;
+    }
+
+    if (typeof port === "string") {
+      return candidate.from.port === port;
+    }
+
+    return true;
+  });
+
+  return edge?.to?.nodeId;
+}

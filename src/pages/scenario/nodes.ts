@@ -8,8 +8,16 @@ import {ChoiceTab} from './creator/tabs/Choice.Tab';
 import {FreeResponseTab} from './creator/tabs/FreeResponse.Tab';
 import {StartTab} from './creator/tabs/Start.Tab';
 import {VideoTab} from './creator/tabs/Video.Tab';
-import {defineNodeRegistry, pluck, tuple} from './nodeRegistry';
-import {ChoiceNodeSchema, FreeResponseNodeSchema, StartNodeSchema, TextNodeSchema, VideoNodeSchema} from './nodeSchemas';
+import {defineNodeRegistry, pluck} from './nodeRegistry';
+import {
+  ChoiceNodeSchema,
+  FreeResponseNodeSchema,
+  type GenericNode,
+  type NodeType,
+  StartNodeSchema,
+  TextNodeSchema,
+  VideoNodeSchema,
+} from './nodeSchemas';
 import {ChoiceScene} from './viewer/scenes/Choice.Scene';
 import {FreeResponseScene} from './viewer/scenes/FreeResponse.Scene';
 import {StartScene} from './viewer/scenes/Start.Scene';
@@ -92,16 +100,6 @@ export const nodeRegistry = defineNodeRegistry({
     }),
   },
 } as const);
-
-
-const nodeSchemas = tuple(
-    nodeRegistry.start.schema,
-    nodeRegistry.text.schema, 
-    nodeRegistry.video.schema, 
-    nodeRegistry.choice.schema,
-    nodeRegistry.free_response.schema
-);
-
 export const NODE_TYPE_LABELS: Record<GenericNode["type"], string> = {
     start: "Start",
     text: "Text",
@@ -110,13 +108,8 @@ export const NODE_TYPE_LABELS: Record<GenericNode["type"], string> = {
     free_response: "Free Response",
 };
 
-export const GenericNodeSchema = z.discriminatedUnion('type', nodeSchemas);
-export type GenericNode = z.infer<typeof GenericNodeSchema>;
-
 // Projections
 export const scenes = pluck(nodeRegistry, 'scene');
 export const cards = pluck(nodeRegistry, 'card');
 export const tabs = pluck(nodeRegistry, 'tab');
-
-export type NodeType = GenericNode['type'];
 export type NodeOf<T extends NodeType> = Extract<GenericNode, {type: T}>;

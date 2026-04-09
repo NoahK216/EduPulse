@@ -1,18 +1,31 @@
 import type { Prisma } from '../../../prisma/generated/client.js';
 
 export function accessibleClassroomWhere(
-  publicUserId: number
+  publicUserId: string,
 ): Prisma.classroomWhereInput {
   return {
-    OR: [
-      { created_by_user_id: publicUserId },
-      { members: { some: { user_id: publicUserId } } },
-    ],
+    OR: [{ members: { some: { user_id: publicUserId } } }],
+  };
+}
+
+export function instructorClassroomWhere(
+  publicUserId: string,
+): Prisma.classroomWhereInput {
+  return {
+    OR: [{ members: { some: { user_id: publicUserId, role: "instructor" } } }],
+  };
+}
+
+export function studentClassroomWhere(
+  publicUserId: string
+): Prisma.classroomWhereInput {
+  return {
+    members: { some: { user_id: publicUserId, role: 'student' } },
   };
 }
 
 export function accessibleAssignmentWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.assignmentWhereInput {
   return {
     classroom: accessibleClassroomWhere(publicUserId),
@@ -20,23 +33,37 @@ export function accessibleAssignmentWhere(
 }
 
 export function accessibleAttemptWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.attemptWhereInput {
   return {
-    assignment: {
-      classroom: accessibleClassroomWhere(publicUserId),
-    },
+    OR: [
+      { student_user_id: publicUserId },
+      {
+        assignment: {
+          classroom: instructorClassroomWhere(publicUserId),
+        },
+      },
+    ],
   };
 }
 
 export function accessibleResponseWhere(
-  publicUserId: number
+  publicUserId: string
 ): Prisma.responseWhereInput {
   return {
-    attempt: {
-      assignment: {
-        classroom: accessibleClassroomWhere(publicUserId),
+    OR: [
+      {
+        attempt: {
+          student_user_id: publicUserId,
+        },
       },
-    },
+      {
+        attempt: {
+          assignment: {
+            classroom: instructorClassroomWhere(publicUserId),
+          },
+        },
+      },
+    ],
   };
 }
