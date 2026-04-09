@@ -62,7 +62,7 @@ model scenario {
   created_at            DateTime           @default(now()) @db.Timestamptz(6)
   updated_at            DateTime           @default(now()) @db.Timestamptz(6)
   versions              scenario_version[]
-  owner                 user_profile       @relation("scenario_owner", fields: [owner_user_id], references: [id], onUpdate: NoAction)
+  owner                 user_profile       @relation("scenario_owner", fields: [owner_user_id], onDelete: Cascade, references: [id], onUpdate: NoAction)
 
   @@index([owner_user_id])
   @@schema("public")
