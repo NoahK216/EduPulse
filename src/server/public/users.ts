@@ -2,7 +2,7 @@ import express from "express";
 
 import type { CurrentUserProfile } from "../../types/publicApi.js";
 import { prisma } from "../prisma.js";
-import { asAuthedRequest, sendError, sendInternalError } from "./common.js";
+import { asAuthedRequest, sendError, sendInternalError, parseStringParam } from "./common.js";
 
 const userSelect = {
   id: true,
@@ -59,69 +59,16 @@ export function createPublicMeRouter() {
   });
 
   router.put('/:id', async (req, res) => {
-    const authedReq = asAuthedRequest(req);
-    const id = parseIntParam('id', req.params.id);
-    if (!id.ok) {
-      return sendError(res, 400, 'BAD_REQUEST', id.message);
-    }
-
-    if (id.value !== authedReq.auth.publicUserId) {
-      return sendError(res, 403, 'FORBIDDEN', 'You can only update your own profile');
-    }
-
-    const { name, email } = req.body;
-
-    // Validate input
-    if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
-      return sendError(res, 400, 'BAD_REQUEST', 'Name must be a non-empty string');
-    }
-
-    if (email !== undefined) {
-      return sendError(
-        res,
-        400,
-        'BAD_REQUEST',
-        'Email changes are managed by auth and are not supported by this endpoint'
-      );
-    }
-
-    try {
-      const updateData: { name?: string; updated_at: Date } = {
-        updated_at: new Date(),
-      };
-
-      if (name !== undefined) {
-        updateData.name = name.trim();
-      }
-
-      const updatedUser = await prisma.public_user.update({
-        where: { id: id.value },
-        data: updateData,
-        select: {
-          id: true,
-          auth_user_id: true,
-          email: true,
-          name: true,
-          created_at: true,
-          updated_at: true,
-          _count: {
-            select: {
-              created_classrooms: true,
-              classroom_members: true,
-              scenarios: true,
-              attempts: true,
-            },
-          },
-        },
-      });
-
-      return res.json({ item: mapUserRow(updatedUser) });
-    } catch (error) {
-      return sendInternalError(res, 'Failed to update user', error);
-    }
+    // User updates are managed by auth, not supported here
+    return sendError(
+      res,
+      400,
+      'BAD_REQUEST',
+      'User updates are managed by auth and are not supported by this endpoint'
+    );
   });
 
-  const deleteOwnAccount = async (req: express.Request, res: express.Response, userId: number) => {
+  const deleteOwnAccount = async (req: express.Request, res: express.Response, userId: string) => {
     const authedReq = asAuthedRequest(req);
     if (userId !== authedReq.auth.publicUserId) {
       return sendError(res, 403, 'FORBIDDEN', 'You can only delete your own account');
@@ -149,9 +96,9 @@ export function createPublicMeRouter() {
 
     try {
       await prisma.$transaction(async (tx) => {
-        const existingUser = await tx.public_user.findUnique({
+        const existingUser = await tx.user_profile.findUnique({
           where: { id: userId },
-          select: { id: true, auth_user_id: true },
+          select: { id: true },
         });
 
         if (!existingUser) {
@@ -163,7 +110,7 @@ export function createPublicMeRouter() {
           where: {
             OR: [
               { assigned_by_user_id: userId },
-              { classroom: { created_by_user_id: userId } },
+              { classroom: { created_by_id: userId } },
               { scenario_version: { scenario: { owner_user_id: userId } } },
               { scenario_version: { published_by_user_id: userId } },
             ],
@@ -171,7 +118,7 @@ export function createPublicMeRouter() {
         });
 
         // Remove artifacts the user owns that have RESTRICT references to users.
-        await tx.classroom.deleteMany({ where: { created_by_user_id: userId } });
+        await tx.classroom.deleteMany({ where: { created_by_id: userId } });
         await tx.scenario.deleteMany({ where: { owner_user_id: userId } });
         await tx.scenario_version.deleteMany({ where: { published_by_user_id: userId } });
 
@@ -179,11 +126,7 @@ export function createPublicMeRouter() {
         await tx.classroom_member.deleteMany({ where: { user_id: userId } });
         await tx.attempt.deleteMany({ where: { student_user_id: userId } });
 
-        await tx.public_user.delete({ where: { id: userId } });
-
-        if (existingUser.auth_user_id) {
-          await tx.user.delete({ where: { id: existingUser.auth_user_id } });
-        }
+        await tx.user_profile.delete({ where: { id: userId } });
       });
 
       return res.status(204).send();
@@ -202,7 +145,7 @@ export function createPublicMeRouter() {
 
   // Backward-compatible route for older clients.
   router.delete('/:id', async (req, res) => {
-    const id = parseIntParam('id', req.params.id);
+    const id = parseStringParam('id', req.params.id);
     if (!id.ok) {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }

@@ -117,6 +117,16 @@ export function parseUuidParam(
   return parseUuid(field, rawValue);
 }
 
+export function parseStringParam(
+  field: string,
+  rawValue: string | undefined
+): ParseResult<string> {
+  if (!rawValue) {
+    return { ok: false, message: `${field} is required` };
+  }
+  return { ok: true, value: rawValue };
+}
+
 export function parseOptionalUuidQuery(
   query: express.Request['query'],
   key: string
