@@ -20,9 +20,13 @@ export type StartNode = z.infer<typeof StartNodeSchema>;
 
 export const VideoNodeSchema = BaseNodeSchema.extend({
   type: z.literal('video'),
-  src: z.string().optional(),
+  src: z.string().optional(), // Can be file URL (uploaded) or YouTube URL
+  srcType: z.enum(['file', 'youtube', 'url']).optional(), // Track source type
+  youtubeId: z.string().optional(), // Extracted YouTube video ID for embeds
   captionsSrc: z.string().optional(),
-  autoplay: z.boolean().optional()
+  autoplay: z.boolean().optional(),
+  uploadedBy: z.string().optional(), // User ID who uploaded (if applicable)
+  uploadedAt: z.string().optional(), // ISO timestamp
 });
 export type VideoNode = z.infer<typeof VideoNodeSchema>;
 

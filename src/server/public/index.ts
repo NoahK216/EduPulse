@@ -10,6 +10,7 @@ import { createPublicResponsesRouter } from './responses.js';
 import { createPublicScenariosRouter } from './scenarios.js';
 import { createPublicScenarioTemplatesRouter } from './scenarioTemplates.js';
 import { createPublicScenarioVersionsRouter } from './scenarioVersions.js';
+import { createPublicVideosRouter } from './videos.js';
 import { createPublicMeRouter } from './users.js';
 
 export function createPublicRouter(openai: OpenAI) {
@@ -17,6 +18,7 @@ export function createPublicRouter(openai: OpenAI) {
 
   router.use(requireSession);
   router.use('/me', createPublicMeRouter());
+  router.use('/videos', createPublicVideosRouter());
   router.use('/classrooms', createPublicClassroomsRouter());
   router.use('/classroom-members', createPublicClassroomMembersRouter());
   router.use('/scenarios', createPublicScenariosRouter());
