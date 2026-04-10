@@ -1,229 +1,594 @@
 # EduPulse Architecture
 
-## 1. Product Scope
-EduPulse is a classroom-based learning web application where instructors build interactive scenarios, assign them to classes, and review student performance.
+## 1. Current System Summary
+EduPulse is currently a full-stack classroom and scenario platform built as a React SPA plus an Express API. Instructors can create branching scenario drafts, publish or implicitly publish them into immutable scenario versions, assign them to classrooms, and review student attempts and node-level responses. Students can join classrooms, open assignments, progress through scenarios, and submit free responses that are graded through OpenAI.
 
-Core product capabilities:
-- Scenario authoring (creator)
-- Scenario delivery (viewer)
-- AI-assisted grading (free response)
-- Classroom management
-- Assignment lifecycle
-- Role-based access for students, instructors, and admins
+The current stack is:
+- Frontend: Vite, React 19, React Router, TanStack Query, Tailwind CSS 4, XYFlow/React Flow, Dagre.
+- Backend: Express 5, Prisma 7, PostgreSQL via Neon, Neon Auth, OpenAI.
+- Build/deploy shape: Vite builds the client, TypeScript compiles the server to `dist/`, and Express serves both API routes and the built SPA.
 
-## 2. Current State Snapshot (From Existing Branches)
-### Main branch
-- React + Vite frontend with scenario creator/viewer demos
-- Express backend with `/api/grade` endpoint and OpenAI integration
-- Placeholder classroom/login/signup pages
-- No production auth, session model, or role-enforced backend permissions
+## 2. Current Runtime Shape
 
-### Database/backend branch direction (`origin/Database`)
-- PostgreSQL-backed users/scenarios/submissions tables
-- Basic role field on users (`trainee`, `trainer`, `admin`)
-- Scenario CRUD and user endpoints
-- Still missing secure authentication, institutional tenancy, class entities, and strict authorization policies
+### Frontend route tree
+- `/`
+  - `src/pages/home/HomePage.tsx`
+  - Chooses between guest landing and authenticated dashboard using `authClient.useSession()`.
+- `/login`
+  - `src/pages/home/LoginPage.tsx`
+  - Email/password sign-in through Neon Auth.
+- `/signup`
+  - `src/pages/home/SignupPage.tsx`
+  - Email/password sign-up with verification callback back to `/login`.
+- `/settings`
+  - `src/pages/home/SettingsPage.tsx`
+  - Routed, but mostly a UI shell; only theme toggling is currently wired.
+- `/classrooms`
+  - `src/pages/classroom/ClassroomListPage.tsx`
+- `/classrooms/create`
+  - `src/pages/classroom/ClassroomCreatePage.tsx`
+- `/classrooms/join`
+  - `src/pages/classroom/ClassroomJoinPage.tsx`
+- `/classrooms/:classroomId`
+  - `src/pages/classroom/ClassroomPage.tsx`
+  - Switches between instructor and student classroom views based on `viewer_role`.
+- `/classrooms/:classroomId/assignment/:assignmentId`
+  - `src/pages/classroom/AssignmentPage.tsx`
+- `/classrooms/:classroomId/assignment/:assignmentId/attempt`
+  - `src/pages/classroom/AssignmentRunnerPage.tsx`
+  - Starts or resumes a student attempt session and runs `ScenarioViewer` in persisted mode.
+- `/classrooms/:classroomId/assignment/:assignmentId/attempt/:attemptId`
+  - `src/pages/classroom/AttemptPage.tsx`
+- `/classrooms/:classroomId/assignment/:assignmentId/attempt/:attemptId/response/:responseId`
+  - `src/pages/classroom/ResponsePage.tsx`
+- `/scenario`
+  - `src/pages/scenario/ScenarioLibraryPage.tsx`
+- `/scenario/library`
+  - `src/pages/scenario/ScenarioLibraryPage.tsx`
+- `/scenario/new`
+  - `src/pages/scenario/ScenarioNewPage.tsx`
+- `/scenario/:scenarioId/editor`
+  - `src/pages/scenario/ScenarioEditorPage.tsx`
+- `/scenario/:scenarioId/viewer`
+  - `src/pages/scenario/ScenarioTestRunPage.tsx`
 
-## 3. Target Architecture Overview
-### Frontend
-- React SPA with route groups by role:
-  - Student: dashboard, assigned work, in-progress, completed, feedback
-  - Instructor: scenario library, assignment builder, class roster, analytics
-  - Admin: institution settings, user provisioning, audits
+### Backend route tree
+- `/api/grade`
+  - Standalone free-response grading endpoint used by local scenario test runs.
+- `/api/public/*`
+  - Protected API namespace.
+  - Every route uses `requireSession` in `src/server/public/auth.ts`.
+  - Session auth accepts either:
+    - a Neon session token looked up in `neon_auth.session`, or
+    - a JWT verified against `neon_auth.jwks`.
+  - After auth, the server upserts a matching `public.user_profile` row and attaches `authUserId` and `publicUserId` to the request.
 
-### Backend
-- Express API with domain routers:
-  - Auth
-  - Users/Roles
-  - Organizations/Classrooms/Groups
-  - Scenarios
-  - Assignments
-  - Attempts/Submissions/Grades
-  - Reporting
+Protected resources currently mounted under `/api/public`:
+- `/me`
+- `/classrooms`
+- `/classroom-members`
+- `/scenarios`
+- `/scenario-templates`
+- `/scenario-versions`
+- `/assignments`
+- `/attempts`
+- `/responses`
 
-### Data + External Services
-- PostgreSQL (primary transactional store)
-- Object storage for scenario media/assets (video/files)
-- OpenAI service for grading
-- Microsoft Entra ID (Azure AD) for OAuth sign-in
+## 3. Repository Hierarchy
 
-## 4. Core Domain Model
-Recommended primary entities:
-- `organizations` (school/department tenant boundary)
-- `users`
-- `memberships` (user membership in org with role)
-- `classrooms`
-- `classroom_members` (student/instructor membership in a class)
-- `scenarios` (draft/head metadata)
-- `scenario_versions` (immutable published versions)
-- `assignments` (bind scenario version to classroom + due dates)
-- `attempts` (student run state per assignment)
-- `responses` (node-level answers, including AI graded information)
+### Root
+- `.github/`
+  - `dependabot.yml`
+    - Weekly npm dependency update configuration.
+- `dist/`
+  - Generated build output for the client and compiled server.
+  - Not source of truth.
+- `node_modules/`
+  - Installed dependencies.
+  - Not source of truth.
+- `prisma/`
+  - Prisma schema and migration history.
+- `public/`
+  - Static assets served directly by Vite/Express.
+- `src/`
+  - Application source code for frontend, backend, shared types, and scenario engine.
+- `.env`
+  - Local environment file. Required values are inferred from code, including `DATABASE_URL`, `OPENAI_API_KEY`, and `VITE_NEON_AUTH_URL`.
+- `.gitignore`
+  - Git ignore rules.
+- `README.md`
+  - Legacy project map from the earlier grading-demo phase.
+  - No longer accurate as a system description.
+- `architecture.md`
+  - This file.
+- `future.md`
+  - Future-work notes. Useful for roadmap context, not for current architecture.
+- `plan.md`
+  - Delivery-plan document from an earlier planning phase. Not an accurate description of the live implementation.
+- `TODO.md`
+  - UI/product TODO notes.
+- `eslint.config.js`
+  - Flat ESLint config for TypeScript and React hooks.
+- `index.html`
+  - SPA shell, favicon/manifest wiring, and client entry bootstrap.
+- `package.json`
+  - Project scripts and dependency manifest.
+  - Key scripts:
+    - `dev`: runs Prisma generation, backend watch server, and Vite client together.
+    - `build`: builds client and server.
+    - `start`: runs compiled Express server from `dist/src/server/index.js`.
+- `package-lock.json`
+  - npm lockfile.
+- `prisma.config.ts`
+  - Prisma CLI config pointing to `prisma/schema.prisma` and `DATABASE_URL`.
+- `tsconfig.json`
+  - Root TypeScript project references.
+- `tsconfig.app.json`
+  - Frontend TypeScript config.
+- `tsconfig.node.json`
+  - Server TypeScript config; emits to `dist/`.
+- `vite.config.ts`
+  - Vite config with React SWC, Tailwind plugin, `/api` proxy to `http://localhost:8787`, and Dagre chunking.
 
-Key design rule:
-- Assignments should reference immutable `scenario_versions`, not mutable draft scenarios.
+### `public/`
+- `EdupulseTutorial.mp4`
+  - Tutorial video used by the scenario tutorial flow.
+- `depression.mp4`
+  - Scenario media asset.
+- `antihypertensives.mp4`
+  - Scenario media asset.
+- `manifest.json`
+  - PWA-style manifest and icon metadata.
+- `logos/`
+  - `edupulse.svg`
+  - `edupulse-wordmark.svg`
+  - `edupulse-with-wordmark.svg`
+  - `favicon.ico`
+  - `logo192.png`
+  - `logo512.png`
+  - Brand assets used by the SPA.
+- `scenarios/`
+  - `tutorial.json`
+    - Importable starter/tutorial scenario.
+    - Also exposed by the backend as a scenario template via `/api/public/scenario-templates`.
 
-## 5. Auth and Identity (Microsoft OAuth)
-Use Microsoft Entra ID via OAuth 2.0 / OpenID Connect.
+### `prisma/`
+- `schema.prisma`
+  - Current source of truth for database structure.
+  - Two schemas are in play:
+    - `public`: EduPulse application tables.
+    - `neon_auth`: Neon-managed auth/session/JWKS tables.
+- `generated/`
+  - Referenced by the app via generated Prisma client/model imports.
+- `migrations/`
+  - `20250227_baseline/`
+    - Initial schema baseline.
+  - `20260302195456_align_schema_with_current_models/`
+    - Aligns database with the then-current Prisma models.
+  - `20260302212606_sync_auth_user_to_public_user/`
+    - Sync work between Neon auth users and public user records.
+  - `20260307190146_user_profile_and_string_uuids/`
+    - Introduces `user_profile` and string UUID alignment.
+  - `20260307203000_fix_user_profile_sync_trigger/`
+    - Fixes profile sync behavior.
+  - `20260330203045_make_max_attempts_optional/`
+    - Makes assignment attempt limit optional.
+  - `20260330211631_attempt_progress_fields/`
+    - Adds attempt progress fields such as `current_node_id` and `last_activity_at`.
+  - `20260402173043_make_classroom_code_unique/`
+    - Enforces unique classroom join codes.
+  - `20260409221326_cascade_delete_scenarios/`
+    - Enables scenario cascade delete behavior.
+  - `migration_lock.toml`
+    - Prisma migration lock metadata.
 
-Recommended flow:
-1. User signs in with Microsoft account.
-2. Backend validates token claims (issuer, audience, expiration, signature/JWKS).
-3. App maps identity to local `users` + `memberships`.
-4. Backend issues application session (HTTP-only secure cookie or signed JWT session).
-5. All protected routes enforce authorization from local role/membership state.
+### `src/`
+- `index.css`
+  - Tailwind import and global CSS defaults.
+- `main.tsx`
+  - Frontend entrypoint.
+  - Initializes theme.
+  - Wraps the app in the React Query provider.
+  - Builds the lazy route tree described above.
 
-Important decisions:
-- Single-tenant vs multi-tenant Entra setup
-- Allowed email domains / tenant IDs
-- Auto-provisioning rules (first login behavior)
-- Account linking strategy if email changes
+#### `src/components/`
+- `data/`
+  - `DataStatePanels.tsx`
+    - Loading, empty, error, and unauthorized panels.
+  - `DataGuard.tsx`
+    - Small state machine that chooses which panel or content to render.
+- `layout/`
+  - `NavBar.tsx`
+    - Shared top navigation.
+    - Session-aware app links and account dropdown.
+  - `PageShell.tsx`
+    - Shared authenticated page frame with NavBar and page header.
+- `ui/`
+  - `Surfaces.tsx`
+    - Shared visual primitives like `SurfaceCard`, `SectionHeader`, `StatusBadge`, and `EmptyStateCard`.
 
-## 6. Authorization Model
-Use RBAC + resource-scoped checks:
-- Platform roles: admin, instructor, student
-- Resource scopes: organization, classroom, assignment
+#### `src/lib/`
+- `auth-client.ts`
+  - Shared Neon Auth client.
+  - Depends on `VITE_NEON_AUTH_URL`.
+- `cn.ts`
+  - Small class-name join helper.
+- `format-dates.ts`
+  - Shared date formatting helpers.
+- `public-api-client.ts`
+  - Low-level fetch wrapper for `/api/public`.
+  - Resolves and caches bearer tokens from Neon Auth session state.
+  - Normalizes API errors into `ApiRequestError`.
+- `query-client-instance.ts`
+  - Singleton TanStack Query client configuration.
+- `query-client.tsx`
+  - `PublicApiQueryProvider`.
+  - Clears token/query cache when authenticated identity changes.
+- `theme.ts`
+  - LocalStorage-backed light/dark theme initialization and toggle helpers.
+- `useApiData.ts`
+  - Generic React Query wrapper for authenticated public API reads.
+- `usePublicApiHooks.ts`
+  - Typed read hooks for the `/api/public` resources:
+    - current user
+    - classrooms
+    - classroom members
+    - assignments
+    - attempts
+    - responses
+    - scenarios
+    - scenario versions
+- `uuid.ts`
+  - UUID validation helpers for route params and query construction.
 
-Examples:
-- Instructors can create scenarios and assign to classrooms they teach.
-- Students can only access assignments where they are enrolled.
-- Admins can manage users/roles across their organization.
+#### `src/types/`
+- `grader.ts`
+  - Basic standalone grading request/response interfaces.
+- `publicApi.ts`
+  - Shared public API response contracts used by the frontend.
+  - Extends base Prisma model shapes with computed fields like role, counts, names, and related titles.
 
-Do not trust frontend role checks alone; every sensitive API must enforce server-side authorization.
+#### `src/server/`
+- `index.ts`
+  - Express server bootstrap.
+  - Mounts `/api/grade`.
+  - Mounts `/api/public`.
+  - Serves static build artifacts from `dist/`.
+  - Falls back to `index.html` for SPA routes.
+- `prisma.ts`
+  - Prisma client creation using Neon adapter and `DATABASE_URL`.
+- `grader.ts`
+  - OpenAI grading implementation.
+  - Contains:
+    - Zod request/response validation.
+    - JSON-schema constrained model output.
+    - prompt-injection hardening.
+    - retry/fix-up pass for malformed JSON.
+  - Default model is `gpt-4o-mini` unless `OPENAI_MODEL` is set.
 
-## 7. Scenario Lifecycle Architecture
-Scenario states:
-- Draft
-- Published
-- Archived
+##### `src/server/public/`
+- `index.ts`
+  - Composes the protected routers under `/api/public`.
+- `auth.ts`
+  - Bearer-token auth middleware.
+  - Supports session lookup and JWT fallback.
+  - Auto-provisions `public.user_profile`.
+- `common.ts`
+  - Shared request parsing, pagination, UUID validation, auth context typing, and error helpers.
+- `scopes.ts`
+  - Prisma `where` helpers for classroom-, assignment-, attempt-, and response-level access control.
+- `users.ts`
+  - `/me` resource.
+  - Supports:
+    - current-user lookup
+    - self-account deletion with explicit confirmation
+  - Explicitly rejects profile updates; those are not supported here.
+- `classrooms.ts`
+  - Classroom listing, detail lookup, creation, and join-by-code behavior.
+  - Classroom creation auto-creates an instructor membership.
+  - Join flow adds the user as a student if not already enrolled.
+- `classroomMembers.ts`
+  - Lists classroom memberships visible to the requester.
+- `scenarios.ts`
+  - Owned-scenario CRUD surface for drafts.
+  - Supports:
+    - list owned scenarios
+    - fetch one owned scenario
+    - create/update draft (`draft_content`)
+    - delete scenario if no published version has assignments
+- `scenarioVersions.ts`
+  - Lists published versions for the authenticated user's scenarios.
+- `scenarioTemplates.ts`
+  - Discovers JSON templates in `public/scenarios` or `dist/scenarios`.
+- `assignments.ts`
+  - Assignment listing, detail lookup, creation, and student attempt-session startup.
+  - Key behavior:
+    - instructors can assign either an existing published version or a draft scenario
+    - assigning a draft auto-publishes a new immutable `scenario_version`
+    - students opening an assignment get an existing in-progress attempt or a new attempt
+    - the response includes assignment metadata, attempt metadata, prior responses, and published scenario content
+- `attempts.ts`
+  - Attempt listing, detail lookup, and persisted attempt progress updates.
+  - Key behavior:
+    - validates that the requester owns the attempt as a student
+    - re-parses the published scenario document on each progress request
+    - advances start/text/video nodes without storing a response
+    - stores choice and free-response payloads into `response`
+    - grades free responses synchronously through OpenAI
+    - marks attempts `submitted` when no next node exists
+- `responses.ts`
+  - Lists and fetches stored node-level responses for accessible attempts.
 
-Workflow:
-1. Instructor edits draft scenario in creator.
-2. Publish creates immutable version snapshot.
-3. Assignment references published version.
-4. Students run attempts against that fixed version.
-5. New edits create new version, without breaking historical attempts.
+#### `src/pages/`
 
-## 8. Classroom and Assignment Workflows
-### Instructor workflow
-1. Create/import scenario
-2. Publish version
-3. Assign to classroom with due date and grading settings
-4. Monitor progress, completion, and weak concept areas
+##### `src/pages/home/`
+- `HomePage.tsx`
+  - Session-aware home switch between guest and authenticated views.
+- `LoginPage.tsx`
+  - Email/password login.
+  - Handles verification-required and verification-success query states.
+- `SignupPage.tsx`
+  - Email/password account creation with email verification.
+- `SettingsPage.tsx`
+  - Routed settings shell.
+  - Currently only theme toggle is functionally wired; account, password, notification, accessibility, and delete-account controls are mostly placeholders.
+- `forgot-password.tsx`
+  - Legacy password-reset request screen.
+  - Not registered in the router.
+  - Imports an old NavBar path.
+- `reset-password.tsx`
+  - Legacy password-reset completion screen.
+  - Not registered in the router.
+  - Imports an old NavBar path.
+- `profile.tsx`
+  - Legacy profile/account-management screen.
+  - Not registered in the router.
+  - Targets older API contracts and imports an old NavBar path.
+- `hooks/`
+  - `homeDashboardData.types.ts`
+    - View-model types for the authenticated dashboard.
+  - `useHomeDashboardData.ts`
+    - Aggregates classrooms, attempts, scenarios, and session state into dashboard content.
+- `views/`
+  - `GuestHome.tsx`
+    - Marketing-style landing page for signed-out users.
+  - `AuthenticatedHome.tsx`
+    - Dashboard showing action buttons, continue-work card, and classroom list.
 
-### Student workflow
-1. See assigned work
-2. Launch scenario
-3. Submit node responses
-4. Receive feedback
-5. Review completion status and results
+##### `src/pages/classroom/`
+- `ClassroomListPage.tsx`
+  - Lists classrooms the viewer belongs to.
+- `ClassroomCreatePage.tsx`
+  - Instructor flow for classroom creation.
+- `ClassroomJoinPage.tsx`
+  - Student flow for classroom-code join.
+- `ClassroomPage.tsx`
+  - Classroom-level switch between instructor and student views.
+- `AssignmentPage.tsx`
+  - Assignment summary plus attempts list.
+- `AssignmentRunnerPage.tsx`
+  - Fetches attempt session data and runs `ScenarioViewer` in assignment mode.
+- `AttemptPage.tsx`
+  - Attempt summary plus response list.
+- `ResponsePage.tsx`
+  - Full detail view for a single stored response.
+- `classroomMutations.ts`
+  - Frontend mutations for classroom create/join.
+- `hooks/`
+  - `useClassroomData.ts`
+    - View-model composition for classroom, assignment, attempt, and response pages.
+- `views/`
+  - `InstructorClassroom.tsx`
+    - Instructor dashboard with assignments and students tabs.
+    - Opens `AssignScenarioModal`.
+  - `StudentClassroom.tsx`
+    - Student classroom view showing assignment list and instructors.
+- `components/`
+  - `AssignScenarioModal.tsx`
+    - Search/select UI for draft scenarios and published versions.
+    - Sends assignment-create requests and captures scheduling, instructions, and attempt limit.
+  - `ClassroomRow.tsx`
+    - Reusable classroom list row.
+  - `InstructorAssignmentCard.tsx`
+    - Instructor assignment summary card.
+  - `AssignmentSummaryCard.tsx`
+    - Shared assignment metadata summary.
+  - `StudentProgressCard.tsx`
+    - Student-specific assignment status and start/resume controls.
+  - `AttemptList.tsx`
+    - Attempt table/list.
+  - `AttemptSummaryCard.tsx`
+    - Attempt metadata summary.
+  - `ResponseList.tsx`
+    - Response table/list.
+  - `ResponseDetailCard.tsx`
+    - Detailed stored-response display.
 
-## 9. Grading System Architecture
-Current synchronous grading is fine for MVP; evolve to queue-based grading for scale/reliability.
+##### `src/pages/scenario/`
+- `nodeSchemas.ts`
+  - Zod schemas for the five current node types:
+    - `start`
+    - `text`
+    - `video`
+    - `choice`
+    - `free_response`
+- `scenarioSchemas.ts`
+  - Zod schema for whole scenario documents.
+  - Defines node edges and layout records.
+  - Contains traversal helpers such as `getScenarioNode()` and `getNextNodeIdForScenarioNode()`.
+- `nodeRegistry.ts`
+  - Generic registry typing utilities used to bind schemas, cards, tabs, scenes, and factories together.
+- `nodes.ts`
+  - Concrete node registry.
+  - The single place where node type is mapped to:
+    - schema
+    - runtime scene
+    - editor card
+    - editor tab
+    - node factory
+- `ScenarioLibraryPage.tsx`
+  - Scenario library view for drafts and published versions.
+  - Supports scenario deletion and links to editor/test run.
+- `ScenarioNewPage.tsx`
+  - Boots the editor with a fresh starter document.
+- `ScenarioEditorPage.tsx`
+  - Loads a persisted scenario draft into the editor.
+- `ScenarioTestRunPage.tsx`
+  - Loads a persisted draft into the runtime viewer for local test runs.
+- `hooks/`
+  - `useScenarioPageData.ts`
+    - Converts stored draft JSON into validated scenario documents or starter documents.
 
-MVP:
-- API receives response and grades immediately
-- Save grade result with prompt/rubric version metadata
+###### `src/pages/scenario/creator/`
+- `ScenarioCreator.tsx`
+  - Main scenario editor.
+  - Uses React Flow as the canvas.
+  - Uses reducer state as the source of truth.
+  - Supports:
+    - title editing
+    - node insertion
+    - node inspection
+    - edge creation/replacement
+    - auto layout
+    - JSON download
+    - template/file import
+    - backend draft sync
+    - test-run navigation
+    - unsaved-change tracking
+- `Creator.css`
+  - Creator-specific styles.
+- `ScenarioCreatorCallbacks.ts`
+  - Adapters between React Flow change events and reducer actions.
+  - Enforces single outgoing edge per node handle.
+- `starterScenario.ts`
+  - Creates the initial single-start-node scenario document.
+- `scenarioImport.ts`
+  - Loads/imports/validates scenario JSON and converts documents into React Flow nodes/edges.
+- `autoLayout.ts`
+  - Dagre-based left-to-right layout helper for the editor graph.
+- `DownloadJson.ts`
+  - Browser download helper for scenario export.
+- `editor-store/`
+  - `EditorStore.ts`
+    - Reducer and actions for scenario editing state.
+  - `EditorDispatchContext.tsx`
+    - Dispatch context/provider hook for child editor components.
+- `ui/`
+  - `CreatorTopBar.tsx`
+    - Top toolbar and menu integration.
+  - `NodeAddPanel.tsx`
+    - Palette of addable node types.
+  - `NodeEditorPanel.tsx`
+    - Resizable side panel for editing the selected node.
+  - `menus/`
+    - `FileMenu.tsx`
+      - New/open/import/save/test/download commands.
+    - `EditMenu.tsx`
+      - Edit menu shell.
+    - `ViewMenu.tsx`
+      - Zoom/layout commands.
+    - `HelpMenu.tsx`
+      - Tutorial/help entry points.
+    - `MenuDropdown.tsx`
+      - Shared dropdown primitive.
+    - `TemplateImportModal.tsx`
+      - Modal that lists backend-discovered templates from `public/scenarios`.
+    - `menuTypes.ts`
+      - Shared menu action typings.
+- `cards/`
+  - React Flow node renderers for creator canvas nodes.
+  - `Start.Card.tsx`
+  - `Text.Card.tsx`
+  - `Video.Card.tsx`
+  - `Choice.Card.tsx`
+  - `FreeResponse.Card.tsx`
+  - `NodeCardFrame.tsx`
+    - Shared shell with inspection and delete affordances.
+  - `Cards.ts`
+    - Card-export utility module.
+- `tabs/`
+  - Inspector/editor forms for each node type.
+  - `Start.Tab.tsx`
+  - `Text.Tab.tsx`
+  - `Video.Tab.tsx`
+  - `Choice.Tab.tsx`
+  - `FreeResponse.Tab.tsx`
+  - `NodeDispatchFields.tsx`
+    - Common field wiring for reducer-backed updates.
+  - `TabRenderer.tsx`
+    - Registry-based tab dispatch.
+  - `tabStyles.ts`
+    - Shared tab styling helpers.
 
-Scaled:
-- Write response event to queue
-- Background worker performs grading with retries/backoff
-- Persist graded output and emit completion event/notification
+###### `src/pages/scenario/viewer/`
+- `ScenarioViewer.tsx`
+  - Scenario runtime component.
+  - Supports two modes:
+    - local mode for test runs and template URLs
+    - persisted assignment mode using `/api/public/attempts/:id/progress`
+  - Handles feedback modal display for graded free-response nodes.
+- `viewerTypes.ts`
+  - Runtime event and scene prop types.
+- `scenes/`
+  - `SceneRenderer.tsx`
+    - Registry-based runtime scene dispatch.
+  - `Start.Scene.tsx`
+    - Runtime UI for `start`.
+  - `Text.Scene.tsx`
+    - Runtime UI for `text`.
+  - `Video.Scene.tsx`
+    - Runtime UI for `video`.
+  - `Choice.Scene.tsx`
+    - Runtime UI for `choice`.
+  - `FreeResponse.Scene.tsx`
+    - Runtime UI for `free_response`.
+  - `FreeResponseGrader.ts`
+    - Direct `/api/grade` client used for local, non-assignment runs.
+  - `sceneUi.tsx`
+    - Shared runtime scene UI helpers.
 
-Add guardrails:
-- Idempotency keys for grading requests
-- Timeout/retry policy
-- Fallback for model/API failures
-- Cost controls and per-tenant usage limits
+## 4. Current Domain Model
 
-## 10. Frontend Architecture by Route Domains
-Recommended route domains:
-- `/auth/*`
-- `/student/*`
-- `/instructor/*`
-- `/admin/*`
-- `/scenario/viewer/:assignmentId`
-- `/scenario/creator/:scenarioId`
+### Application tables in `public`
+- `user_profile`
+  - App-facing user identity keyed to Neon auth user id.
+- `classroom`
+  - Classroom shell created by an instructor; includes unique join code.
+- `classroom_member`
+  - Membership relation with role `instructor` or `student`.
+- `scenario`
+  - Mutable draft head owned by an instructor.
+  - Stores `draft_content` JSON and `latest_version_number`.
+- `scenario_version`
+  - Immutable published snapshot of a scenario draft.
+- `assignment`
+  - Binds a classroom to a scenario version with title, instructions, open/due/close dates, and optional attempt limit.
+- `attempt`
+  - Student run state for a single assignment attempt.
+  - Tracks `current_node_id`, `status`, timestamps, and attempt number.
+- `response`
+  - Node-level persisted answer/feedback record for an attempt.
 
-Shared frontend concerns:
-- Session/bootstrap loader
-- Role-aware navigation
-- API client with auth + error normalization
-- Query caching/state management strategy
-- Form validation and optimistic updates where safe
+### Auth/session tables in `neon_auth`
+- `user`
+- `account`
+- `session`
+- `jwks`
+- `verification`
+- `organization`
+- `member`
+- `invitation`
+- `project_config`
 
-## 11. API Architecture Guidelines
-Recommended patterns:
-- Versioned APIs (`/api/v1/...`)
-- Zod validation on all request/response boundaries
-- Consistent error format and status codes
-- Pagination/filtering for list endpoints
-- Request IDs for tracing
+These are not EduPulse feature tables, but the app depends on them for session validation, JWT verification, and user bootstrap.
 
-Example domain endpoints:
-- `POST /api/v1/auth/microsoft/callback`
-- `GET  /api/v1/classrooms/:id/assignments`
-- `POST /api/v1/scenarios/:id/publish`
-- `POST /api/v1/assignments/:id/attempts`
-- `POST /api/v1/attempts/:id/responses`
-
-## 12. Data and Migration Strategy
-- Use migration tooling (drizzle, knex, or similar)
-- Never rely on runtime `CREATE TABLE IF NOT EXISTS` as long-term migration strategy
-- Add unique constraints + foreign keys + indexing for high-volume joins
-- Support soft deletes/audit where compliance requires history
-- Include seed data for local development (demo org/class/users/scenario)
-
-## 13. Security, Privacy, and Compliance
-Education context adds extra requirements:
-- PII minimization and encrypted data at rest/in transit
-- Audit logging for access and role changes
-- Retention/deletion policy for student data
-- FERPA-aligned data handling practices (if applicable)
-- Secret management (no raw keys in frontend)
-- Rate limiting and abuse protection on auth and grading endpoints
-
-## 14. Observability and Operations
-- Structured logging (JSON logs with request IDs)
-- Metrics: request latency, grading latency, failure rates, token errors
-- Error tracking/alerting (backend + frontend)
-- Health/readiness checks
-- Environment separation: local, staging, production
-- Backup and recovery plan for PostgreSQL
-
-## 15. Testing Strategy
-- Unit tests for scenario engine reducers/schemas
-- API integration tests (auth, permissions, assignment access)
-- End-to-end tests for key role workflows (student/instructor/admin)
-- Contract tests for grading response schema stability
-
-## 16. Suggested Delivery Phases
-### Phase 1: Foundation
-- Microsoft OAuth + session handling
-- RBAC middleware
-- Core classroom/assignment schema
-- Instructor + student dashboard skeletons
-
-### Phase 2: Instructional Core
-- Scenario publish/versioning
-- Assignment workflow
-- Attempt tracking and progress states
-- Basic analytics (completion, score distribution)
-
-### Phase 3: Reliability + Admin
-- Queue-based grading pipeline
-- Admin tools and audit logs
-- Notifications/reminders
-- Operational dashboards and SLOs
-
-## 17. Big-Picture Items You Were Missing (or only partially captured)
-- Tenant model (organization/school boundaries)
-- Real auth/session architecture (not just login forms)
-- Server-enforced authorization on every protected route
-- Classroom/assignment domain schema
-- Scenario versioning strategy for stable assignments
-- Attempt lifecycle and progress persistence
-- Analytics/reporting model for instructors
-- Compliance/security/audit requirements for education data
-- Migrations + deployment + observability plan
-- Testing strategy across role-based flows
+## 5. Important Current-State Notes
+- Auth is currently Neon Auth email/password plus email verification, not Microsoft/Entra OAuth.
+- The authoritative protected API namespace is `/api/public`, not `/api/v1`.
+- Scenario drafts are stored as opaque JSON in `scenario.draft_content`; publishing snapshots that JSON into `scenario_version.content`.
+- Assignment creation from a draft scenario auto-publishes a new scenario version on the backend.
+- Assignment progress is persisted node-by-node through `attempt.current_node_id` plus `response` rows.
+- `SettingsPage` is routed but mostly placeholder UI.
+- `src/pages/home/profile.tsx`, `src/pages/home/forgot-password.tsx`, and `src/pages/home/reset-password.tsx` are legacy screens that are not in the route tree.
+- `ScenarioLibraryPage.tsx` contains links to `/scenario/library/version/:id`, but that route is not defined in `src/main.tsx`.
+- `README.md`, `plan.md`, and the old version of this file should be treated as historical context, not as accurate architecture.
