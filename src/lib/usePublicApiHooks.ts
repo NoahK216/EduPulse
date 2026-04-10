@@ -8,7 +8,6 @@ import type {
   PublicResponse,
   PublicScenario,
   PublicScenarioVersion,
-  CurrentUserProfile,
 } from "../types/publicApi";
 
 import { useApiData, type ApiState } from "./useApiData";
@@ -20,10 +19,6 @@ type CollectionState<T> = ApiState<PagedResponse<T>> & {
 
 type ItemState<T> = ApiState<ItemResponse<T>> & {
   item: T | null;
-};
-
-export type CurrentUserState = ApiState<ItemResponse<CurrentUserProfile>> & {
-  user: CurrentUserProfile | null;
 };
 
 export type ClassroomState = ItemState<PublicClassroom>;
@@ -92,15 +87,6 @@ function useCollectionResource<T>(path: string | null): CollectionState<T> {
   return {
     ...state,
     items: state.data?.items ?? [],
-  };
-}
-
-export function useCurrentUser(): CurrentUserState {
-  const state = useApiData<ItemResponse<CurrentUserProfile>>("/api/public/me");
-
-  return {
-    ...state,
-    user: state.data?.item ?? null,
   };
 }
 

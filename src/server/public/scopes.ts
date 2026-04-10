@@ -1,46 +1,46 @@
 import type { Prisma } from '../../../prisma/generated/client.js';
 
 export function accessibleClassroomWhere(
-  publicUserId: string,
+  userId: string,
 ): Prisma.classroomWhereInput {
   return {
-    OR: [{ members: { some: { user_id: publicUserId } } }],
+    OR: [{ members: { some: { user_id: userId } } }],
   };
 }
 
 export function instructorClassroomWhere(
-  publicUserId: string,
+  userId: string,
 ): Prisma.classroomWhereInput {
   return {
-    OR: [{ members: { some: { user_id: publicUserId, role: "instructor" } } }],
+    OR: [{ members: { some: { user_id: userId, role: "instructor" } } }],
   };
 }
 
 export function studentClassroomWhere(
-  publicUserId: string
+  userId: string
 ): Prisma.classroomWhereInput {
   return {
-    members: { some: { user_id: publicUserId, role: 'student' } },
+    members: { some: { user_id: userId, role: 'student' } },
   };
 }
 
 export function accessibleAssignmentWhere(
-  publicUserId: string
+  userId: string
 ): Prisma.assignmentWhereInput {
   return {
-    classroom: accessibleClassroomWhere(publicUserId),
+    classroom: accessibleClassroomWhere(userId),
   };
 }
 
 export function accessibleAttemptWhere(
-  publicUserId: string
+  userId: string
 ): Prisma.attemptWhereInput {
   return {
     OR: [
-      { student_user_id: publicUserId },
+      { student_user_id: userId },
       {
         assignment: {
-          classroom: instructorClassroomWhere(publicUserId),
+          classroom: instructorClassroomWhere(userId),
         },
       },
     ],
@@ -48,19 +48,19 @@ export function accessibleAttemptWhere(
 }
 
 export function accessibleResponseWhere(
-  publicUserId: string
+  userId: string
 ): Prisma.responseWhereInput {
   return {
     OR: [
       {
         attempt: {
-          student_user_id: publicUserId,
+          student_user_id: userId,
         },
       },
       {
         attempt: {
           assignment: {
-            classroom: instructorClassroomWhere(publicUserId),
+            classroom: instructorClassroomWhere(userId),
           },
         },
       },

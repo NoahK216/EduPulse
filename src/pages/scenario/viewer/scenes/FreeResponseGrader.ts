@@ -1,3 +1,7 @@
+import {
+  publicApiPost,
+  resolvePublicApiToken,
+} from '../../../../lib/public-api-client';
 import type {FreeResponseNode} from '../../nodeSchemas';
 
 export type FreeResponseEvaluation = {
@@ -15,22 +19,20 @@ export const evaluateFreeResponse = async(
   const rubric = node.rubric;
 
   try {
-    const res = await fetch('/api/grade', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
+    const token = await resolvePublicApiToken();
+    if (!token) {
+      throw new Error('You must be logged in to grade free responses.');
+    }
+
+    const json = await publicApiPost<FreeResponseEvaluation>(
+      '/api/public/grade',
+      token,
+      {
         question_prompt: node.prompt,
         user_response_text: userText,
         rubric,
-      }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Server error (${res.status}): ${text}`);
-    }
-
-    const json = (await res.json()) as FreeResponseEvaluation;
+      },
+    );
 
     return {ok: true, evaluation: json};
   } catch (err) {

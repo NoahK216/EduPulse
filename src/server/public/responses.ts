@@ -92,7 +92,7 @@ export function createPublicResponsesRouter() {
     }
 
     const where: Prisma.responseWhereInput = accessibleResponseWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.userId
     );
     if (attemptId.value !== undefined) {
       where.attempt_id = attemptId.value;
@@ -133,7 +133,7 @@ export function createPublicResponsesRouter() {
     try {
       const row = await prisma.response.findFirst({
         where: {
-          AND: [{ id: id.value }, accessibleResponseWhere(authedReq.auth.publicUserId)],
+          AND: [{ id: id.value }, accessibleResponseWhere(authedReq.auth.userId)],
         },
         select: responseSelect,
       });

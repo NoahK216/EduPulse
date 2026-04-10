@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type OpenAI from 'openai';
 import type { Prisma } from '../../../prisma/generated/client.js';
 
-import { gradeWithOpenAI } from '../grader.js';
+import { gradeWithOpenAI } from "./grader.js";
 import { prisma } from '../prisma.js';
 import {
   getNextNodeIdForScenarioNode,
@@ -172,7 +172,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
     }
 
     const where: Prisma.attemptWhereInput = accessibleAttemptWhere(
-      authedReq.auth.publicUserId
+      authedReq.auth.userId
     );
     if (assignmentId.value !== undefined) {
       where.assignment_id = assignmentId.value;
@@ -220,7 +220,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
     try {
       const row = await prisma.attempt.findFirst({
         where: {
-          AND: [{ id: id.value }, accessibleAttemptWhere(authedReq.auth.publicUserId)],
+          AND: [{ id: id.value }, accessibleAttemptWhere(authedReq.auth.userId)],
         },
         select: attemptSelect,
       });
@@ -256,7 +256,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
       const attempt = await prisma.attempt.findFirst({
         where: {
           id: id.value,
-          student_user_id: authedReq.auth.publicUserId,
+          student_user_id: authedReq.auth.userId,
         },
         select: progressAttemptSelect,
       });
@@ -420,7 +420,7 @@ export function createPublicAttemptsRouter(openai: OpenAI) {
         const updateResult = await tx.attempt.updateMany({
           where: {
             id: attempt.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
             status: 'in_progress',
             current_node_id: currentNode.id,
           },

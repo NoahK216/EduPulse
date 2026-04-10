@@ -59,12 +59,12 @@ class RouteError extends Error {
   }
 }
 
-function buildViewerClassroomSelect(publicUserId: string) {
+function buildViewerClassroomSelect(userId: string) {
   return {
     name: true,
     members: {
       where: {
-        user_id: publicUserId,
+        user_id: userId,
       },
       select: {
         role: true,
@@ -74,7 +74,7 @@ function buildViewerClassroomSelect(publicUserId: string) {
   } satisfies Prisma.classroomSelect;
 }
 
-function buildAssignmentSelect(publicUserId: string) {
+function buildAssignmentSelect(userId: string) {
   return {
     id: true,
     classroom_id: true,
@@ -89,7 +89,7 @@ function buildAssignmentSelect(publicUserId: string) {
     created_at: true,
     updated_at: true,
     classroom: {
-      select: buildViewerClassroomSelect(publicUserId),
+      select: buildViewerClassroomSelect(userId),
     },
     scenario_version: { select: { title: true, version_number: true } },
     assigned_by: {
@@ -106,7 +106,7 @@ function buildAssignmentSelect(publicUserId: string) {
   } satisfies Prisma.assignmentSelect;
 }
 
-function buildAssignmentAttemptSessionSelect(publicUserId: string) {
+function buildAssignmentAttemptSessionSelect(userId: string) {
   return {
     id: true,
     classroom_id: true,
@@ -121,7 +121,7 @@ function buildAssignmentAttemptSessionSelect(publicUserId: string) {
     created_at: true,
     updated_at: true,
     classroom: {
-      select: buildViewerClassroomSelect(publicUserId),
+      select: buildViewerClassroomSelect(userId),
     },
     scenario_version: {
       select: {
@@ -244,13 +244,13 @@ export function createPublicAssignmentsRouter() {
     }
 
     const where: Prisma.assignmentWhereInput = accessibleAssignmentWhere(
-      authedReq.auth.publicUserId,
+      authedReq.auth.userId,
     );
     if (classroomId.value !== undefined) {
       where.classroom_id = classroomId.value;
     }
 
-    const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
+    const assignmentSelect = buildAssignmentSelect(authedReq.auth.userId);
     const { page, pageSize, skip, take } = pagination.value;
 
     try {
@@ -283,14 +283,14 @@ export function createPublicAssignmentsRouter() {
       return sendError(res, 400, 'BAD_REQUEST', id.message);
     }
 
-    const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
+    const assignmentSelect = buildAssignmentSelect(authedReq.auth.userId);
 
     try {
       const row = await prisma.assignment.findFirst({
         where: {
           AND: [
             { id: id.value },
-            accessibleAssignmentWhere(authedReq.auth.publicUserId),
+            accessibleAssignmentWhere(authedReq.auth.userId),
           ],
         },
         select: assignmentSelect,
@@ -315,14 +315,14 @@ export function createPublicAssignmentsRouter() {
     }
 
     const assignmentAttemptSessionSelect = buildAssignmentAttemptSessionSelect(
-      authedReq.auth.publicUserId,
+      authedReq.auth.userId,
     );
 
     try {
       const assignment = await prisma.assignment.findFirst({
         where: {
           id: id.value,
-          classroom: studentClassroomWhere(authedReq.auth.publicUserId),
+          classroom: studentClassroomWhere(authedReq.auth.userId),
         },
         select: assignmentAttemptSessionSelect,
       });
@@ -366,7 +366,7 @@ export function createPublicAssignmentsRouter() {
         let attempt = await tx.attempt.findFirst({
           where: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
             status: 'in_progress',
           },
           orderBy: { attempt_number: 'desc' },
@@ -401,7 +401,7 @@ export function createPublicAssignmentsRouter() {
         const latestAttempt = await tx.attempt.findFirst({
           where: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
           },
           orderBy: { attempt_number: 'desc' },
           select: {
@@ -425,7 +425,7 @@ export function createPublicAssignmentsRouter() {
         attempt = await tx.attempt.create({
           data: {
             assignment_id: assignment.id,
-            student_user_id: authedReq.auth.publicUserId,
+            student_user_id: authedReq.auth.userId,
             attempt_number: nextAttemptNumber,
             current_node_id: scenario.startNodeId,
             last_activity_at: now,
@@ -515,7 +515,7 @@ export function createPublicAssignmentsRouter() {
         where: {
           AND: [
             { id: parsed.data.classroom_id },
-            accessibleClassroomWhere(authedReq.auth.publicUserId),
+            accessibleClassroomWhere(authedReq.auth.userId),
           ],
         },
         select: { id: true },
@@ -529,7 +529,7 @@ export function createPublicAssignmentsRouter() {
         where: {
           AND: [
             { id: parsed.data.classroom_id },
-            instructorClassroomWhere(authedReq.auth.publicUserId),
+            instructorClassroomWhere(authedReq.auth.userId),
           ],
         },
         select: { id: true },
@@ -544,7 +544,7 @@ export function createPublicAssignmentsRouter() {
       }
 
       const row = await prisma.$transaction(async (tx) => {
-        const assignmentSelect = buildAssignmentSelect(authedReq.auth.publicUserId);
+        const assignmentSelect = buildAssignmentSelect(authedReq.auth.userId);
         let scenarioVersionId: string;
         let fallbackTitle: string;
 
@@ -552,7 +552,7 @@ export function createPublicAssignmentsRouter() {
           const version = await tx.scenario_version.findFirst({
             where: {
               id: parsed.data.scenario_version_id,
-              scenario: { owner_user_id: authedReq.auth.publicUserId },
+              scenario: { owner_user_id: authedReq.auth.userId },
             },
             select: {
               id: true,
@@ -574,7 +574,7 @@ export function createPublicAssignmentsRouter() {
           const scenario = await tx.scenario.findFirst({
             where: {
               id: parsed.data.scenario_id,
-              owner_user_id: authedReq.auth.publicUserId,
+              owner_user_id: authedReq.auth.userId,
             },
             select: {
               id: true,
@@ -609,7 +609,7 @@ export function createPublicAssignmentsRouter() {
               version_number: nextVersionNumber,
               title: scenario.title,
               content: jsonContent.value,
-              published_by_user_id: authedReq.auth.publicUserId,
+              published_by_user_id: authedReq.auth.userId,
               published_at: now,
             },
             select: { id: true },
@@ -632,7 +632,7 @@ export function createPublicAssignmentsRouter() {
           data: {
             classroom_id: parsed.data.classroom_id,
             scenario_version_id: scenarioVersionId,
-            assigned_by_user_id: authedReq.auth.publicUserId,
+            assigned_by_user_id: authedReq.auth.userId,
             title: title ?? fallbackTitle,
             instructions,
             open_at: openAt.value,

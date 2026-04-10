@@ -71,7 +71,7 @@ export function createPublicClassroomMembersRouter() {
     }
 
     const where: Prisma.classroom_memberWhereInput = {
-      classroom: accessibleClassroomWhere(authedReq.auth.publicUserId),
+      classroom: accessibleClassroomWhere(authedReq.auth.userId),
     };
     if (classroomId.value !== undefined) {
       where.classroom_id = classroomId.value;

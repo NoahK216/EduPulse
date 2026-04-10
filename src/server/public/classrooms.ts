@@ -34,7 +34,7 @@ function buildActiveAssignmentWhere(now: Date): Prisma.assignmentWhereInput {
 }
 
 function buildClassroomSelect(
-  publicUserId: string,
+  userId: string,
   activeAssignmentWhere: Prisma.assignmentWhereInput,
 ) {
   return {
@@ -46,7 +46,7 @@ function buildClassroomSelect(
     updated_at: true,
     members: {
       where: {
-        user_id: publicUserId,
+        user_id: userId,
       },
       select: {
         role: true,
@@ -97,10 +97,10 @@ function mapClassroomRow(
 }
 
 async function listPublicClassrooms(
-  publicUserId: string,
+  userId: string,
   pagination: Pagination,
 ) {
-  const where = accessibleClassroomWhere(publicUserId);
+  const where = accessibleClassroomWhere(userId);
   const activeAssignmentWhere = buildActiveAssignmentWhere(new Date());
   const [total, rows] = await Promise.all([
     prisma.classroom.count({ where }),
@@ -109,7 +109,7 @@ async function listPublicClassrooms(
       orderBy: [{ name: "asc" }, { id: "asc" }],
       skip: pagination.skip,
       take: pagination.take,
-      select: buildClassroomSelect(publicUserId, activeAssignmentWhere),
+      select: buildClassroomSelect(userId, activeAssignmentWhere),
     }),
   ]);
 
@@ -121,14 +121,14 @@ async function listPublicClassrooms(
 
 async function getPublicClassroomById(
   classroomId: string,
-  publicUserId: string,
+  userId: string,
 ) {
   const row = await prisma.classroom.findFirst({
     where: {
-      AND: [{ id: classroomId }, accessibleClassroomWhere(publicUserId)],
+      AND: [{ id: classroomId }, accessibleClassroomWhere(userId)],
     },
     select: buildClassroomSelect(
-      publicUserId,
+      userId,
       buildActiveAssignmentWhere(new Date()),
     ),
   });
@@ -189,7 +189,7 @@ export function createPublicClassroomsRouter() {
 
     try {
       const { items, total } = await listPublicClassrooms(
-        authedReq.auth.publicUserId,
+        authedReq.auth.userId,
         pagination.value,
       );
 
@@ -216,7 +216,7 @@ export function createPublicClassroomsRouter() {
     try {
       const item = await getPublicClassroomById(
         id.value,
-        authedReq.auth.publicUserId,
+        authedReq.auth.userId,
       );
       if (!item) {
         return sendError(res, 404, "NOT_FOUND", "Classroom not found");
@@ -246,7 +246,7 @@ export function createPublicClassroomsRouter() {
 
         const created = await tx.classroom.create({
           data: {
-            created_by_id: authedReq.auth.publicUserId,
+            created_by_id: authedReq.auth.userId,
             name: parsed.data.name,
             code,
             updated_at: now,
@@ -257,7 +257,7 @@ export function createPublicClassroomsRouter() {
         await tx.classroom_member.create({
           data: {
             classroom_id: created.id,
-            user_id: authedReq.auth.publicUserId,
+            user_id: authedReq.auth.userId,
             role: "instructor",
             updated_at: now,
           },
@@ -269,7 +269,7 @@ export function createPublicClassroomsRouter() {
 
       const item = await getPublicClassroomById(
         classroomId,
-        authedReq.auth.publicUserId,
+        authedReq.auth.userId,
       );
       if (!item) {
         return sendError(
@@ -322,7 +322,7 @@ export function createPublicClassroomsRouter() {
         const existingMembership = await tx.classroom_member.findFirst({
           where: {
             classroom_id: classroomId,
-            user_id: authedReq.auth.publicUserId,
+            user_id: authedReq.auth.userId,
           },
           select: {
             classroom_id: true,
@@ -336,7 +336,7 @@ export function createPublicClassroomsRouter() {
         await tx.classroom_member.create({
           data: {
             classroom_id: classroomId,
-            user_id: authedReq.auth.publicUserId,
+            user_id: authedReq.auth.userId,
             role: "student",
             updated_at: new Date(),
           },
@@ -348,7 +348,7 @@ export function createPublicClassroomsRouter() {
 
       const item = await getPublicClassroomById(
         classroomId,
-        authedReq.auth.publicUserId,
+        authedReq.auth.userId,
       );
       if (!item) {
         return sendError(

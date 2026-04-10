@@ -9,22 +9,5 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8787',
     },
-  },
-  optimizeDeps: {
-    include: ['dagre'],
-    esbuildOptions: {
-      supported: {
-        bigint: true,
-      },
-    },
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          dagre: ['dagre'],
-        },
-      },
-    },
-  },
+  }
 })

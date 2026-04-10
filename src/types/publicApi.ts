@@ -23,12 +23,6 @@ export type PublicAssignmentBase = Serialized<assignmentModel>;
 export type PublicAttemptBase = Serialized<attemptModel>;
 export type PublicResponseBase = Serialized<responseModel>;
 
-export type CurrentUserProfile = {
-  id: string;
-  email: string;
-  name: string;
-};
-
 export type PagedResponse<T> = {
   items: T[];
   page: number;

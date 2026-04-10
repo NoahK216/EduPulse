@@ -62,7 +62,7 @@ export function createPublicScenarioVersionsRouter() {
     }
 
     const where: Prisma.scenario_versionWhereInput = {
-      scenario: { owner_user_id: authedReq.auth.publicUserId },
+      scenario: { owner_user_id: authedReq.auth.userId },
     };
     if (scenarioId.value !== undefined) {
       where.scenario_id = scenarioId.value;

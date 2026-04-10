@@ -127,7 +127,7 @@ export function createPublicScenariosRouter() {
       return sendError(res, 400, 'BAD_REQUEST', pagination.message);
     }
 
-    const where = { owner_user_id: authedReq.auth.publicUserId };
+    const where = { owner_user_id: authedReq.auth.userId };
     const { page, pageSize, skip, take } = pagination.value;
 
     try {
@@ -164,7 +164,7 @@ export function createPublicScenariosRouter() {
       const row = await prisma.scenario.findFirst({
         where: {
           id: id.value,
-          owner_user_id: authedReq.auth.publicUserId,
+          owner_user_id: authedReq.auth.userId,
         },
         select: scenarioDetailSelect,
       });
@@ -190,7 +190,7 @@ export function createPublicScenariosRouter() {
     try {
       const where = {
         id: id.value,
-        owner_user_id: authedReq.auth.publicUserId,
+        owner_user_id: authedReq.auth.userId,
       } satisfies Prisma.scenarioWhereInput;
       const [existing, assignedVersion] = await Promise.all([
         prisma.scenario.findFirst({
@@ -203,7 +203,7 @@ export function createPublicScenariosRouter() {
           where: {
             scenario_id: id.value,
             scenario: {
-              owner_user_id: authedReq.auth.publicUserId,
+              owner_user_id: authedReq.auth.userId,
             },
             assignments: {
               some: {},
@@ -271,7 +271,7 @@ export function createPublicScenariosRouter() {
         const existing = await prisma.scenario.findFirst({
           where: {
             id: scenarioId,
-            owner_user_id: authedReq.auth.publicUserId,
+            owner_user_id: authedReq.auth.userId,
           },
           select: { id: true },
         });
@@ -294,7 +294,7 @@ export function createPublicScenariosRouter() {
       } else {
         const created = await prisma.scenario.create({
           data: {
-            owner_user_id: authedReq.auth.publicUserId,
+            owner_user_id: authedReq.auth.userId,
             title,
             description,
             draft_content: jsonDraft.value,
@@ -309,7 +309,7 @@ export function createPublicScenariosRouter() {
       const row = await prisma.scenario.findFirst({
         where: {
           id: savedId,
-          owner_user_id: authedReq.auth.publicUserId,
+          owner_user_id: authedReq.auth.userId,
         },
         select: scenarioDetailSelect,
       });

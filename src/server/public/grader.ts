@@ -2,7 +2,7 @@ import express from 'express';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-import { RubricSchema } from "../pages/scenario/nodeSchemas.js";
+import { RubricSchema } from "../../pages/scenario/nodeSchemas.js";
 
 export const gradeRequestSchema = z.object({
   question_prompt: z.string().min(1, 'question_prompt is required'),
@@ -219,11 +219,18 @@ export function createGraderRouter(openai: OpenAI) {
     if (!parsed.success) {
       return res
         .status(400)
-        .json({ error: 'Invalid request body', details: parsed.error.flatten() });
+        .json({
+          error: 'BAD_REQUEST',
+          message: 'Invalid request body',
+          details: parsed.error.flatten(),
+        });
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OPENAI_API_KEY is not set' });
+      return res.status(500).json({
+        error: 'INTERNAL_ERROR',
+        message: 'OPENAI_API_KEY is not set',
+      });
     }
 
     try {
@@ -232,7 +239,7 @@ export function createGraderRouter(openai: OpenAI) {
     } catch (error) {
       console.error('Grading failed', error);
       res.status(502).json({
-        error: 'Failed to grade response',
+        error: 'BAD_GATEWAY',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }

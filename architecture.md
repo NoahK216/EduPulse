@@ -1,12 +1,13 @@
+# [View on GitHub](https://github.com/NoahK216/EduPulse/blob/main/architecture.md)
 # EduPulse Architecture
 
 ## 1. Current System Summary
-EduPulse is currently a full-stack classroom and scenario platform built as a React SPA plus an Express API. Instructors can create branching scenario drafts, publish or implicitly publish them into immutable scenario versions, assign them to classrooms, and review student attempts and node-level responses. Students can join classrooms, open assignments, progress through scenarios, and submit free responses that are graded through OpenAI.
+EduPulse is a full-stack classroom and scenario platform built as a React SPA plus an Express API. Instructors can create branching scenario drafts, publish them into immutable scenario versions, assign them to classrooms, and review student attempts. Students can join classrooms, open assignments, progress through scenarios, and submit free responses that are graded through OpenAI.
 
 The current stack is:
 - Frontend: Vite, React 19, React Router, TanStack Query, Tailwind CSS 4, XYFlow/React Flow, Dagre.
 - Backend: Express 5, Prisma 7, PostgreSQL via Neon, Neon Auth, OpenAI.
-- Build/deploy shape: Vite builds the client, TypeScript compiles the server to `dist/`, and Express serves both API routes and the built SPA.
+- Build/deploy shape: Vite builds the client, TypeScript compiles the server to `dist/`, and Express serves both API routes and the built SPA on a heroku dyno.
 
 ## 2. Current Runtime Shape
 
@@ -53,18 +54,13 @@ The current stack is:
   - `src/pages/scenario/ScenarioTestRunPage.tsx`
 
 ### Backend route tree
-- `/api/grade`
-  - Standalone free-response grading endpoint used by local scenario test runs.
 - `/api/public/*`
   - Protected API namespace.
   - Every route uses `requireSession` in `src/server/public/auth.ts`.
-  - Session auth accepts either:
-    - a Neon session token looked up in `neon_auth.session`, or
-    - a JWT verified against `neon_auth.jwks`.
-  - After auth, the server upserts a matching `public.user_profile` row and attaches `authUserId` and `publicUserId` to the request.
+  - Auth accepts JWT bearer tokens verified against `neon_auth.jwks`.
+  - After auth, the server attaches `userId` to the request.
 
 Protected resources currently mounted under `/api/public`:
-- `/me`
 - `/classrooms`
 - `/classroom-members`
 - `/scenarios`
@@ -73,6 +69,7 @@ Protected resources currently mounted under `/api/public`:
 - `/assignments`
 - `/attempts`
 - `/responses`
+- `/grade`
 
 ## 3. Repository Hierarchy
 
@@ -82,31 +79,19 @@ Protected resources currently mounted under `/api/public`:
     - Weekly npm dependency update configuration.
 - `dist/`
   - Generated build output for the client and compiled server.
-  - Not source of truth.
 - `node_modules/`
   - Installed dependencies.
-  - Not source of truth.
 - `prisma/`
   - Prisma schema and migration history.
 - `public/`
   - Static assets served directly by Vite/Express.
 - `src/`
-  - Application source code for frontend, backend, shared types, and scenario engine.
+  - Application source code for frontend, backend, shared types.
 - `.env`
   - Local environment file. Required values are inferred from code, including `DATABASE_URL`, `OPENAI_API_KEY`, and `VITE_NEON_AUTH_URL`.
+  - DO NOT COMMIT YOUR .env!!!
 - `.gitignore`
   - Git ignore rules.
-- `README.md`
-  - Legacy project map from the earlier grading-demo phase.
-  - No longer accurate as a system description.
-- `architecture.md`
-  - This file.
-- `future.md`
-  - Future-work notes. Useful for roadmap context, not for current architecture.
-- `plan.md`
-  - Delivery-plan document from an earlier planning phase. Not an accurate description of the live implementation.
-- `TODO.md`
-  - UI/product TODO notes.
 - `eslint.config.js`
   - Flat ESLint config for TypeScript and React hooks.
 - `index.html`
@@ -126,27 +111,15 @@ Protected resources currently mounted under `/api/public`:
 - `tsconfig.app.json`
   - Frontend TypeScript config.
 - `tsconfig.node.json`
-  - Server TypeScript config; emits to `dist/`.
+  - Server TypeScript config;.
 - `vite.config.ts`
-  - Vite config with React SWC, Tailwind plugin, `/api` proxy to `http://localhost:8787`, and Dagre chunking.
+  - Vite config with React SWC, Tailwind plugin, and `/api` proxy to `http://localhost:8787`.
 
 ### `public/`
-- `EdupulseTutorial.mp4`
-  - Tutorial video used by the scenario tutorial flow.
-- `depression.mp4`
-  - Scenario media asset.
-- `antihypertensives.mp4`
-  - Scenario media asset.
 - `manifest.json`
   - PWA-style manifest and icon metadata.
 - `logos/`
-  - `edupulse.svg`
-  - `edupulse-wordmark.svg`
-  - `edupulse-with-wordmark.svg`
-  - `favicon.ico`
-  - `logo192.png`
-  - `logo512.png`
-  - Brand assets used by the SPA.
+  - Brand assets used by the frontend.
 - `scenarios/`
   - `tutorial.json`
     - Importable starter/tutorial scenario.
@@ -161,26 +134,7 @@ Protected resources currently mounted under `/api/public`:
 - `generated/`
   - Referenced by the app via generated Prisma client/model imports.
 - `migrations/`
-  - `20250227_baseline/`
-    - Initial schema baseline.
-  - `20260302195456_align_schema_with_current_models/`
-    - Aligns database with the then-current Prisma models.
-  - `20260302212606_sync_auth_user_to_public_user/`
-    - Sync work between Neon auth users and public user records.
-  - `20260307190146_user_profile_and_string_uuids/`
-    - Introduces `user_profile` and string UUID alignment.
-  - `20260307203000_fix_user_profile_sync_trigger/`
-    - Fixes profile sync behavior.
-  - `20260330203045_make_max_attempts_optional/`
-    - Makes assignment attempt limit optional.
-  - `20260330211631_attempt_progress_fields/`
-    - Adds attempt progress fields such as `current_node_id` and `last_activity_at`.
-  - `20260402173043_make_classroom_code_unique/`
-    - Enforces unique classroom join codes.
-  - `20260409221326_cascade_delete_scenarios/`
-    - Enables scenario cascade delete behavior.
-  - `migration_lock.toml`
-    - Prisma migration lock metadata.
+  - Each directory represents a change to the Neon DB.
 
 ### `src/`
 - `index.css`
@@ -230,7 +184,6 @@ Protected resources currently mounted under `/api/public`:
   - Generic React Query wrapper for authenticated public API reads.
 - `usePublicApiHooks.ts`
   - Typed read hooks for the `/api/public` resources:
-    - current user
     - classrooms
     - classroom members
     - assignments
@@ -251,38 +204,32 @@ Protected resources currently mounted under `/api/public`:
 #### `src/server/`
 - `index.ts`
   - Express server bootstrap.
-  - Mounts `/api/grade`.
   - Mounts `/api/public`.
   - Serves static build artifacts from `dist/`.
   - Falls back to `index.html` for SPA routes.
 - `prisma.ts`
   - Prisma client creation using Neon adapter and `DATABASE_URL`.
+
+##### `src/server/public/`
+- `index.ts`
+  - Composes the protected routers under `/api/public`.
+  - Mounts the protected standalone grader at `/api/public/grade`.
+- `auth.ts`
+  - Bearer-token auth middleware.
+  - Verifies JWTs against Neon JWKs.
+  - Requires an existing `public.user_profile` created by database sync.
+- `common.ts`
+  - Shared request parsing, pagination, UUID validation, auth context typing, and error helpers.
 - `grader.ts`
-  - OpenAI grading implementation.
+  - Protected OpenAI grading implementation used by `/api/public/grade` and assignment progress grading.
   - Contains:
     - Zod request/response validation.
     - JSON-schema constrained model output.
     - prompt-injection hardening.
     - retry/fix-up pass for malformed JSON.
   - Default model is `gpt-4o-mini` unless `OPENAI_MODEL` is set.
-
-##### `src/server/public/`
-- `index.ts`
-  - Composes the protected routers under `/api/public`.
-- `auth.ts`
-  - Bearer-token auth middleware.
-  - Supports session lookup and JWT fallback.
-  - Auto-provisions `public.user_profile`.
-- `common.ts`
-  - Shared request parsing, pagination, UUID validation, auth context typing, and error helpers.
 - `scopes.ts`
   - Prisma `where` helpers for classroom-, assignment-, attempt-, and response-level access control.
-- `users.ts`
-  - `/me` resource.
-  - Supports:
-    - current-user lookup
-    - self-account deletion with explicit confirmation
-  - Explicitly rejects profile updates; those are not supported here.
 - `classrooms.ts`
   - Classroom listing, detail lookup, creation, and join-by-code behavior.
   - Classroom creation auto-creates an instructor membership.
@@ -332,18 +279,6 @@ Protected resources currently mounted under `/api/public`:
 - `SettingsPage.tsx`
   - Routed settings shell.
   - Currently only theme toggle is functionally wired; account, password, notification, accessibility, and delete-account controls are mostly placeholders.
-- `forgot-password.tsx`
-  - Legacy password-reset request screen.
-  - Not registered in the router.
-  - Imports an old NavBar path.
-- `reset-password.tsx`
-  - Legacy password-reset completion screen.
-  - Not registered in the router.
-  - Imports an old NavBar path.
-- `profile.tsx`
-  - Legacy profile/account-management screen.
-  - Not registered in the router.
-  - Targets older API contracts and imports an old NavBar path.
 - `hooks/`
   - `homeDashboardData.types.ts`
     - View-model types for the authenticated dashboard.
@@ -543,7 +478,7 @@ Protected resources currently mounted under `/api/public`:
   - `FreeResponse.Scene.tsx`
     - Runtime UI for `free_response`.
   - `FreeResponseGrader.ts`
-    - Direct `/api/grade` client used for local, non-assignment runs.
+    - Direct `/api/public/grade` client used for local, non-assignment runs.
   - `sceneUi.tsx`
     - Shared runtime scene UI helpers.
 
@@ -580,15 +515,4 @@ Protected resources currently mounted under `/api/public`:
 - `invitation`
 - `project_config`
 
-These are not EduPulse feature tables, but the app depends on them for session validation, JWT verification, and user bootstrap.
-
-## 5. Important Current-State Notes
-- Auth is currently Neon Auth email/password plus email verification, not Microsoft/Entra OAuth.
-- The authoritative protected API namespace is `/api/public`, not `/api/v1`.
-- Scenario drafts are stored as opaque JSON in `scenario.draft_content`; publishing snapshots that JSON into `scenario_version.content`.
-- Assignment creation from a draft scenario auto-publishes a new scenario version on the backend.
-- Assignment progress is persisted node-by-node through `attempt.current_node_id` plus `response` rows.
-- `SettingsPage` is routed but mostly placeholder UI.
-- `src/pages/home/profile.tsx`, `src/pages/home/forgot-password.tsx`, and `src/pages/home/reset-password.tsx` are legacy screens that are not in the route tree.
-- `ScenarioLibraryPage.tsx` contains links to `/scenario/library/version/:id`, but that route is not defined in `src/main.tsx`.
-- `README.md`, `plan.md`, and the old version of this file should be treated as historical context, not as accurate architecture.
+These are not EduPulse feature tables, but the app depends on them for JWT verification and auth-user bootstrap.

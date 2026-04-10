@@ -163,38 +163,11 @@ export async function requireSession(
   }
 
   try {
-    debugAuth('querying session', { requestId, token: maskToken(token) });
-    const session = await prisma.session.findFirst({
-      where: {
-        token,
-        expiresAt: { gt: new Date() },
-      },
-      select: {
-        id: true,
-        userId: true,
-      },
-    });
-
-    let authUserId = session?.userId ?? null;
-    let resolvedSessionId = session?.id ?? null;
-
-    if (!session) {
-      debugAuth('session not found/expired, trying JWT fallback', {
-        requestId,
-        token: maskToken(token),
-      });
-      authUserId = await resolveAuthUserIdFromJwt(token, requestId);
-      resolvedSessionId = authUserId ? 'jwt' : null;
-    } else {
-      debugAuth('session found', {
-        requestId,
-        sessionId: session.id,
-        authUserId: session.userId,
-      });
-    }
+    debugAuth('verifying JWT', { requestId, token: maskToken(token) });
+    const authUserId = await resolveAuthUserIdFromJwt(token, requestId);
 
     if (!authUserId) {
-      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
+      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired token');
     }
 
     const authUser = await prisma.user.findUnique({
@@ -207,40 +180,42 @@ export async function requireSession(
         requestId,
         authUserId,
       });
-      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired session');
+      return sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired token');
     }
 
-    const publicUser = await prisma.user_profile.upsert({
+    const userProfile = await prisma.user_profile.findUnique({
       where: {
         id: authUserId,
-      },
-      update: {},
-      create: {
-        auth_user: {
-          connect: { id: authUserId },
-        },
       },
       select: {
         id: true,
       },
     });
 
+    if (!userProfile) {
+      debugAuth('public user profile missing', {
+        requestId,
+        authUserId,
+      });
+      return sendInternalError(
+        res,
+        `Verified auth user ${authUserId} is missing public.user_profile`,
+        new Error('public.user_profile not found for verified auth user'),
+      );
+    }
+
     asAuthedRequest(req).auth = {
-      sessionId: resolvedSessionId ?? 'unknown',
-      authUserId,
-      publicUserId: publicUser.id,
+      userId: authUserId,
     };
 
     debugAuth('request authorized', {
       requestId,
-      sessionId: resolvedSessionId ?? 'unknown',
-      authUserId,
-      publicUserId: publicUser.id,
+      userId: authUserId,
     });
 
     return next();
   } catch (error) {
-    debugAuth('session validation threw', { requestId });
-    return sendInternalError(res, 'Session validation failed', error);
+    debugAuth('token validation threw', { requestId });
+    return sendInternalError(res, 'Token validation failed', error);
   }
 }
