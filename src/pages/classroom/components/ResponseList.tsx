@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
-import type { PublicResponse } from '../../../types/publicApi';
+import type { PublicResponse } from "../../../types/publicApi";
 
 type ResponseListProps = {
   responses: PublicResponse[];
@@ -25,10 +25,10 @@ function ResponseList({
         <Link
           key={response.id}
           to={`/classrooms/${classroomId}/assignment/${assignmentId}/attempt/${attemptId}/response/${response.id}`}
-          className="block rounded border border-neutral-800 bg-neutral-800 px-3 py-2 text-sm hover:border-neutral-700"
+          className="block rounded border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-800 dark:text-neutral-100 dark:hover:border-neutral-700"
         >
           <p className="font-medium">Node: {response.node_id}</p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Created: {formatDate(response.created_at)}
           </p>
         </Link>

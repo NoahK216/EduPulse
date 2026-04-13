@@ -1,10 +1,10 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from "react-router-dom";
 
-import AttemptSummaryCard from './components/AttemptSummaryCard';
-import ResponseList from './components/ResponseList';
-import { useAttemptDetailData } from './hooks/useClassroomData';
-import { DataGuard } from '../../components/data/DataGuard';
-import PageShell from '../../components/layout/PageShell';
+import AttemptSummaryCard from "./components/AttemptSummaryCard";
+import ResponseList from "./components/ResponseList";
+import { useAttemptDetailData } from "./hooks/useClassroomData";
+import { DataGuard } from "../../components/data/DataGuard";
+import PageShell from "../../components/layout/PageShell";
 
 function AttemptPage() {
   const { classroomId, assignmentId, attemptId } = useParams();
@@ -13,16 +13,20 @@ function AttemptPage() {
   return (
     <PageShell
       title="Attempt Details"
-      subtitle={detail.attemptId ? `Attempt ID: ${detail.attemptId}` : 'Invalid attempt identifier'}
+      subtitle={
+        detail.attemptId
+          ? `Attempt ID: ${detail.attemptId}`
+          : "Invalid attempt identifier"
+      }
     >
       <div className="mb-4">
         <Link
           to={
             classroomId && assignmentId
               ? `/classrooms/${classroomId}/assignment/${assignmentId}`
-              : '/classrooms'
+              : "/classrooms"
           }
-          className="text-sm text-blue-300 hover:text-blue-200"
+          className="text-sm text-sky-700 hover:text-sky-500 dark:text-blue-300 dark:hover:text-blue-200"
         >
           Back to assignment
         </Link>
