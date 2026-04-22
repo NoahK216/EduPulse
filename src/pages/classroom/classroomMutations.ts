@@ -1,5 +1,9 @@
 import { queryClient } from "../../lib/query-client-instance";
-import { publicApiPost, resolvePublicApiToken } from "../../lib/public-api-client";
+import {
+  publicApiPost,
+  publicApiPut,
+  resolvePublicApiToken,
+} from "../../lib/public-api-client";
 import type { ItemResponse, PublicClassroom } from "../../types/publicApi";
 
 type CreateClassroomInput = {
@@ -8,6 +12,11 @@ type CreateClassroomInput = {
 
 type JoinClassroomInput = {
   code: string;
+};
+
+type UpdateClassroomInput = {
+  classroomId: string;
+  name: string;
 };
 
 async function resolveRequiredToken() {
@@ -46,6 +55,20 @@ export async function joinClassroom(input: JoinClassroomInput) {
     token,
     {
       code: input.code.trim(),
+    },
+  );
+
+  await invalidatePublicApiQueries();
+  return response.item;
+}
+
+export async function updateClassroom(input: UpdateClassroomInput) {
+  const token = await resolveRequiredToken();
+  const response = await publicApiPut<ItemResponse<PublicClassroom>>(
+    `/api/public/classrooms/${input.classroomId}`,
+    token,
+    {
+      name: input.name.trim(),
     },
   );
 

@@ -24,10 +24,24 @@ import type {
 import type { DataGuardState } from "../../../components/data/DataGuard";
 
 type AssignmentViewerRole = PublicClassroomRole | null;
+export type AssignmentProgressState =
+  | "not_started"
+  | "in_progress"
+  | "completed";
 
 type InstructorAssignmentCard = {
   assignment: PublicAssignment;
   completedCount: number;
+};
+
+export type InstructorStudentAttemptGroup = {
+  student: PublicClassroomMember;
+  attempts: PublicAttempt[];
+  latestAttempt: PublicAttempt | null;
+  preferredAttempt: PublicAttempt | null;
+  inProgressAttempt: PublicAttempt | null;
+  status: AssignmentProgressState;
+  lastActivityAt: string | null;
 };
 
 export type ClassroomPageData = {
@@ -60,9 +74,11 @@ export type AssignmentDetailData = {
   role: AssignmentViewerRole;
   guard: DataGuardState;
   attemptsGuard: DataGuardState;
+  submissionsGuard: DataGuardState;
   attempts: PublicAttempt[];
   latestAttempt: PublicAttempt | null;
   inProgressAttempt: PublicAttempt | null;
+  studentAttemptGroups: InstructorStudentAttemptGroup[];
   isOpen: boolean;
   isClosed: boolean;
   attemptsUsed: number;
@@ -116,8 +132,57 @@ function compareAssignments(left: PublicAssignment, right: PublicAssignment) {
   return leftTime - rightTime;
 }
 
+function compareClassroomMembers(
+  left: PublicClassroomMember,
+  right: PublicClassroomMember,
+) {
+  const nameComparison = left.user_name.localeCompare(right.user_name);
+  if (nameComparison !== 0) {
+    return nameComparison;
+  }
+
+  return left.user_email.localeCompare(right.user_email);
+}
+
+function getAssignmentProgressPriority(status: AssignmentProgressState) {
+  switch (status) {
+    case "completed":
+      return 0;
+    case "in_progress":
+      return 1;
+    case "not_started":
+      return 2;
+  }
+}
+
+function compareInstructorStudentAttemptGroups(
+  left: InstructorStudentAttemptGroup,
+  right: InstructorStudentAttemptGroup,
+) {
+  const priorityDifference =
+    getAssignmentProgressPriority(left.status) -
+    getAssignmentProgressPriority(right.status);
+
+  if (priorityDifference !== 0) {
+    return priorityDifference;
+  }
+
+  return compareClassroomMembers(left.student, right.student);
+}
+
 function compareAttempts(left: PublicAttempt, right: PublicAttempt) {
   return right.attempt_number - left.attempt_number;
+}
+
+function compareResponsesOldestFirst(left: PublicResponse, right: PublicResponse) {
+  const timeDifference =
+    new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
+
+  if (timeDifference !== 0) {
+    return timeDifference;
+  }
+
+  return left.id.localeCompare(right.id);
 }
 
 function isPastAssignment(assignment: PublicAssignment, now: number) {
@@ -151,6 +216,20 @@ function getAssignmentProgress(
   return {
     completedCount: submittedStudentIds.size,
   };
+}
+
+function getStudentAttemptStatus(
+  attempts: PublicAttempt[],
+): AssignmentProgressState {
+  if (attempts.some((attempt) => attempt.status === "submitted")) {
+    return "completed";
+  }
+
+  if (attempts.some((attempt) => attempt.status === "in_progress")) {
+    return "in_progress";
+  }
+
+  return attempts.length > 0 ? "completed" : "not_started";
 }
 
 function createCollectionGuard({
@@ -341,9 +420,50 @@ export function useAssignmentDetailData(
   const attempts = useAssignmentAttempts(
     hasValidIds ? validAssignmentId : null,
   );
+  const classroomMembers = useClassroomMembers(
+    hasValidIds ? validClassroomId : null,
+  );
   const assignmentItem = assignment.item;
   const role = assignmentItem?.viewer_role ?? null;
   const attemptItems = [...attempts.items].sort(compareAttempts);
+  const studentMembers = [...classroomMembers.items]
+    .filter((member) => member.role === "student")
+    .sort(compareClassroomMembers);
+  const attemptsByStudentId = new Map<string, PublicAttempt[]>();
+
+  attemptItems.forEach((attemptItem) => {
+    const currentAttempts =
+      attemptsByStudentId.get(attemptItem.student_user_id) ?? [];
+    currentAttempts.push(attemptItem);
+    attemptsByStudentId.set(attemptItem.student_user_id, currentAttempts);
+  });
+
+  const studentAttemptGroups = studentMembers
+    .map((student): InstructorStudentAttemptGroup => {
+      const studentAttempts = [
+        ...(attemptsByStudentId.get(student.user_id) ?? []),
+      ].sort(compareAttempts);
+      const latestStudentAttempt = studentAttempts[0] ?? null;
+      const latestCompletedStudentAttempt =
+        studentAttempts.find((attemptItem) => attemptItem.status === "submitted") ??
+        null;
+      const inProgressStudentAttempt =
+        studentAttempts.find((attemptItem) => attemptItem.status === "in_progress") ??
+        null;
+      const preferredStudentAttempt =
+        latestCompletedStudentAttempt ?? inProgressStudentAttempt ?? latestStudentAttempt;
+
+      return {
+        student,
+        attempts: studentAttempts,
+        latestAttempt: latestStudentAttempt,
+        preferredAttempt: preferredStudentAttempt,
+        inProgressAttempt: inProgressStudentAttempt,
+        status: getStudentAttemptStatus(studentAttempts),
+        lastActivityAt: latestStudentAttempt?.last_activity_at ?? null,
+      };
+    })
+    .sort(compareInstructorStudentAttemptGroups);
   const latestAttempt = attemptItems[0] ?? null;
   const inProgressAttempt =
     attemptItems.find((attemptItem) => attemptItem.status === "in_progress") ??
@@ -381,7 +501,11 @@ export function useAssignmentDetailData(
       kind: "invalid",
       message: "The classroom or assignment ID in the URL is invalid.",
     };
-  } else if (assignment.unauthorized || attempts.unauthorized) {
+  } else if (
+    assignment.unauthorized ||
+    attempts.unauthorized ||
+    classroomMembers.unauthorized
+  ) {
     guard = { kind: "unauthorized" };
   } else if (assignment.loading) {
     guard = { kind: "loading" };
@@ -416,13 +540,22 @@ export function useAssignmentDetailData(
       onRetry: attempts.refetch,
       itemCount: attemptItems.length,
       emptyMessage:
-        role === "student"
-          ? "You have not started this assignment yet."
-          : "No attempts found for this assignment.",
+        role === "student" ? "You have not started this assignment yet." : undefined,
+    }),
+    submissionsGuard: createCollectionGuard({
+      unauthorized: attempts.unauthorized || classroomMembers.unauthorized,
+      loading: attempts.loading || classroomMembers.loading,
+      error: getFirstError(attempts.error, classroomMembers.error),
+      onRetry: () => {
+        attempts.refetch();
+        classroomMembers.refetch();
+      },
+      itemCount: studentAttemptGroups.length,
     }),
     attempts: attemptItems,
     latestAttempt,
     inProgressAttempt,
+    studentAttemptGroups,
     isOpen,
     isClosed,
     attemptsUsed,
@@ -439,6 +572,7 @@ export function useAttemptDetailData(
   const validAttemptId = toUuidOrNull(attemptId);
   const attempt = useAttempt(validAttemptId);
   const responses = useAttemptResponses(validAttemptId);
+  const sortedResponses = [...responses.items].sort(compareResponsesOldestFirst);
 
   let guard: DataGuardState = CONTENT_GUARD;
 
@@ -473,10 +607,10 @@ export function useAttemptDetailData(
       loading: responses.loading,
       error: responses.error,
       onRetry: responses.refetch,
-      itemCount: responses.items.length,
+      itemCount: sortedResponses.length,
       emptyMessage: "No responses found for this attempt.",
     }),
-    responses: responses.items,
+    responses: sortedResponses,
   };
 }
 

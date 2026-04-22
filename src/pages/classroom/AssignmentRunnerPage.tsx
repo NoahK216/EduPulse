@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { ApiRequestError, publicApiPost, resolvePublicApiToken } from "../../lib/public-api-client";
+import {
+  ApiRequestError,
+  publicApiPost,
+  resolvePublicApiToken,
+} from "../../lib/public-api-client";
 import { isUuid } from "../../lib/uuid";
 import type {
   ItemResponse,
-  PublicAssignmentAttemptSession,
-  PublicAttempt,
+  PublicAssignmentRunnerSession,
 } from "../../types/publicApi";
 import {
   ErrorPanel,
@@ -28,8 +31,9 @@ function AssignmentRunnerPage() {
   const [loading, setLoading] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [session, setSession] = useState<PublicAssignmentAttemptSession | null>(null);
-  const [attempt, setAttempt] = useState<PublicAttempt | null>(null);
+  const [session, setSession] = useState<PublicAssignmentRunnerSession | null>(
+    null,
+  );
   const parsedScenario = useMemo(() => {
     if (!session) {
       return null;
@@ -46,7 +50,6 @@ function AssignmentRunnerPage() {
       setUnauthorized(false);
       setError("The classroom or assignment ID in the URL is invalid.");
       setSession(null);
-      setAttempt(null);
       return () => {
         cancelled = true;
       };
@@ -63,12 +66,11 @@ function AssignmentRunnerPage() {
           if (!cancelled) {
             setUnauthorized(true);
             setSession(null);
-            setAttempt(null);
           }
           return;
         }
 
-        const result = await publicApiPost<ItemResponse<PublicAssignmentAttemptSession>>(
+        const result = await publicApiPost<ItemResponse<PublicAssignmentRunnerSession>>(
           `/api/public/assignments/${assignmentIdValue}/attempt`,
           token,
           {},
@@ -76,7 +78,6 @@ function AssignmentRunnerPage() {
 
         if (!cancelled) {
           setSession(result.item);
-          setAttempt(result.item.attempt);
         }
       } catch (requestError) {
         if (cancelled) {
@@ -93,7 +94,6 @@ function AssignmentRunnerPage() {
         }
 
         setSession(null);
-        setAttempt(null);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -118,7 +118,10 @@ function AssignmentRunnerPage() {
 
   if (unauthorized) {
     return (
-      <PageShell title="Assignment Runner" subtitle={`Assignment ID: ${assignmentIdValue}`}>
+      <PageShell
+        title="Assignment Runner"
+        subtitle={`Assignment ID: ${assignmentIdValue}`}
+      >
         <UnauthorizedPanel />
       </PageShell>
     );
@@ -126,7 +129,10 @@ function AssignmentRunnerPage() {
 
   if (loading) {
     return (
-      <PageShell title="Assignment Runner" subtitle={`Assignment ID: ${assignmentIdValue}`}>
+      <PageShell
+        title="Assignment Runner"
+        subtitle={`Assignment ID: ${assignmentIdValue}`}
+      >
         <LoadingPanel />
       </PageShell>
     );
@@ -134,7 +140,10 @@ function AssignmentRunnerPage() {
 
   if (error) {
     return (
-      <PageShell title="Assignment Runner" subtitle={`Assignment ID: ${assignmentIdValue}`}>
+      <PageShell
+        title="Assignment Runner"
+        subtitle={`Assignment ID: ${assignmentIdValue}`}
+      >
         <div className="mb-4">
           <Link
             to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`}
@@ -143,14 +152,20 @@ function AssignmentRunnerPage() {
             Back to assignment
           </Link>
         </div>
-        <ErrorPanel message={error} onRetry={() => setReloadKey((value) => value + 1)} />
+        <ErrorPanel
+          message={error}
+          onRetry={() => setReloadKey((value) => value + 1)}
+        />
       </PageShell>
     );
   }
 
-  if (!session || !attempt) {
+  if (!session) {
     return (
-      <PageShell title="Assignment Runner" subtitle={`Assignment ID: ${assignmentIdValue}`}>
+      <PageShell
+        title="Assignment Runner"
+        subtitle={`Assignment ID: ${assignmentIdValue}`}
+      >
         <ErrorPanel message="Assignment runner session could not be loaded." />
       </PageShell>
     );
@@ -158,7 +173,10 @@ function AssignmentRunnerPage() {
 
   if (!parsedScenario?.success) {
     return (
-      <PageShell title={session.assignment.title} subtitle={session.assignment.classroom_name}>
+      <PageShell
+        title={session.assignment.title}
+        subtitle={session.assignment.classroom_name}
+      >
         <div className="mb-4">
           <Link
             to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`}
@@ -172,10 +190,19 @@ function AssignmentRunnerPage() {
     );
   }
 
-  const initialNodeId = session.attempt.current_node_id ?? parsedScenario.data.startNodeId;
+  const initialNodeId =
+    session.attempt?.current_node_id ?? parsedScenario.data.startNodeId;
+  const title =
+    session.mode === "preview"
+      ? `${session.assignment.title} Preview`
+      : session.assignment.title;
+  const subtitle =
+    session.mode === "preview"
+      ? `${session.assignment.classroom_name} • Instructor test run`
+      : session.assignment.classroom_name;
 
   return (
-    <PageShell title={session.assignment.title} subtitle={session.assignment.classroom_name}>
+    <PageShell title={title} subtitle={subtitle}>
       <div className="mb-4">
         <Link
           to={`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`}
@@ -188,9 +215,26 @@ function AssignmentRunnerPage() {
       <ScenarioViewer
         scenario={parsedScenario.data}
         initialNodeId={initialNodeId}
-        attemptId={attempt.id}
-        onAttemptUpdate={setAttempt}
-        onFinished={() => { navigate(`/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`) }}
+        attemptId={session.attempt?.id ?? null}
+        onAttemptUpdate={(nextAttempt) =>
+          setSession((currentSession) =>
+            currentSession
+              ? {
+                ...currentSession,
+                attempt: nextAttempt,
+              }
+              : currentSession,
+          )
+        }
+        onFinished={
+          session.mode === "attempt"
+            ? () => {
+              navigate(
+                `/classrooms/${classroomIdValue}/assignment/${assignmentIdValue}`,
+              );
+            }
+            : undefined
+        }
       />
     </PageShell>
   );

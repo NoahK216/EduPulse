@@ -22,6 +22,10 @@ export type PublicScenarioBase = Serialized<scenarioModel>;
 export type PublicAssignmentBase = Serialized<assignmentModel>;
 export type PublicAttemptBase = Serialized<attemptModel>;
 export type PublicResponseBase = Serialized<responseModel>;
+export type PublicResponseChoiceOption = {
+  id: string;
+  label: string;
+};
 
 export type PagedResponse<T> = {
   items: T[];
@@ -104,15 +108,23 @@ export type PublicResponse = Omit<PublicResponseBase, "response_payload"> & {
   classroom_name: string;
   student_name: string;
   student_email: string;
+  node_type: string | null;
+  node_title: string | null;
+  prompt_text: string | null;
+  choice_options: PublicResponseChoiceOption[] | null;
+  selected_choice_id: string | null;
+  selected_choice_label: string | null;
+  answer_text: string | null;
   has_response_payload: boolean;
   response_payload?: PublicResponseBase["response_payload"];
 };
 
-export type PublicAssignmentAttemptSession = {
+export type PublicAssignmentRunnerSession = {
   assignment: PublicAssignment;
-  attempt: PublicAttempt;
+  attempt: PublicAttempt | null;
   responses: PublicResponse[];
   scenario_content: unknown;
+  mode: "attempt" | "preview";
 };
 
 export type PublicAttemptProgressResult = {

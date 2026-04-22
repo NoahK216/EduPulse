@@ -1,6 +1,10 @@
 import express from 'express';
 import type { Prisma } from '../../../prisma/generated/client.js';
 
+import {
+  getScenarioNode,
+  ScenarioSchema,
+} from '../../pages/scenario/scenarioSchemas.js';
 import { prisma } from '../prisma.js';
 import {
   asAuthedRequest,
@@ -22,14 +26,19 @@ export const responseSelect = {
   attempt: {
     select: {
       id: true,
-      attempt_number: true,
-      assignment: {
-        select: {
-          id: true,
-          title: true,
-          classroom: { select: { id: true, name: true } },
+        attempt_number: true,
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            scenario_version: {
+              select: {
+                content: true,
+              },
+            },
+            classroom: { select: { id: true, name: true } },
+          },
         },
-      },
       student: {
         select: {
           auth_user: {
@@ -58,6 +67,38 @@ export function mapResponseRow(
     return null;
   }
 
+  const parsedScenario = ScenarioSchema.safeParse(
+    row.attempt.assignment.scenario_version.content,
+  );
+  const node = parsedScenario.success
+    ? getScenarioNode(parsedScenario.data, row.node_id)
+    : null;
+  const payload =
+    row.response_payload && typeof row.response_payload === 'object'
+      ? (row.response_payload as Record<string, unknown>)
+      : null;
+  const selectedChoiceId =
+    payload?.kind === 'choice' && typeof payload.choice_id === 'string'
+      ? payload.choice_id
+      : null;
+  const selectedChoiceLabel =
+    node?.type === 'choice'
+      ? node.choices.find((choice) => choice.id === selectedChoiceId)?.label ?? null
+      : null;
+  const answerText =
+    payload?.kind === 'free_response' && typeof payload.answer_text === 'string'
+      ? payload.answer_text
+      : null;
+  const promptText =
+    node?.type === 'choice' || node?.type === 'free_response' ? node.prompt : null;
+  const choiceOptions =
+    node?.type === 'choice'
+      ? node.choices.map((choice) => ({
+          id: choice.id,
+          label: choice.label,
+        }))
+      : null;
+
   return {
     id: row.id,
     attempt_id: row.attempt_id,
@@ -71,6 +112,13 @@ export function mapResponseRow(
     classroom_name: row.attempt.assignment.classroom.name,
     student_name: row.attempt.student.auth_user.name,
     student_email: row.attempt.student.auth_user.email,
+    node_type: node?.type ?? null,
+    node_title: node?.title ?? null,
+    prompt_text: promptText,
+    choice_options: choiceOptions,
+    selected_choice_id: selectedChoiceId,
+    selected_choice_label: selectedChoiceLabel,
+    answer_text: answerText,
     has_response_payload: row.response_payload !== null,
     response_payload: includePayload ? row.response_payload : undefined,
   };

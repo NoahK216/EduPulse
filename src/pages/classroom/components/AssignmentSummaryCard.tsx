@@ -32,7 +32,7 @@ function AssignmentSummaryCard({ assignment }: AssignmentSummaryCardProps) {
           : assignment.max_attempts}
       </p>
       {assignment.instructions ? (
-        <p className="mt-3 text-sm text-neutral-200">
+        <p className="mt-3 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200">
           {assignment.instructions}
         </p>
       ) : null}

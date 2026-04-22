@@ -23,3 +23,7 @@ Performance might be meaningfully improved by implementing a server cache
 ## Classroom stability
 - Ensure a classroom always has at least one instructor
 - Allow instructors to delete classrooms
+
+## Account interaction
+- Password recovery
+- 

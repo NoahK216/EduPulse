@@ -13,7 +13,7 @@ import {
   sendError,
   sendInternalError,
 } from "./common.js";
-import { accessibleClassroomWhere } from "./scopes.js";
+import { accessibleClassroomWhere, instructorClassroomWhere } from "./scopes.js";
 
 const createClassroomBodySchema = z.object({
   name: z.string().trim().min(1).max(255),
@@ -225,6 +225,75 @@ export function createPublicClassroomsRouter() {
       return res.json({ item });
     } catch (error) {
       return sendInternalError(res, "Failed to fetch classroom", error);
+    }
+  });
+
+  router.put("/:id", async (req, res) => {
+    const authedReq = asAuthedRequest(req);
+    const id = parseUuidParam("id", req.params.id);
+    if (!id.ok) {
+      return sendError(res, 400, "BAD_REQUEST", id.message);
+    }
+
+    const parsed = createClassroomBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "BAD_REQUEST",
+        message: "Invalid request body",
+        details: parsed.error.flatten(),
+      });
+    }
+
+    try {
+      const accessibleClassroom = await prisma.classroom.findFirst({
+        where: {
+          AND: [{ id: id.value }, accessibleClassroomWhere(authedReq.auth.userId)],
+        },
+        select: { id: true },
+      });
+
+      if (!accessibleClassroom) {
+        return sendError(res, 404, "NOT_FOUND", "Classroom not found");
+      }
+
+      const instructorClassroom = await prisma.classroom.findFirst({
+        where: {
+          AND: [{ id: id.value }, instructorClassroomWhere(authedReq.auth.userId)],
+        },
+        select: { id: true },
+      });
+
+      if (!instructorClassroom) {
+        return sendError(
+          res,
+          403,
+          "FORBIDDEN",
+          "You must be an instructor in this classroom to rename it",
+        );
+      }
+
+      await prisma.classroom.update({
+        where: { id: id.value },
+        data: {
+          name: parsed.data.name,
+          updated_at: new Date(),
+        },
+        select: { id: true },
+      });
+
+      const item = await getPublicClassroomById(id.value, authedReq.auth.userId);
+      if (!item) {
+        return sendError(
+          res,
+          500,
+          "INTERNAL_ERROR",
+          "Classroom updated but could not be loaded",
+        );
+      }
+
+      return res.json({ item });
+    } catch (error) {
+      return sendInternalError(res, "Failed to update classroom", error);
     }
   });
 

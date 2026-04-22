@@ -85,12 +85,6 @@ const router = createBrowserRouter([
               () => import("./pages/classroom/AttemptPage.tsx"),
             ),
           },
-          {
-            path: "assignment/:assignmentId/attempt/:attemptId/response/:responseId",
-            lazy: lazyComponent(
-              () => import("./pages/classroom/ResponsePage.tsx"),
-            ),
-          },
         ],
       },
       {

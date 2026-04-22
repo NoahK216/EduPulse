@@ -20,7 +20,6 @@ import {
   accessibleAssignmentWhere,
   accessibleClassroomWhere,
   instructorClassroomWhere,
-  studentClassroomWhere,
 } from './scopes.js';
 
 const createAssignmentBodySchema = z
@@ -321,8 +320,10 @@ export function createPublicAssignmentsRouter() {
     try {
       const assignment = await prisma.assignment.findFirst({
         where: {
-          id: id.value,
-          classroom: studentClassroomWhere(authedReq.auth.userId),
+          AND: [
+            { id: id.value },
+            accessibleAssignmentWhere(authedReq.auth.userId),
+          ],
         },
         select: assignmentAttemptSessionSelect,
       });
@@ -350,6 +351,28 @@ export function createPublicAssignmentsRouter() {
           500,
           'INTERNAL_ERROR',
           'Published scenario is missing its start node',
+        );
+      }
+
+      const viewerRole = assignment.classroom.members[0]?.role;
+      if (viewerRole === 'instructor') {
+        return res.json({
+          item: {
+            assignment: mapAssignmentRow(assignment),
+            attempt: null,
+            responses: [],
+            scenario_content: assignment.scenario_version.content,
+            mode: 'preview',
+          },
+        });
+      }
+
+      if (viewerRole !== 'student') {
+        return sendError(
+          res,
+          403,
+          'FORBIDDEN',
+          'You do not have access to run this assignment',
         );
       }
 
@@ -447,6 +470,7 @@ export function createPublicAssignmentsRouter() {
             mapResponseRow(response, true),
           ),
           scenario_content: assignment.scenario_version.content,
+          mode: 'attempt',
         },
       });
     } catch (error) {

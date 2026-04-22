@@ -40,12 +40,7 @@ function AttemptPage() {
             <section className="mt-6">
               <h3 className="text-lg font-semibold">Responses</h3>
               <DataGuard state={detail.responsesGuard}>
-                <ResponseList
-                  responses={detail.responses}
-                  classroomId={classroomId}
-                  assignmentId={assignmentId}
-                  attemptId={detail.attemptId}
-                />
+                <ResponseList responses={detail.responses} />
               </DataGuard>
             </section>
           </>
